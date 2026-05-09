@@ -1,0 +1,75 @@
+:root {
+  color-scheme: light;
+
+  --brand-ink: #171513;
+  --brand-ink-soft: #2a2521;
+  --brand-red: #9f1416;
+  --brand-red-strong: #7e0f12;
+  --brand-red-soft: #f7dddd;
+  --brand-ivory: #fff8ed;
+  --brand-cream: #f3e6d2;
+  --brand-bronze: #c89555;
+  --brand-bronze-soft: #efe0c7;
+  --brand-brown: #7b4a27;
+
+  --background: #fffaf2;
+  --foreground: #171513;
+  --card: #fffdf8;
+  --card-foreground: #171513;
+  --popover: #fffdf8;
+  --popover-foreground: #171513;
+  --primary: #9f1416;
+  --primary-foreground: #fff8ed;
+  --secondary: #f3e6d2;
+  --secondary-foreground: #171513;
+  --muted: #f7eee3;
+  --muted-foreground: #695f55;
+  --accent: #c89555;
+  --accent-foreground: #1d1712;
+  --destructive: #b42318;
+  --destructive-foreground: #fff8ed;
+  --border: rgb(23 21 19 / 0.13);
+  --input: rgb(23 21 19 / 0.17);
+  --ring: #c89555;
+
+  --radius: 0.75rem;
+  --shadow-soft: 0 20px 60px rgb(23 21 19 / 0.09);
+  --shadow-card: 0 12px 35px rgb(23 21 19 / 0.07);
+  --shadow-glow: 0 16px 50px rgb(159 20 22 / 0.18);
+  --gradient-hero:
+    radial-gradient(circle at 12% 18%, rgb(200 149 85 / 0.22), transparent 30%),
+    radial-gradient(circle at 84% 12%, rgb(159 20 22 / 0.12), transparent 26%),
+    linear-gradient(135deg, #fff8ed 0%, #f8ead8 46%, #fffdf8 100%);
+  --gradient-dark:
+    radial-gradient(circle at 18% 14%, rgb(200 149 85 / 0.18), transparent 32%),
+    radial-gradient(circle at 86% 10%, rgb(159 20 22 / 0.24), transparent 26%),
+    linear-gradient(135deg, #12100f 0%, #1b1513 50%, #0f0d0c 100%);
+}
+
+.dark {
+  color-scheme: dark;
+
+  --background: #0f0d0c;
+  --foreground: #f8efe4;
+  --card: #181513;
+  --card-foreground: #f8efe4;
+  --popover: #181513;
+  --popover-foreground: #f8efe4;
+  --primary: #d6403f;
+  --primary-foreground: #fff8ed;
+  --secondary: #251f1b;
+  --secondary-foreground: #f8efe4;
+  --muted: #211c18;
+  --muted-foreground: #c7b7a5;
+  --accent: #d3a262;
+  --accent-foreground: #171513;
+  --destructive: #ef5b51;
+  --destructive-foreground: #fff8ed;
+  --border: rgb(255 248 237 / 0.13);
+  --input: rgb(255 248 237 / 0.16);
+  --ring: #d3a262;
+
+  --shadow-soft: 0 22px 70px rgb(0 0 0 / 0.35);
+  --shadow-card: 0 18px 45px rgb(0 0 0 / 0.26);
+  --shadow-glow: 0 16px 55px rgb(214 64 63 / 0.16);
+}
