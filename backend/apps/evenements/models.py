@@ -19,6 +19,8 @@ class Evenement(models.Model):
     date_evenement = models.DateField()
     heure_evenement = models.TimeField()
     lieu = models.CharField(max_length=255, blank=True)
+    image = models.ImageField(upload_to="evenements/images/", blank=True, null=True)
+    video = models.FileField(upload_to="evenements/videos/", blank=True, null=True)
     type_evenement = models.CharField(max_length=30, choices=TypeEvenement.choices, default=TypeEvenement.ATELIER)
     statut_evenement = models.CharField(
         max_length=30,

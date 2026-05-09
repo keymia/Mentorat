@@ -14,6 +14,8 @@ class EvenementSerializer(serializers.ModelSerializer):
             "date_evenement",
             "heure_evenement",
             "lieu",
+            "image",
+            "video",
             "type_evenement",
             "statut_evenement",
         ]
