@@ -3,12 +3,12 @@
 import { FormEvent, useEffect, useState } from "react";
 
 import {
-  AvailableSlot,
   MentorDisponible,
+  MentorshipPeriod,
   NiveauAcademique,
   createMentoreInscription,
   formatApiError,
-  getAvailableSlots,
+  getAvailableMentorshipPeriods,
   getMentorsDisponibles,
   getNiveaux,
 } from "@/lib/api";
@@ -24,52 +24,29 @@ function textValue(formData: FormData, key: string) {
   return String(formData.get(key) ?? "");
 }
 
-function toDateInput(offsetDays = 0) {
-  const date = new Date();
-  date.setDate(date.getDate() + offsetDays);
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
-function formatSlot(startsAt: string, endsAt: string) {
-  const dateFormatter = new Intl.DateTimeFormat("fr-CA", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-  const timeFormatter = new Intl.DateTimeFormat("fr-CA", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-  return `${dateFormatter.format(new Date(startsAt))} - ${timeFormatter.format(new Date(endsAt))}`;
-}
-
 export function MentoreForm() {
   const [niveaux, setNiveaux] = useState<NiveauAcademique[]>([]);
+  const [periods, setPeriods] = useState<MentorshipPeriod[]>([]);
   const [mentors, setMentors] = useState<MentorDisponible[]>([]);
-  const [slots, setSlots] = useState<AvailableSlot[]>([]);
+  const [periodId, setPeriodId] = useState("");
   const [niveauId, setNiveauId] = useState("");
   const [selectedMentorId, setSelectedMentorId] = useState("");
   const [isLoadingMentors, setIsLoadingMentors] = useState(false);
-  const [isLoadingSlots, setIsLoadingSlots] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [status, setStatus] = useState<FormStatus>({ type: "idle", message: "" });
 
   useEffect(() => {
     let isMounted = true;
-    getNiveaux()
-      .then((niveauxAcademiques) => {
+    Promise.all([getNiveaux(), getAvailableMentorshipPeriods()])
+      .then(([niveauxAcademiques, mentorshipPeriods]) => {
         if (isMounted) {
           setNiveaux(niveauxAcademiques);
+          setPeriods(mentorshipPeriods);
         }
       })
       .catch((error) => {
         if (isMounted) {
-          setStatus({ type: "error", message: `Niveaux indisponibles: ${formatApiError(error)}` });
+          setStatus({ type: "error", message: `Donnees d'inscription indisponibles: ${formatApiError(error)}` });
         }
       });
     return () => {
@@ -77,18 +54,14 @@ export function MentoreForm() {
     };
   }, []);
 
-  async function handleNiveauChange(selectedNiveauId: string) {
-    setNiveauId(selectedNiveauId);
-    setSelectedMentorId("");
-    setMentors([]);
-    setSlots([]);
-    if (!selectedNiveauId) {
+  async function loadMentors(selectedNiveauId: string, selectedPeriodId: string) {
+    if (!selectedNiveauId || !selectedPeriodId) {
       return;
     }
 
     setIsLoadingMentors(true);
     try {
-      const mentorsDisponibles = await getMentorsDisponibles(Number(selectedNiveauId));
+      const mentorsDisponibles = await getMentorsDisponibles(Number(selectedNiveauId), selectedPeriodId);
       setMentors(mentorsDisponibles);
     } catch (error) {
       setStatus({ type: "error", message: `Mentors indisponibles: ${formatApiError(error)}` });
@@ -97,22 +70,18 @@ export function MentoreForm() {
     }
   }
 
-  async function handleMentorChange(selectedMentor: string) {
-    setSelectedMentorId(selectedMentor);
-    setSlots([]);
-    if (!selectedMentor) {
-      return;
-    }
+  async function handlePeriodChange(selectedPeriodId: string) {
+    setPeriodId(selectedPeriodId);
+    setSelectedMentorId("");
+    setMentors([]);
+    await loadMentors(niveauId, selectedPeriodId);
+  }
 
-    setIsLoadingSlots(true);
-    try {
-      const availableSlots = await getAvailableSlots(Number(selectedMentor), toDateInput(), toDateInput(14), false);
-      setSlots(availableSlots);
-    } catch (error) {
-      setStatus({ type: "error", message: `Creneaux indisponibles: ${formatApiError(error)}` });
-    } finally {
-      setIsLoadingSlots(false);
-    }
+  async function handleNiveauChange(selectedNiveauId: string) {
+    setNiveauId(selectedNiveauId);
+    setSelectedMentorId("");
+    setMentors([]);
+    await loadMentors(selectedNiveauId, periodId);
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -130,6 +99,7 @@ export function MentoreForm() {
       langue_preferee: textValue(formData, "langue_preferee"),
       region: textValue(formData, "region"),
       niveau_academique: Number(textValue(formData, "niveau_academique")),
+      mentorship_period: Number(textValue(formData, "mentorship_period")),
       objectifs: textValue(formData, "objectifs"),
       mentor_choisi: mentorChoisi ? Number(mentorChoisi) : null,
       consentement: formData.get("consentement") === "on",
@@ -138,10 +108,10 @@ export function MentoreForm() {
     try {
       await createMentoreInscription(payload);
       event.currentTarget.reset();
+      setPeriodId("");
       setNiveauId("");
       setSelectedMentorId("");
       setMentors([]);
-      setSlots([]);
       setStatus({
         type: "success",
         message: "Votre inscription mentore a ete envoyee et sera validee par l'administration.",
@@ -185,6 +155,25 @@ export function MentoreForm() {
         </label>
       </div>
       <label>
+        Periode de mentorat
+        <select
+          name="mentorship_period"
+          required
+          className="field"
+          value={periodId}
+          onChange={(event) => void handlePeriodChange(event.target.value)}
+        >
+          <option value="" disabled>
+            Choisir une periode
+          </option>
+          {periods.map((period) => (
+            <option key={period.id} value={period.id}>
+              {period.title}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label>
         Niveau academique
         <select
           name="niveau_academique"
@@ -209,9 +198,9 @@ export function MentoreForm() {
           name="mentor_choisi"
           required
           className="field"
-          disabled={!niveauId || mentors.length === 0}
+          disabled={!periodId || !niveauId || mentors.length === 0}
           value={selectedMentorId}
-          onChange={(event) => void handleMentorChange(event.target.value)}
+          onChange={(event) => setSelectedMentorId(event.target.value)}
         >
           <option value="">
             {isLoadingMentors ? "Chargement..." : "Choisir un mentor disponible"}
@@ -226,24 +215,6 @@ export function MentoreForm() {
       </label>
       {niveauId && !isLoadingMentors && mentors.length === 0 ? (
         <Alert variant="warning">Aucun mentor disponible pour ce niveau actuellement.</Alert>
-      ) : null}
-      {selectedMentorId ? (
-        <div className="rounded-xl border border-border bg-muted/35 p-4">
-          <p className="text-sm font-semibold text-foreground">Creneaux disponibles sur les 14 prochains jours</p>
-          {isLoadingSlots ? (
-            <p className="mt-2 text-sm text-muted-foreground">Chargement des creneaux...</p>
-          ) : slots.length > 0 ? (
-            <div className="mt-3 grid gap-2 sm:grid-cols-2">
-              {slots.slice(0, 6).map((slot) => (
-                <div key={`${slot.starts_at}-${slot.ends_at}`} className="rounded-lg border border-border bg-card px-3 py-2 text-sm">
-                  {formatSlot(slot.starts_at, slot.ends_at)}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="mt-2 text-sm text-muted-foreground">Aucun creneau disponible pour ce mentor actuellement.</p>
-          )}
-        </div>
       ) : null}
       <label>
         Objectifs

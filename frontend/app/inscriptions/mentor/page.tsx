@@ -11,7 +11,7 @@ export default function MentorInscriptionPage() {
       <PageHeader
         eyebrow="Inscription mentor"
         title="Devenir mentor"
-        description="Indiquez votre niveau academique, vos disponibilites et la capacite de mentorat que vous pouvez assumer."
+        description="Indiquez votre niveau academique et la capacite de mentorat que vous pouvez assumer."
       />
       <main className="mx-auto max-w-4xl px-4 py-12 sm:px-6">
         <Card>

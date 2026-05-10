@@ -69,54 +69,161 @@ export type Evenement = {
   statut_evenement: string;
 };
 
-export type MentorProfile = {
-  id: number;
-  mentor: number;
-  max_mentores: number;
-  max_sessions_per_week: number;
-  default_session_duration: 30 | 45 | 60 | 90;
-  date_creation: string;
-  date_modification: string;
+export type UtilisateurDetail = MentorDisponible & {
+  role?: number;
+  role_nom?: string;
+  profil_mentorat?: "MENTOR" | "MENTORE" | "MENTOR_ET_MENTORE" | null;
+  statut_compte?: string;
 };
 
-export type MentorAvailability = {
-  id: number;
-  mentor: number;
-  weekday: number;
-  weekday_label: string;
-  start_time: string;
-  end_time: string;
-  is_active: boolean;
-  date_creation: string;
-  date_modification: string;
-};
+export type MentorshipPeriodStatus = "draft" | "active" | "completed" | "archived";
 
-export type MentorAvailabilityException = {
+export type MentorshipPeriod = {
   id: number;
-  mentor: number;
+  title: string;
+  description: string;
   start_date: string;
   end_date: string;
-  reason: string;
-  date_creation: string;
+  required_sessions: number;
+  status: MentorshipPeriodStatus;
+  assignments_count?: number;
+  sessions_count?: number;
+  completed_sessions_count?: number;
+  created_at: string;
+  updated_at: string;
 };
 
-export type AvailableSlot = {
-  mentor: number;
-  starts_at: string;
-  ends_at: string;
-  duration_minutes: number;
-};
+export type MentorshipAssignmentStatus = "active" | "completed" | "suspended";
 
-export type SessionBooking = {
+export type MentorshipAssignment = {
   id: number;
   mentor: number;
-  mentor_detail?: MentorDisponible;
-  mentore: number;
-  mentore_detail?: MentorDisponible;
-  starts_at: string;
-  ends_at: string;
-  status: "pending" | "confirmed" | "cancelled" | "completed";
+  mentor_detail?: UtilisateurDetail;
+  mentoree: number;
+  mentoree_detail?: UtilisateurDetail;
+  period: number;
+  period_detail?: MentorshipPeriod;
+  required_sessions?: number;
+  status: MentorshipAssignmentStatus;
+  admin_notes: string;
+  scheduled_sessions_count: number;
+  completed_sessions_count: number;
+  remaining_sessions_count: number;
+  missing_sessions_count: number;
+  assigned_at: string;
   created_at: string;
+  updated_at: string;
+};
+
+export type MentorshipSessionStatus = "scheduled" | "completed" | "cancelled" | "postponed" | "absent";
+
+export type MentorshipSession = {
+  id: number;
+  assignment: number;
+  mentor_detail?: UtilisateurDetail;
+  mentoree_detail?: UtilisateurDetail;
+  period_detail?: MentorshipPeriod;
+  session_number: number;
+  scheduled_date: string;
+  start_time: string | null;
+  end_time: string | null;
+  status: MentorshipSessionStatus;
+  summary: string;
+  mentor_comment: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type MentoreeProgressStatus = "excellent" | "good" | "average" | "watch" | "difficulty";
+
+export type MentoreeProgress = {
+  id: number;
+  assignment: number;
+  mentor_detail?: UtilisateurDetail;
+  mentoree_detail?: UtilisateurDetail;
+  period_detail?: MentorshipPeriod;
+  progress_status: MentoreeProgressStatus;
+  progress_percentage: number | null;
+  difficulties: string;
+  achievements: string;
+  recommendations: string;
+  mentor_opinion: string;
+  updated_at: string;
+};
+
+export type MentorDashboard = {
+  mentor: UtilisateurDetail;
+  active_periods: MentorshipPeriod[];
+  counts: {
+    mentees: number;
+    assignments: number;
+    required_sessions: number;
+    scheduled_sessions: number;
+    completed_sessions: number;
+    remaining_sessions: number;
+    missing_sessions: number;
+  };
+  assignments: MentorshipAssignment[];
+};
+
+export type MentorMenteeDetail = {
+  mentee: UtilisateurDetail;
+  assignments: MentorshipAssignment[];
+  current_assignment: MentorshipAssignment;
+  sessions: MentorshipSession[];
+  progress: MentoreeProgress | null;
+};
+
+export type AdminMentorshipOverview = {
+  periods: {
+    total: number;
+    active: number;
+    active_items: MentorshipPeriod[];
+  };
+  assignments: {
+    total: number;
+    active: number;
+    completed: number;
+    suspended: number;
+  };
+  sessions: {
+    total: number;
+    scheduled: number;
+    completed: number;
+    cancelled: number;
+    postponed: number;
+    absent: number;
+  };
+  progress: {
+    total: number;
+    watch: number;
+    difficulty: number;
+  };
+};
+
+export type AdminMentorshipReportRow = {
+  assignment: MentorshipAssignment;
+  required_sessions: number;
+  scheduled_sessions: number;
+  completed_sessions: number;
+  missing_sessions: number;
+  remaining_sessions: number;
+};
+
+export type AdminMentorshipReport = {
+  summary: {
+    assignments: number;
+    missing_sessions: number;
+  };
+  results: AdminMentorshipReportRow[];
+};
+
+export type MentorshipFilters = {
+  period?: string;
+  mentor?: string;
+  mentoree?: string;
+  status?: string;
+  progress_status?: string;
 };
 
 type ApiOptions = RequestInit & {
@@ -256,8 +363,12 @@ export function getNiveaux() {
   return apiFetch<NiveauAcademique[]>("/niveaux/", { auth: false });
 }
 
-export function getMentorsDisponibles(niveauId: number) {
-  return apiFetch<MentorDisponible[]>(`/mentors/disponibles/?niveau_id=${niveauId}`, { auth: false });
+export function getMentorsDisponibles(niveauId: number, periodId?: number | string) {
+  const params = new URLSearchParams({ niveau_id: String(niveauId) });
+  if (periodId) {
+    params.set("period_id", String(periodId));
+  }
+  return apiFetch<MentorDisponible[]>(`/mentors/disponibles/?${params.toString()}`, { auth: false });
 }
 
 export function createMentorInscription(payload: Record<string, unknown>) {
@@ -312,6 +423,149 @@ export function getAdminCollection(endpoint: string) {
   return apiFetch<Record<string, unknown>[] | { results?: Record<string, unknown>[] }>(endpoint);
 }
 
+function toQueryString(filters: MentorshipFilters = {}) {
+  const params = new URLSearchParams();
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value) {
+      params.set(key, value);
+    }
+  });
+  const query = params.toString();
+  return query ? `?${query}` : "";
+}
+
+export function getUsersByProfil(profilMentorat: string) {
+  return apiFetch<UtilisateurDetail[]>(`/users/?profil_mentorat=${profilMentorat}`);
+}
+
+export function getMentorshipPeriods() {
+  return apiFetch<MentorshipPeriod[]>("/mentorship-periods/");
+}
+
+export function getAvailableMentorshipPeriods() {
+  return apiFetch<MentorshipPeriod[]>("/mentorship-periods/available/", { auth: false });
+}
+
+export function createMentorshipPeriod(
+  payload: Pick<MentorshipPeriod, "title" | "description" | "start_date" | "end_date" | "required_sessions" | "status">,
+) {
+  return apiFetch<MentorshipPeriod>("/mentorship-periods/", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function updateMentorshipPeriod(id: number, payload: Partial<MentorshipPeriod>) {
+  return apiFetch<MentorshipPeriod>(`/mentorship-periods/${id}/`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function deleteMentorshipPeriod(id: number) {
+  return apiFetch<null>(`/mentorship-periods/${id}/`, {
+    method: "DELETE",
+  });
+}
+
+export function getMentorshipAssignments(filters: MentorshipFilters = {}) {
+  return apiFetch<MentorshipAssignment[]>(`/mentorship-assignments/${toQueryString(filters)}`);
+}
+
+export function createMentorshipAssignment(
+  payload: Pick<MentorshipAssignment, "mentor" | "mentoree" | "period" | "status" | "admin_notes">,
+) {
+  return apiFetch<MentorshipAssignment>("/mentorship-assignments/", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function updateMentorshipAssignment(id: number, payload: Partial<MentorshipAssignment>) {
+  return apiFetch<MentorshipAssignment>(`/mentorship-assignments/${id}/`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function getAdminMentorshipOverview(filters: MentorshipFilters = {}) {
+  return apiFetch<AdminMentorshipOverview>(`/admin/mentorship-overview/${toQueryString(filters)}`);
+}
+
+export function getAdminMentorshipSessions(filters: MentorshipFilters = {}) {
+  return apiFetch<MentorshipSession[]>(`/admin/mentorship-sessions/${toQueryString(filters)}`);
+}
+
+export function getAdminMentorshipProgress(filters: MentorshipFilters = {}) {
+  return apiFetch<MentoreeProgress[]>(`/admin/mentorship-progress/${toQueryString(filters)}`);
+}
+
+export function getAdminMentorshipReports(filters: MentorshipFilters = {}) {
+  return apiFetch<AdminMentorshipReport>(`/admin/mentorship-reports/${toQueryString(filters)}`);
+}
+
+export function getMentorDashboard() {
+  return apiFetch<MentorDashboard>("/mentor/dashboard/");
+}
+
+export function getMentorMentees() {
+  return apiFetch<MentorshipAssignment[]>("/mentor/mentees/");
+}
+
+export function getMentorMenteeDetail(id: number) {
+  return apiFetch<MentorMenteeDetail>(`/mentor/mentees/${id}/`);
+}
+
+export function getMentorAssignments() {
+  return apiFetch<MentorshipAssignment[]>("/mentor/assignments/");
+}
+
+export function getMentorAssignmentSessions(assignmentId: number) {
+  return apiFetch<MentorshipSession[]>(`/mentor/assignments/${assignmentId}/sessions/`);
+}
+
+export function createMentorAssignmentSession(
+  assignmentId: number,
+  payload: Pick<MentorshipSession, "session_number" | "scheduled_date" | "start_time" | "end_time" | "status" | "summary" | "mentor_comment">,
+) {
+  return apiFetch<MentorshipSession>(`/mentor/assignments/${assignmentId}/sessions/`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function updateMentorSession(id: number, payload: Partial<MentorshipSession>) {
+  return apiFetch<MentorshipSession>(`/mentor/sessions/${id}/`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function completeMentorSession(id: number, payload: Partial<MentorshipSession>) {
+  return apiFetch<MentorshipSession>(`/mentor/sessions/${id}/complete/`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function getMentorAssignmentProgress(assignmentId: number) {
+  return apiFetch<MentoreeProgress>(`/mentor/assignments/${assignmentId}/progress/`);
+}
+
+export function updateMentorAssignmentProgress(assignmentId: number, payload: Partial<MentoreeProgress>) {
+  return apiFetch<MentoreeProgress>(`/mentor/assignments/${assignmentId}/progress/`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function continueMentorAssignment(assignmentId: number, period: number) {
+  return apiFetch<MentorshipAssignment>(`/mentor/assignments/${assignmentId}/continue/`, {
+    method: "POST",
+    body: JSON.stringify({ period }),
+  });
+}
+
 export function validerInscription(id: number) {
   return apiFetch<Record<string, unknown>>(`/inscriptions/${id}/valider/`, {
     method: "PUT",
@@ -360,86 +614,5 @@ export function updateEvenement(id: number, payload: FormData | Partial<Omit<Eve
 export function deleteEvenement(id: number) {
   return apiFetch<null>(`/evenements/${id}/`, {
     method: "DELETE",
-  });
-}
-
-export function getMentorProfile() {
-  return apiFetch<MentorProfile>("/mentor/profile/");
-}
-
-export function updateMentorProfile(payload: Pick<MentorProfile, "max_mentores" | "max_sessions_per_week" | "default_session_duration">) {
-  return apiFetch<MentorProfile>("/mentor/profile/", {
-    method: "PUT",
-    body: JSON.stringify(payload),
-  });
-}
-
-export function getMentorAvailability() {
-  return apiFetch<MentorAvailability[]>("/mentor/availability/");
-}
-
-export function createMentorAvailability(payload: Omit<MentorAvailability, "id" | "mentor" | "weekday_label" | "date_creation" | "date_modification">) {
-  return apiFetch<MentorAvailability>("/mentor/availability/", {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
-}
-
-export function updateMentorAvailability(
-  id: number,
-  payload: Partial<Omit<MentorAvailability, "id" | "mentor" | "weekday_label" | "date_creation" | "date_modification">>,
-) {
-  return apiFetch<MentorAvailability>(`/mentor/availability/${id}/`, {
-    method: "PUT",
-    body: JSON.stringify(payload),
-  });
-}
-
-export function deleteMentorAvailability(id: number) {
-  return apiFetch<null>(`/mentor/availability/${id}/`, {
-    method: "DELETE",
-  });
-}
-
-export function getMentorAvailabilityExceptions() {
-  return apiFetch<MentorAvailabilityException[]>("/mentor/availability-exceptions/");
-}
-
-export function createMentorAvailabilityException(
-  payload: Pick<MentorAvailabilityException, "start_date" | "end_date" | "reason">,
-) {
-  return apiFetch<MentorAvailabilityException>("/mentor/availability-exceptions/", {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
-}
-
-export function deleteMentorAvailabilityException(id: number) {
-  return apiFetch<null>(`/mentor/availability-exceptions/${id}/`, {
-    method: "DELETE",
-  });
-}
-
-export function getAvailableSlots(mentorId: number, startDate: string, endDate: string, auth = true) {
-  return apiFetch<AvailableSlot[]>(
-    `/mentors/${mentorId}/available-slots/?start_date=${startDate}&end_date=${endDate}`,
-    { auth },
-  );
-}
-
-export function createBooking(payload: Pick<SessionBooking, "mentor" | "starts_at" | "ends_at">) {
-  return apiFetch<SessionBooking>("/bookings/", {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
-}
-
-export function getMyBookings() {
-  return apiFetch<SessionBooking[]>("/my-bookings/");
-}
-
-export function cancelBooking(id: number) {
-  return apiFetch<SessionBooking>(`/bookings/${id}/cancel/`, {
-    method: "PATCH",
   });
 }

@@ -13,7 +13,7 @@ from apps.inscriptions.serializers import (
     MentoreInscriptionSerializer,
     MentorInscriptionSerializer,
 )
-from apps.mentorat.models import Mentorat
+from apps.mentorat.models import MentorshipAssignment
 from apps.mentorat.services import validate_mentor_for_mentore_level
 from apps.users.models import Utilisateur
 from apps.users.permissions import IsAdminRole
@@ -47,6 +47,7 @@ class InscriptionViewSet(viewsets.ModelViewSet):
         "mentor_choisi",
         "mentor_choisi__role",
         "mentor_choisi__niveau_academique",
+        "mentorship_period",
     ).all()
     serializer_class = InscriptionSerializer
     permission_classes = [IsAdminRole]
@@ -68,6 +69,7 @@ class InscriptionViewSet(viewsets.ModelViewSet):
             validate_mentor_for_mentore_level(
                 inscription.mentor_choisi,
                 inscription.utilisateur.niveau_academique,
+                inscription.mentorship_period,
             )
 
         inscription.statut_inscription = Inscription.StatutInscription.VALIDEE
@@ -78,20 +80,24 @@ class InscriptionViewSet(viewsets.ModelViewSet):
         utilisateur.save(update_fields=["statut_compte"])
 
         if inscription.type_inscription == Inscription.TypeInscription.MENTORE and inscription.mentor_choisi:
-            mentorat_actif_existe = Mentorat.objects.filter(
-                mentore=utilisateur,
-                statut_jumelage=Mentorat.StatutJumelage.ACTIF,
-            ).exists()
-            if not mentorat_actif_existe:
-                try:
-                    Mentorat.objects.create(
-                        mentor=inscription.mentor_choisi,
-                        mentore=utilisateur,
-                        statut_jumelage=Mentorat.StatutJumelage.ACTIF,
-                    )
-                except DjangoValidationError as exc:
-                    payload = exc.message_dict if hasattr(exc, "message_dict") else exc.messages
-                    raise ValidationError(payload) from exc
+            selected_period = inscription.mentorship_period
+            if selected_period:
+                assignment_exists = MentorshipAssignment.objects.filter(
+                    mentoree=utilisateur,
+                    period=selected_period,
+                    status=MentorshipAssignment.Status.ACTIVE,
+                ).exists()
+                if not assignment_exists:
+                    try:
+                        MentorshipAssignment.objects.create(
+                            mentor=inscription.mentor_choisi,
+                            mentoree=utilisateur,
+                            period=selected_period,
+                            status=MentorshipAssignment.Status.ACTIVE,
+                        )
+                    except DjangoValidationError as exc:
+                        payload = exc.message_dict if hasattr(exc, "message_dict") else exc.messages
+                        raise ValidationError(payload) from exc
 
         return Response(self.get_serializer(inscription).data)
 

@@ -4,7 +4,7 @@ from rest_framework.views import APIView
 
 from apps.evenements.models import Evenement
 from apps.inscriptions.models import Inscription
-from apps.mentorat.models import Mentorat
+from apps.mentorat.models import MentorshipAssignment
 from apps.partenaires.models import Partenaire
 from apps.statistiques.serializers import DashboardStatistiquesSerializer
 from apps.users.models import Utilisateur
@@ -36,7 +36,9 @@ class DashboardStatistiquesView(APIView):
             "inscriptions_en_attente": Inscription.objects.filter(
                 statut_inscription=Inscription.StatutInscription.EN_ATTENTE
             ).count(),
-            "jumelages_actifs": Mentorat.objects.filter(statut_jumelage=Mentorat.StatutJumelage.ACTIF).count(),
+            "jumelages_actifs": MentorshipAssignment.objects.filter(
+                status=MentorshipAssignment.Status.ACTIVE
+            ).count(),
             "mentors_disponibles": mentors_disponibles,
             "mentors_satures": mentors_satures,
             "evenements_a_venir": Evenement.objects.filter(

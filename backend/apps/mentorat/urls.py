@@ -2,28 +2,85 @@ from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
 from apps.mentorat.views import (
-    AvailableSlotsView,
-    MentorAvailabilityExceptionViewSet,
-    MentorAvailabilityViewSet,
-    MentorProfileView,
+    AdminMentorshipOverviewView,
+    AdminMentorshipProgressView,
+    AdminMentorshipReportsView,
+    AdminMentorshipSessionsView,
+    AvailableMentorshipPeriodsView,
+    DisabledLegacyMentorshipFeatureView,
+    MentorContinueAssignmentView,
+    MentorAssignmentProgressView,
+    MentorAssignmentsView,
+    MentorAssignmentSessionsView,
+    MentorDashboardView,
+    MentorMenteeDetailView,
+    MentorMenteesView,
+    MentorSessionCompleteView,
+    MentorSessionDetailView,
     MentoratViewSet,
-    MyBookingsView,
-    SessionBookingViewSet,
+    MentorshipAssignmentViewSet,
+    MentorshipPeriodViewSet,
 )
 
 router = DefaultRouter()
 router.register("mentorat", MentoratViewSet, basename="mentorat")
-router.register("mentor/availability", MentorAvailabilityViewSet, basename="mentor-availability")
-router.register(
-    "mentor/availability-exceptions",
-    MentorAvailabilityExceptionViewSet,
-    basename="mentor-availability-exceptions",
-)
-router.register("bookings", SessionBookingViewSet, basename="bookings")
+router.register("mentorship-periods", MentorshipPeriodViewSet, basename="mentorship-periods")
+router.register("mentorship-assignments", MentorshipAssignmentViewSet, basename="mentorship-assignments")
+
+legacy_disabled = DisabledLegacyMentorshipFeatureView.as_view()
 
 urlpatterns = [
-    path("mentor/profile/", MentorProfileView.as_view(), name="mentor-profile"),
-    path("mentors/<int:mentor_id>/available-slots/", AvailableSlotsView.as_view(), name="mentor-available-slots"),
-    path("my-bookings/", MyBookingsView.as_view(), name="my-bookings"),
+    path("mentorship-periods/available/", AvailableMentorshipPeriodsView.as_view(), name="available-mentorship-periods"),
+    path("admin/mentorship-overview/", AdminMentorshipOverviewView.as_view(), name="admin-mentorship-overview"),
+    path("admin/mentorship-sessions/", AdminMentorshipSessionsView.as_view(), name="admin-mentorship-sessions"),
+    path("admin/mentorship-progress/", AdminMentorshipProgressView.as_view(), name="admin-mentorship-progress"),
+    path("admin/mentorship-reports/", AdminMentorshipReportsView.as_view(), name="admin-mentorship-reports"),
+    path("mentor/dashboard/", MentorDashboardView.as_view(), name="mentor-dashboard"),
+    path("mentor/mentees/", MentorMenteesView.as_view(), name="mentor-mentees"),
+    path("mentor/mentees/<int:pk>/", MentorMenteeDetailView.as_view(), name="mentor-mentee-detail"),
+    path("mentor/assignments/", MentorAssignmentsView.as_view(), name="mentor-assignments"),
+    path(
+        "mentor/assignments/<int:pk>/sessions/",
+        MentorAssignmentSessionsView.as_view(),
+        name="mentor-assignment-sessions",
+    ),
+    path("mentor/sessions/<int:pk>/", MentorSessionDetailView.as_view(), name="mentor-session-detail"),
+    path(
+        "mentor/sessions/<int:pk>/complete/",
+        MentorSessionCompleteView.as_view(),
+        name="mentor-session-complete",
+    ),
+    path(
+        "mentor/assignments/<int:pk>/progress/",
+        MentorAssignmentProgressView.as_view(),
+        name="mentor-assignment-progress",
+    ),
+    path(
+        "mentor/assignments/<int:pk>/continue/",
+        MentorContinueAssignmentView.as_view(),
+        name="mentor-assignment-continue",
+    ),
+    path("mentor/profile/", legacy_disabled, name="legacy-mentor-profile-disabled"),
+    path("mentor/availability/", legacy_disabled, name="legacy-mentor-availability-disabled"),
+    path("mentor/availability/<int:pk>/", legacy_disabled, name="legacy-mentor-availability-detail-disabled"),
+    path(
+        "mentor/availability-exceptions/",
+        legacy_disabled,
+        name="legacy-mentor-availability-exceptions-disabled",
+    ),
+    path(
+        "mentor/availability-exceptions/<int:pk>/",
+        legacy_disabled,
+        name="legacy-mentor-availability-exception-detail-disabled",
+    ),
+    path(
+        "mentors/<int:mentor_id>/available-slots/",
+        legacy_disabled,
+        name="legacy-mentor-available-slots-disabled",
+    ),
+    path("bookings/", legacy_disabled, name="legacy-bookings-disabled"),
+    path("bookings/<int:pk>/", legacy_disabled, name="legacy-booking-detail-disabled"),
+    path("bookings/<int:pk>/cancel/", legacy_disabled, name="legacy-booking-cancel-disabled"),
+    path("my-bookings/", legacy_disabled, name="legacy-my-bookings-disabled"),
     path("", include(router.urls)),
 ]

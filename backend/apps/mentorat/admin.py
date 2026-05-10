@@ -4,7 +4,11 @@ from apps.mentorat.models import (
     MentorAvailability,
     MentorAvailabilityException,
     MentorProfile,
+    MentoreeProgress,
     Mentorat,
+    MentorshipAssignment,
+    MentorshipPeriod,
+    MentorshipSession,
     SessionBooking,
 )
 
@@ -42,3 +46,46 @@ class SessionBookingAdmin(admin.ModelAdmin):
     list_display = ("mentor", "mentore", "starts_at", "ends_at", "status", "created_at")
     list_filter = ("status", "starts_at")
     search_fields = ("mentor__email", "mentore__email", "mentor__nom", "mentore__nom")
+
+
+@admin.register(MentorshipPeriod)
+class MentorshipPeriodAdmin(admin.ModelAdmin):
+    list_display = ("title", "start_date", "end_date", "required_sessions", "status", "updated_at")
+    list_filter = ("status", "start_date", "end_date")
+    search_fields = ("title", "description")
+
+
+@admin.register(MentorshipAssignment)
+class MentorshipAssignmentAdmin(admin.ModelAdmin):
+    list_display = ("mentor", "mentoree", "period", "status", "assigned_at")
+    list_filter = ("period", "status", "assigned_at")
+    search_fields = ("mentor__email", "mentoree__email", "mentor__nom", "mentoree__nom", "admin_notes")
+    autocomplete_fields = ("mentor", "mentoree", "period")
+
+
+@admin.register(MentorshipSession)
+class MentorshipSessionAdmin(admin.ModelAdmin):
+    list_display = ("assignment", "session_number", "scheduled_date", "start_time", "end_time", "status")
+    list_filter = ("status", "scheduled_date", "assignment__period")
+    search_fields = (
+        "assignment__mentor__email",
+        "assignment__mentoree__email",
+        "summary",
+        "mentor_comment",
+    )
+    autocomplete_fields = ("assignment",)
+
+
+@admin.register(MentoreeProgress)
+class MentoreeProgressAdmin(admin.ModelAdmin):
+    list_display = ("assignment", "progress_status", "progress_percentage", "updated_at")
+    list_filter = ("progress_status", "updated_at")
+    search_fields = (
+        "assignment__mentor__email",
+        "assignment__mentoree__email",
+        "difficulties",
+        "achievements",
+        "recommendations",
+        "mentor_opinion",
+    )
+    autocomplete_fields = ("assignment",)

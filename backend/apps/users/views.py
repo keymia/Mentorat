@@ -126,6 +126,6 @@ class MentorViewSet(viewsets.ReadOnlyModelViewSet):
                 {"detail": "Le parametre niveau_id est obligatoire."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        mentors = get_mentors_disponibles_for_niveau(niveau_id)
+        mentors = get_mentors_disponibles_for_niveau(niveau_id, request.query_params.get("period_id"))
         serializer = self.get_serializer(mentors, many=True)
         return Response(serializer.data)

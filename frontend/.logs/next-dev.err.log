@@ -1,11 +1,194 @@
-[browser] Detected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior="smooth"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_115brz8._.js:2477:13)
-⚠ Fast Refresh had to perform a full reload when ./node_modules/next/dist/client/image-component.js changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
-⚠ Fast Refresh had to perform a full reload when ./node_modules/next/dist/client/image-component.js changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
-⚠ Fast Refresh had to perform a full reload when ./node_modules/next/dist/client/image-component.js changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
-⚠ Fast Refresh had to perform a full reload when ./node_modules/next/dist/client/image-component.js changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
-⚠ Fast Refresh had to perform a full reload when ./node_modules/next/dist/client/image-component.js changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
-⚠ Fast Refresh had to perform a full reload when ./node_modules/next/dist/client/image-component.js changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
-[browser] Image with src "http://127.0.0.1:8000/media/partenaires/reseautage.jpg" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
-Read more: https://nextjs.org/docs/app/api-reference/components/image#loading (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_115brz8._.js:2477:13)
-[browser] Image with src "http://127.0.0.1:8000/media/evenements/images/reseautage.jpg" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
-Read more: https://nextjs.org/docs/app/api-reference/components/image#loading (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_115brz8._.js:2477:13)
+[browser] You have Reduced Motion enabled on your device. Animations may not appear as expected.. For more information and steps for solving, visit https://motion.dev/troubleshooting/reduced-motion-disabled (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_115brz8._.js:2477:13)
+[browser] A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <LoadingBoundary name="/" loading={null}>
+      <HTTPAccessFallbackBoundary notFound={{...}} forbidden={undefined} unauthorized={undefined}>
+        <HTTPAccessFallbackErrorBoundary pathname="/" notFound={{...}} forbidden={undefined} unauthorized={undefined} ...>
+          <RedirectBoundary>
+            <RedirectErrorBoundary router={{...}}>
+              <InnerLayoutRouter url="/" tree={[...]} params={{}} cacheNode={{rsc:{...}, ...}} segmentPath={[...]} ...>
+                <SegmentViewNode type="page" pagePath="page.tsx">
+                  <SegmentTrieNode>
+                  <Home>
+                    <div className="min-h-scre...">
+                      <SiteHeader>
+                      <main>
+                        <section className="premium-gr...">
+                          <div>
+                          <div className="relative m...">
+                            <Reveal>
+                              <motion.div initial={false} whileInView={undefined} viewport={{once:true, ...}} ...>
+                                <div
+                                  className=""
+                                  style={{
+-                                   opacity: "0"
+-                                   transform: "translateY(18px)"
+                                  }}
+                                  ref={function useMotionRef.useCallback}
+                                >
+                            <Reveal delay={0.12} className="relative">
+                              <motion.div initial={false} whileInView={undefined} viewport={{once:true, ...}} ...>
+                                <div
+                                  className="relative"
+                                  style={{
+-                                   opacity: "0"
+-                                   transform: "translateY(18px)"
+                                  }}
+                                  ref={function useMotionRef.useCallback}
+                                >
+                        <section className="mx-auto gr...">
+                          <Reveal delay={0}>
+                            <motion.div initial={false} whileInView={undefined} viewport={{once:true, ...}} ...>
+                              <div
+                                className=""
+                                style={{
+-                                 opacity: "0"
+-                                 transform: "translateY(18px)"
+                                }}
+                                ref={function useMotionRef.useCallback}
+                              >
+                          <Reveal delay={0.08}>
+                            <motion.div initial={false} whileInView={undefined} viewport={{once:true, ...}} ...>
+                              <div
+                                className=""
+                                style={{
+-                                 opacity: "0"
+-                                 transform: "translateY(18px)"
+                                }}
+                                ref={function useMotionRef.useCallback}
+                              >
+                          <Reveal delay={0.16}>
+                            <motion.div initial={false} whileInView={undefined} viewport={{once:true, ...}} ...>
+                              <div
+                                className=""
+                                style={{
+-                                 opacity: "0"
+-                                 transform: "translateY(18px)"
+                                }}
+                                ref={function useMotionRef.useCallback}
+                              >
+                        ...
+                      ...
+                ...
+              ...
+ 
+    at <unknown> (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:3439:25)
+    at runWithFiberInDEV (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:965:74)
+    at emitPendingHydrationWarnings (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:3438:13)
+    at completeWork (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6885:102)
+    at runWithFiberInDEV (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:965:131)
+    at completeUnitOfWork (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9622:23)
+    at performUnitOfWork (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9557:28)
+    at workLoopConcurrentByScheduler (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9551:58)
+    at renderRootConcurrent (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9534:71)
+    at performWorkOnRoot (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9061:150)
+    at performWorkOnRootViaSchedulerTask (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10255:9)
+    at MessagePort.performWorkUntilDeadline (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:2647:64) (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:3439:25)
+[browser] You have Reduced Motion enabled on your device. Animations may not appear as expected.. For more information and steps for solving, visit https://motion.dev/troubleshooting/reduced-motion-disabled (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_115brz8._.js:2477:13)
+[browser] A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <LoadingBoundary name="/" loading={null}>
+      <HTTPAccessFallbackBoundary notFound={{...}} forbidden={undefined} unauthorized={undefined}>
+        <HTTPAccessFallbackErrorBoundary pathname="/" notFound={{...}} forbidden={undefined} unauthorized={undefined} ...>
+          <RedirectBoundary>
+            <RedirectErrorBoundary router={{...}}>
+              <InnerLayoutRouter url="/" tree={[...]} params={{}} cacheNode={{rsc:{...}, ...}} segmentPath={[...]} ...>
+                <SegmentViewNode type="page" pagePath="page.tsx">
+                  <SegmentTrieNode>
+                  <Home>
+                    <div className="min-h-scre...">
+                      <SiteHeader>
+                      <main>
+                        <section className="premium-gr...">
+                          <div>
+                          <div className="relative m...">
+                            <Reveal>
+                              <motion.div initial={false} whileInView={undefined} viewport={{once:true, ...}} ...>
+                                <div
+                                  className=""
+                                  style={{
+-                                   opacity: "0"
+-                                   transform: "translateY(18px)"
+                                  }}
+                                  ref={function useMotionRef.useCallback}
+                                >
+                            <Reveal delay={0.12} className="relative">
+                              <motion.div initial={false} whileInView={undefined} viewport={{once:true, ...}} ...>
+                                <div
+                                  className="relative"
+                                  style={{
+-                                   opacity: "0"
+-                                   transform: "translateY(18px)"
+                                  }}
+                                  ref={function useMotionRef.useCallback}
+                                >
+                        <section className="mx-auto gr...">
+                          <Reveal delay={0}>
+                            <motion.div initial={false} whileInView={undefined} viewport={{once:true, ...}} ...>
+                              <div
+                                className=""
+                                style={{
+-                                 opacity: "0"
+-                                 transform: "translateY(18px)"
+                                }}
+                                ref={function useMotionRef.useCallback}
+                              >
+                          <Reveal delay={0.08}>
+                            <motion.div initial={false} whileInView={undefined} viewport={{once:true, ...}} ...>
+                              <div
+                                className=""
+                                style={{
+-                                 opacity: "0"
+-                                 transform: "translateY(18px)"
+                                }}
+                                ref={function useMotionRef.useCallback}
+                              >
+                          <Reveal delay={0.16}>
+                            <motion.div initial={false} whileInView={undefined} viewport={{once:true, ...}} ...>
+                              <div
+                                className=""
+                                style={{
+-                                 opacity: "0"
+-                                 transform: "translateY(18px)"
+                                }}
+                                ref={function useMotionRef.useCallback}
+                              >
+                        ...
+                      ...
+                ...
+              ...
+ 
+    at <unknown> (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:3439:25)
+    at runWithFiberInDEV (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:965:74)
+    at emitPendingHydrationWarnings (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:3438:13)
+    at completeWork (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6885:102)
+    at runWithFiberInDEV (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:965:131)
+    at completeUnitOfWork (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9622:23)
+    at performUnitOfWork (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9557:28)
+    at workLoopConcurrentByScheduler (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9551:58)
+    at renderRootConcurrent (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9534:71)
+    at performWorkOnRoot (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9061:150)
+    at performWorkOnRootViaSchedulerTask (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10255:9)
+    at MessagePort.performWorkUntilDeadline (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:2647:64) (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:3439:25)

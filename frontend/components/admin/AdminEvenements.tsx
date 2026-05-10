@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import Image from "next/image";
-import { CalendarDays, Edit3, Power, RefreshCcw, Trash2 } from "lucide-react";
+import { CalendarDays, CalendarPlus, Edit3, Film, MapPin, Power, RefreshCcw, Trash2 } from "lucide-react";
 
 import {
   Evenement,
@@ -15,8 +15,9 @@ import {
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Modal } from "@/components/ui/modal";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const eventTypes = [
@@ -75,6 +76,7 @@ export function AdminEvenements() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [actionId, setActionId] = useState<number | null>(null);
+  const [isFormOpen, setIsFormOpen] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -167,6 +169,7 @@ export function AdminEvenements() {
         setMessage("Evenement cree.");
       }
       resetForm();
+      setIsFormOpen(false);
     } catch (apiError) {
       setError(formatApiError(apiError));
     } finally {
@@ -207,6 +210,7 @@ export function AdminEvenements() {
       setEvenements((currentRows) => currentRows.filter((currentEvent) => currentEvent.id !== evenement.id));
       if (editingId === evenement.id) {
         resetForm();
+        setIsFormOpen(false);
       }
       setMessage("Evenement supprime.");
     } catch (apiError) {
@@ -223,159 +227,186 @@ export function AdminEvenements() {
     setVideoFile(null);
     setMessage("");
     setError("");
+    setIsFormOpen(true);
+  }
+
+  function startCreate() {
+    resetForm();
+    setMessage("");
+    setError("");
+    setIsFormOpen(true);
+  }
+
+  function closeFormModal() {
+    resetForm();
+    setIsFormOpen(false);
+  }
+
+  function renderEventForm() {
+    return (
+      <form onSubmit={handleSubmit}>
+        <div className="grid gap-4 md:grid-cols-2">
+          <label>
+            Titre
+            <input
+              className="field"
+              required
+              value={form.titre}
+              onChange={(event) => updateForm("titre", event.target.value)}
+            />
+          </label>
+
+          <label>
+            Lieu
+            <input
+              className="field"
+              value={form.lieu}
+              onChange={(event) => updateForm("lieu", event.target.value)}
+            />
+          </label>
+
+          <label>
+            Date
+            <input
+              className="field"
+              type="date"
+              required
+              value={form.date_evenement}
+              onChange={(event) => updateForm("date_evenement", event.target.value)}
+            />
+          </label>
+
+          <label>
+            Heure
+            <input
+              className="field"
+              type="time"
+              required
+              value={form.heure_evenement}
+              onChange={(event) => updateForm("heure_evenement", event.target.value)}
+            />
+          </label>
+
+          <label>
+            Type
+            <select
+              className="field"
+              value={form.type_evenement}
+              onChange={(event) => updateForm("type_evenement", event.target.value)}
+            >
+              {eventTypes.map((type) => (
+                <option key={type.value} value={type.value}>
+                  {type.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label>
+            Statut
+            <select
+              className="field"
+              value={form.statut_evenement}
+              onChange={(event) => updateForm("statut_evenement", event.target.value)}
+            >
+              {eventStatuses.map((status) => (
+                <option key={status.value} value={status.value}>
+                  {status.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label>
+            Image
+            <input
+              className="field"
+              type="file"
+              accept="image/*"
+              onChange={(event) => setImageFile(event.target.files?.[0] ?? null)}
+            />
+          </label>
+
+          <label>
+            Video
+            <input
+              className="field"
+              type="file"
+              accept="video/*"
+              onChange={(event) => setVideoFile(event.target.files?.[0] ?? null)}
+            />
+          </label>
+        </div>
+
+        {editingId && (form.image || form.video) ? (
+          <div className="mt-4 rounded-lg border border-border bg-muted p-3 text-sm text-muted-foreground">
+            {form.image ? <p>Image actuelle conservee si aucune nouvelle image n&apos;est choisie.</p> : null}
+            {form.video ? <p>Video actuelle conservee si aucune nouvelle video n&apos;est choisie.</p> : null}
+          </div>
+        ) : null}
+
+        <label className="mt-4">
+          Description
+          <textarea
+            className="field"
+            rows={4}
+            value={form.description}
+            onChange={(event) => updateForm("description", event.target.value)}
+          />
+        </label>
+
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Button type="submit" disabled={isSaving}>
+            <CalendarPlus aria-hidden="true" />
+            {isSaving ? "Enregistrement..." : editingId ? "Enregistrer les modifications" : "Creer l'evenement"}
+          </Button>
+          <Button type="button" variant="outline" onClick={closeFormModal}>
+            Annuler
+          </Button>
+        </div>
+      </form>
+    );
   }
 
   return (
     <div className="grid gap-6">
-      <div>
-        <h1 className="font-display text-3xl font-bold">Gestion evenements</h1>
-        <p className="mt-2 text-sm leading-6 text-muted-foreground">
-          Creez, modifiez, annulez, terminez ou supprimez les evenements du programme.
-        </p>
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <h1 className="font-display text-3xl font-bold">Gestion evenements</h1>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">
+            Creez, modifiez, annulez, terminez ou supprimez les evenements du programme.
+          </p>
+        </div>
+        <Button type="button" className="w-fit" onClick={startCreate}>
+          <CalendarPlus aria-hidden="true" />
+          Creer un evenement
+        </Button>
       </div>
 
       {message ? <Alert variant="success">{message}</Alert> : null}
       {error ? <Alert variant="error">{error}</Alert> : null}
 
-      <Card>
-        <CardContent className="p-4">
-          <form onSubmit={handleSubmit}>
-            <div className="flex flex-col gap-2 border-b border-border pb-4 md:flex-row md:items-center md:justify-between">
-              <div>
-                <h2 className="font-display text-2xl font-bold">
-                  {editingId ? "Modifier l'evenement" : "Ajouter un evenement"}
-                </h2>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Les informations servent au suivi administratif des evenements.
-                </p>
-              </div>
-              {editingId ? (
-                <Button type="button" onClick={resetForm} variant="outline">
-                  Annuler
-                </Button>
-              ) : null}
-            </div>
-
-            <div className="mt-4 grid gap-4 md:grid-cols-2">
-              <label>
-                Titre
-                <input
-                  className="field"
-                  required
-                  value={form.titre}
-                  onChange={(event) => updateForm("titre", event.target.value)}
-                />
-              </label>
-
-              <label>
-                Lieu
-                <input
-                  className="field"
-                  value={form.lieu}
-                  onChange={(event) => updateForm("lieu", event.target.value)}
-                />
-              </label>
-
-              <label>
-                Date
-                <input
-                  className="field"
-                  type="date"
-                  required
-                  value={form.date_evenement}
-                  onChange={(event) => updateForm("date_evenement", event.target.value)}
-                />
-              </label>
-
-              <label>
-                Heure
-                <input
-                  className="field"
-                  type="time"
-                  required
-                  value={form.heure_evenement}
-                  onChange={(event) => updateForm("heure_evenement", event.target.value)}
-                />
-              </label>
-
-              <label>
-                Type
-                <select
-                  className="field"
-                  value={form.type_evenement}
-                  onChange={(event) => updateForm("type_evenement", event.target.value)}
-                >
-                  {eventTypes.map((type) => (
-                    <option key={type.value} value={type.value}>
-                      {type.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label>
-                Statut
-                <select
-                  className="field"
-                  value={form.statut_evenement}
-                  onChange={(event) => updateForm("statut_evenement", event.target.value)}
-                >
-                  {eventStatuses.map((status) => (
-                    <option key={status.value} value={status.value}>
-                      {status.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label>
-                Image
-                <input
-                  className="field"
-                  type="file"
-                  accept="image/*"
-                  onChange={(event) => setImageFile(event.target.files?.[0] ?? null)}
-                />
-              </label>
-
-              <label>
-                Video
-                <input
-                  className="field"
-                  type="file"
-                  accept="video/*"
-                  onChange={(event) => setVideoFile(event.target.files?.[0] ?? null)}
-                />
-              </label>
-            </div>
-
-            {editingId && (form.image || form.video) ? (
-              <div className="mt-4 rounded-xl border border-border bg-muted p-4 text-sm text-muted-foreground">
-                {form.image ? <p>Image actuelle conservee si aucune nouvelle image n&apos;est choisie.</p> : null}
-                {form.video ? <p>Video actuelle conservee si aucune nouvelle video n&apos;est choisie.</p> : null}
-              </div>
-            ) : null}
-
-            <label className="mt-4">
-              Description
-              <textarea
-                className="field"
-                rows={4}
-                value={form.description}
-                onChange={(event) => updateForm("description", event.target.value)}
-              />
-            </label>
-
-            <Button type="submit" disabled={isSaving} className="mt-4">
-              {isSaving ? "Enregistrement..." : editingId ? "Enregistrer les modifications" : "Creer l'evenement"}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+      <Modal
+        open={isFormOpen}
+        title={editingId ? "Modifier l'evenement" : "Creer un evenement"}
+        description="Renseignez les informations publiees et le statut administratif."
+        onClose={closeFormModal}
+      >
+        {renderEventForm()}
+      </Modal>
 
       <Card className="overflow-hidden">
-        <div className="border-b border-border bg-muted px-4 py-3 text-sm font-medium">
-          {evenements.length} evenement{evenements.length > 1 ? "s" : ""}
+        <div className="flex flex-col gap-3 border-b border-border bg-muted/50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold text-foreground">Liste des evenements</p>
+            <p className="text-xs text-muted-foreground">
+              {evenements.length} evenement{evenements.length > 1 ? "s" : ""}
+            </p>
+          </div>
+          <Button type="button" onClick={() => void reloadEvenements()} variant="outline" size="sm" className="w-fit">
+            <RefreshCcw aria-hidden="true" />
+            Rafraichir
+          </Button>
         </div>
 
         {isLoading ? <div className="p-4"><Skeleton className="h-48" /></div> : null}
@@ -389,42 +420,54 @@ export function AdminEvenements() {
         {!isLoading && evenements.length > 0 ? (
           <div className="divide-y divide-border">
             {evenements.map((evenement) => (
-              <article key={evenement.id} className="grid gap-4 px-4 py-4 lg:grid-cols-[1fr_auto]">
-                <div>
+              <article key={evenement.id} className="grid gap-3 px-4 py-3 md:grid-cols-[76px_1fr] xl:grid-cols-[76px_1fr_auto]">
+                <div className="relative h-14 w-full overflow-hidden rounded-lg border border-border bg-muted md:w-[76px]">
+                  {evenement.image ? (
+                    <Image
+                      src={evenement.image}
+                      alt={`Image de ${evenement.titre}`}
+                      fill
+                      unoptimized
+                      sizes="76px"
+                      className="object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full items-center justify-center text-muted-foreground">
+                      {evenement.video ? <Film className="size-5" aria-hidden="true" /> : <CalendarDays className="size-5" aria-hidden="true" />}
+                    </div>
+                  )}
+                </div>
+
+                <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="font-semibold text-foreground">{evenement.titre}</h2>
+                    <h2 className="truncate text-sm font-semibold text-foreground sm:text-base">{evenement.titre}</h2>
                     <Badge variant={evenement.statut_evenement === "PLANIFIE" ? "success" : "outline"}>
                       {evenement.statut_evenement}
                     </Badge>
                     <Badge variant="bronze">{evenement.type_evenement}</Badge>
                   </div>
-                  <p className="mt-2 text-sm text-muted-foreground">{formatDateTime(evenement)}</p>
-                  <p className="mt-1 text-sm text-muted-foreground">{evenement.lieu || "Lieu non renseigne"}</p>
-                  <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                    <span className="inline-flex items-center gap-1">
+                      <CalendarDays className="size-3.5" aria-hidden="true" />
+                      {formatDateTime(evenement)}
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                      <MapPin className="size-3.5" aria-hidden="true" />
+                      {evenement.lieu || "Lieu non renseigne"}
+                    </span>
+                    {evenement.video ? (
+                      <span className="inline-flex items-center gap-1">
+                        <Film className="size-3.5" aria-hidden="true" />
+                        Video
+                      </span>
+                    ) : null}
+                  </div>
+                  <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted-foreground">
                     {evenement.description || "Aucune description."}
                   </p>
-                  {evenement.image ? (
-                    <div className="relative mt-4 aspect-video w-full max-w-xl overflow-hidden rounded-xl border border-border">
-                      <Image
-                        src={evenement.image}
-                        alt={`Image de ${evenement.titre}`}
-                        fill
-                        unoptimized
-                        sizes="(max-width: 768px) 100vw, 640px"
-                        className="object-cover"
-                      />
-                    </div>
-                  ) : null}
-                  {evenement.video ? (
-                    <video
-                      src={evenement.video}
-                      controls
-                      className="mt-4 aspect-video w-full max-w-xl rounded-xl border border-border bg-black"
-                    />
-                  ) : null}
                 </div>
 
-                <div className="flex flex-wrap gap-2 lg:justify-end">
+                <div className="flex flex-wrap items-start gap-2 xl:justify-end">
                   <Button
                     type="button"
                     onClick={() => startEdit(evenement)}
@@ -478,11 +521,6 @@ export function AdminEvenements() {
           </div>
         ) : null}
       </Card>
-
-      <Button type="button" onClick={() => void reloadEvenements()} variant="outline" className="w-fit">
-        <RefreshCcw aria-hidden="true" />
-        Rafraichir
-      </Button>
     </div>
   );
 }

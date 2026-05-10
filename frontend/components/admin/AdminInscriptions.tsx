@@ -87,7 +87,7 @@ export function AdminInscriptions() {
     try {
       if (action === "valider") {
         await validerInscription(id);
-        setMessage("Inscription validee. Si c'est un mentore, le jumelage actif a ete cree automatiquement.");
+        setMessage("Inscription validee. Si une periode active existe, l'affectation mentorale a ete creee.");
       } else {
         await refuserInscription(id);
         setMessage("Inscription refusee.");
@@ -105,7 +105,7 @@ export function AdminInscriptions() {
       <div>
         <h1 className="font-display text-3xl font-bold">Gestion inscriptions</h1>
         <p className="mt-2 text-sm leading-6 text-muted-foreground">
-          Validez les inscriptions. La validation d&apos;un mentore avec mentor choisi cree automatiquement le jumelage.
+          Validez les inscriptions. Une periode active permet de creer l&apos;affectation mentorale au moment de la validation.
         </p>
       </div>
       {message ? <Alert variant="success">{message}</Alert> : null}

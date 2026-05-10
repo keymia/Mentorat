@@ -2,7 +2,9 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { Settings } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 
+import { AdminMentorshipPeriods } from "@/components/admin/mentorship/AdminMentorshipPeriods";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -17,6 +19,8 @@ import {
 
 type Drafts = Record<number, Pick<ParametreSysteme, "valeur" | "description">>;
 
+const mentorshipPeriodKey = "MENTORSHIP_PERIODS";
+
 function buildDrafts(rows: ParametreSysteme[]) {
   return rows.reduce<Drafts>((accumulator, row) => {
     accumulator[row.id] = {
@@ -28,8 +32,11 @@ function buildDrafts(rows: ParametreSysteme[]) {
 }
 
 export function AdminParametres() {
+  const searchParams = useSearchParams();
+  const requestedKey = searchParams.get("param");
   const [rows, setRows] = useState<ParametreSysteme[]>([]);
   const [drafts, setDrafts] = useState<Drafts>({});
+  const [selectedKey, setSelectedKey] = useState("");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -42,6 +49,8 @@ export function AdminParametres() {
         if (isMounted) {
           setRows(parametres);
           setDrafts(buildDrafts(parametres));
+          const availableKeys = new Set([...parametres.map((parametre) => parametre.cle), mentorshipPeriodKey]);
+          setSelectedKey(requestedKey && availableKeys.has(requestedKey) ? requestedKey : mentorshipPeriodKey);
           setError("");
         }
       })
@@ -58,7 +67,7 @@ export function AdminParametres() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [requestedKey]);
 
   function updateDraft(id: number, field: "valeur" | "description", value: string) {
     setDrafts((currentDrafts) => ({
@@ -94,12 +103,23 @@ export function AdminParametres() {
     }
   }
 
+  const selectedParametre = rows.find((row) => row.cle === selectedKey);
+  const isMentorshipPeriodSelected = selectedKey === mentorshipPeriodKey;
+  const pageTitle = isMentorshipPeriodSelected
+    ? "Periode de mentorat"
+    : selectedParametre
+      ? `Parametre ${selectedParametre.cle}`
+      : "Parametres systeme";
+  const pageDescription = isMentorshipPeriodSelected
+    ? "Creez ou modifiez les periodes utilisees pour les affectations, les seances et les suivis."
+    : "Ajustez la valeur et la description du parametre selectionne.";
+
   return (
     <div className="grid gap-5">
       <div>
-        <h1 className="font-display text-3xl font-bold">Gestion parametres</h1>
+        <h1 className="font-display text-3xl font-bold">{pageTitle}</h1>
         <p className="mt-2 text-sm leading-6 text-muted-foreground">
-          Ajustez les valeurs systeme utilisees par les regles de mentorat.
+          {pageDescription}
         </p>
       </div>
 
@@ -109,46 +129,53 @@ export function AdminParametres() {
 
       {!isLoading && !error ? (
         <div className="grid gap-4">
-          {rows.length === 0 ? (
-            <EmptyState icon={Settings} title="Aucun parametre systeme pour le moment." />
-          ) : (
-            rows.map((row) => (
-              <Card key={row.id}>
-                <CardContent className="p-4">
-                  <form onSubmit={(event) => void handleSubmit(event, row)}>
-                    <div className="grid gap-4 lg:grid-cols-[1fr_180px]">
-                      <div>
-                        <p className="font-mono text-sm font-semibold text-foreground">{row.cle}</p>
-                        <label className="mt-4">
-                          Valeur
-                          <input
-                            className="field"
-                            value={drafts[row.id]?.valeur ?? ""}
-                            onChange={(event) => updateDraft(row.id, "valeur", event.target.value)}
-                          />
-                        </label>
-                        <label className="mt-4">
-                          Description
-                          <textarea
-                            className="field"
-                            rows={3}
-                            value={drafts[row.id]?.description ?? ""}
-                            onChange={(event) => updateDraft(row.id, "description", event.target.value)}
-                          />
-                        </label>
-                      </div>
-                      <div className="flex items-start lg:justify-end">
-                        <Button type="submit" disabled={savingId === row.id}>
-                          {savingId === row.id ? "Enregistrement..." : "Enregistrer"}
-                        </Button>
-                      </div>
+          {selectedParametre && !isMentorshipPeriodSelected ? (
+            <Card>
+              <CardContent className="p-4">
+                <form onSubmit={(event) => void handleSubmit(event, selectedParametre)}>
+                  <div className="grid gap-4 lg:grid-cols-[1fr_180px]">
+                    <div>
+                      <label>
+                        Valeur
+                        <input
+                          className="field"
+                          value={drafts[selectedParametre.id]?.valeur ?? ""}
+                          onChange={(event) => updateDraft(selectedParametre.id, "valeur", event.target.value)}
+                        />
+                      </label>
+                      <label className="mt-4">
+                        Description
+                        <textarea
+                          className="field"
+                          rows={3}
+                          value={drafts[selectedParametre.id]?.description ?? ""}
+                          onChange={(event) => updateDraft(selectedParametre.id, "description", event.target.value)}
+                        />
+                      </label>
                     </div>
-                  </form>
-                </CardContent>
-              </Card>
-            ))
-          )}
+                    <div className="flex items-start lg:justify-end">
+                      <Button type="submit" disabled={savingId === selectedParametre.id}>
+                        {savingId === selectedParametre.id ? "Enregistrement..." : "Enregistrer"}
+                      </Button>
+                    </div>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          ) : null}
+
+          {rows.length === 0 && selectedKey !== mentorshipPeriodKey ? (
+            <EmptyState icon={Settings} title="Aucun parametre systeme pour le moment." />
+          ) : null}
         </div>
+      ) : null}
+
+      {isMentorshipPeriodSelected ? (
+        <AdminMentorshipPeriods
+          title="Periode de mentorat"
+          description="Creez ou modifiez les periodes utilisees pour les affectations, les seances et les suivis."
+          showHeader={false}
+        />
       ) : null}
     </div>
   );

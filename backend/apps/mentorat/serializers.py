@@ -7,7 +7,11 @@ from apps.mentorat.models import (
     MentorAvailability,
     MentorAvailabilityException,
     MentorProfile,
+    MentoreeProgress,
     Mentorat,
+    MentorshipAssignment,
+    MentorshipPeriod,
+    MentorshipSession,
     SessionBooking,
 )
 from apps.mentorat.services import generate_available_slots
@@ -238,3 +242,221 @@ class AvailableSlotsRequestSerializer(AvailableSlotQuerySerializer):
             ),
             pk=value,
         ).id
+
+
+def _raise_drf_validation(exc: DjangoValidationError):
+    raise serializers.ValidationError(exc.message_dict if hasattr(exc, "message_dict") else exc.messages)
+
+
+class CleanModelSerializer(serializers.ModelSerializer):
+    def create(self, validated_data):
+        try:
+            return super().create(validated_data)
+        except DjangoValidationError as exc:
+            _raise_drf_validation(exc)
+
+    def update(self, instance, validated_data):
+        try:
+            return super().update(instance, validated_data)
+        except DjangoValidationError as exc:
+            _raise_drf_validation(exc)
+
+
+class MentorshipPeriodSerializer(CleanModelSerializer):
+    assignments_count = serializers.IntegerField(read_only=True)
+    sessions_count = serializers.IntegerField(read_only=True)
+    completed_sessions_count = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = MentorshipPeriod
+        fields = [
+            "id",
+            "title",
+            "description",
+            "start_date",
+            "end_date",
+            "required_sessions",
+            "status",
+            "assignments_count",
+            "sessions_count",
+            "completed_sessions_count",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["created_at", "updated_at"]
+
+    def validate(self, attrs):
+        instance = MentorshipPeriod(
+            title=attrs.get("title", getattr(self.instance, "title", "")),
+            description=attrs.get("description", getattr(self.instance, "description", "")),
+            start_date=attrs.get("start_date", getattr(self.instance, "start_date", None)),
+            end_date=attrs.get("end_date", getattr(self.instance, "end_date", None)),
+            required_sessions=attrs.get(
+                "required_sessions",
+                getattr(self.instance, "required_sessions", None),
+            ),
+            status=attrs.get("status", getattr(self.instance, "status", MentorshipPeriod.Status.DRAFT)),
+        )
+        if self.instance:
+            instance.pk = self.instance.pk
+        try:
+            instance.clean()
+        except DjangoValidationError as exc:
+            _raise_drf_validation(exc)
+        return attrs
+
+
+class MentorshipAssignmentSerializer(CleanModelSerializer):
+    mentor_detail = UtilisateurLiteSerializer(source="mentor", read_only=True)
+    mentoree_detail = UtilisateurLiteSerializer(source="mentoree", read_only=True)
+    period_detail = MentorshipPeriodSerializer(source="period", read_only=True)
+    required_sessions = serializers.IntegerField(source="period.required_sessions", read_only=True)
+    scheduled_sessions_count = serializers.SerializerMethodField()
+    completed_sessions_count = serializers.SerializerMethodField()
+    remaining_sessions_count = serializers.SerializerMethodField()
+    missing_sessions_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = MentorshipAssignment
+        fields = [
+            "id",
+            "mentor",
+            "mentor_detail",
+            "mentoree",
+            "mentoree_detail",
+            "period",
+            "period_detail",
+            "required_sessions",
+            "status",
+            "admin_notes",
+            "scheduled_sessions_count",
+            "completed_sessions_count",
+            "remaining_sessions_count",
+            "missing_sessions_count",
+            "assigned_at",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["assigned_at", "created_at", "updated_at"]
+
+    def get_scheduled_sessions_count(self, obj: MentorshipAssignment) -> int:
+        return obj.sessions.count()
+
+    def get_completed_sessions_count(self, obj: MentorshipAssignment) -> int:
+        return obj.sessions.filter(status=MentorshipSession.Status.COMPLETED).count()
+
+    def get_remaining_sessions_count(self, obj: MentorshipAssignment) -> int:
+        return max(obj.period.required_sessions - self.get_completed_sessions_count(obj), 0)
+
+    def get_missing_sessions_count(self, obj: MentorshipAssignment) -> int:
+        return max(obj.period.required_sessions - self.get_scheduled_sessions_count(obj), 0)
+
+    def validate(self, attrs):
+        instance = MentorshipAssignment(
+            mentor=attrs.get("mentor", getattr(self.instance, "mentor", None)),
+            mentoree=attrs.get("mentoree", getattr(self.instance, "mentoree", None)),
+            period=attrs.get("period", getattr(self.instance, "period", None)),
+            status=attrs.get("status", getattr(self.instance, "status", MentorshipAssignment.Status.ACTIVE)),
+            admin_notes=attrs.get("admin_notes", getattr(self.instance, "admin_notes", "")),
+        )
+        if self.instance:
+            instance.pk = self.instance.pk
+            instance.assigned_at = self.instance.assigned_at
+        try:
+            instance.clean()
+        except DjangoValidationError as exc:
+            _raise_drf_validation(exc)
+        return attrs
+
+
+class MentorshipSessionSerializer(CleanModelSerializer):
+    mentor_detail = UtilisateurLiteSerializer(source="assignment.mentor", read_only=True)
+    mentoree_detail = UtilisateurLiteSerializer(source="assignment.mentoree", read_only=True)
+    period_detail = MentorshipPeriodSerializer(source="assignment.period", read_only=True)
+
+    class Meta:
+        model = MentorshipSession
+        fields = [
+            "id",
+            "assignment",
+            "mentor_detail",
+            "mentoree_detail",
+            "period_detail",
+            "session_number",
+            "scheduled_date",
+            "start_time",
+            "end_time",
+            "status",
+            "summary",
+            "mentor_comment",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["created_at", "updated_at"]
+
+    def validate(self, attrs):
+        instance = MentorshipSession(
+            assignment=attrs.get("assignment", getattr(self.instance, "assignment", None)),
+            session_number=attrs.get("session_number", getattr(self.instance, "session_number", None)),
+            scheduled_date=attrs.get("scheduled_date", getattr(self.instance, "scheduled_date", None)),
+            start_time=attrs.get("start_time", getattr(self.instance, "start_time", None)),
+            end_time=attrs.get("end_time", getattr(self.instance, "end_time", None)),
+            status=attrs.get("status", getattr(self.instance, "status", MentorshipSession.Status.SCHEDULED)),
+            summary=attrs.get("summary", getattr(self.instance, "summary", "")),
+            mentor_comment=attrs.get("mentor_comment", getattr(self.instance, "mentor_comment", "")),
+        )
+        if self.instance:
+            instance.pk = self.instance.pk
+        try:
+            instance.clean()
+        except DjangoValidationError as exc:
+            _raise_drf_validation(exc)
+        return attrs
+
+
+class MentoreeProgressSerializer(CleanModelSerializer):
+    mentor_detail = UtilisateurLiteSerializer(source="assignment.mentor", read_only=True)
+    mentoree_detail = UtilisateurLiteSerializer(source="assignment.mentoree", read_only=True)
+    period_detail = MentorshipPeriodSerializer(source="assignment.period", read_only=True)
+
+    class Meta:
+        model = MentoreeProgress
+        fields = [
+            "id",
+            "assignment",
+            "mentor_detail",
+            "mentoree_detail",
+            "period_detail",
+            "progress_status",
+            "progress_percentage",
+            "difficulties",
+            "achievements",
+            "recommendations",
+            "mentor_opinion",
+            "updated_at",
+        ]
+        read_only_fields = ["updated_at"]
+
+    def validate(self, attrs):
+        instance = MentoreeProgress(
+            assignment=attrs.get("assignment", getattr(self.instance, "assignment", None)),
+            progress_status=attrs.get(
+                "progress_status",
+                getattr(self.instance, "progress_status", MentoreeProgress.ProgressStatus.AVERAGE),
+            ),
+            progress_percentage=attrs.get(
+                "progress_percentage",
+                getattr(self.instance, "progress_percentage", None),
+            ),
+            difficulties=attrs.get("difficulties", getattr(self.instance, "difficulties", "")),
+            achievements=attrs.get("achievements", getattr(self.instance, "achievements", "")),
+            recommendations=attrs.get("recommendations", getattr(self.instance, "recommendations", "")),
+            mentor_opinion=attrs.get("mentor_opinion", getattr(self.instance, "mentor_opinion", "")),
+        )
+        if self.instance:
+            instance.pk = self.instance.pk
+        try:
+            instance.clean()
+        except DjangoValidationError as exc:
+            _raise_drf_validation(exc)
+        return attrs

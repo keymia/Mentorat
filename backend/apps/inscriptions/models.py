@@ -32,6 +32,13 @@ class Inscription(models.Model):
         null=True,
         blank=True,
     )
+    mentorship_period = models.ForeignKey(
+        "mentorat.MentorshipPeriod",
+        on_delete=models.SET_NULL,
+        related_name="inscriptions",
+        null=True,
+        blank=True,
+    )
 
     class Meta:
         ordering = ["-date_inscription"]

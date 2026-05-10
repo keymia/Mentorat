@@ -3,9 +3,11 @@
 import { FormEvent, useEffect, useState } from "react";
 
 import {
+  MentorshipPeriod,
   NiveauAcademique,
   createMentorInscription,
   formatApiError,
+  getAvailableMentorshipPeriods,
   getNiveaux,
 } from "@/lib/api";
 import { Alert } from "@/components/ui/alert";
@@ -22,20 +24,22 @@ function textValue(formData: FormData, key: string) {
 
 export function MentorForm() {
   const [niveaux, setNiveaux] = useState<NiveauAcademique[]>([]);
+  const [periods, setPeriods] = useState<MentorshipPeriod[]>([]);
   const [status, setStatus] = useState<FormStatus>({ type: "idle", message: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
-    getNiveaux()
-      .then((niveauxAcademiques) => {
+    Promise.all([getNiveaux(), getAvailableMentorshipPeriods()])
+      .then(([niveauxAcademiques, mentorshipPeriods]) => {
         if (isMounted) {
           setNiveaux(niveauxAcademiques);
+          setPeriods(mentorshipPeriods);
         }
       })
       .catch((error) => {
         if (isMounted) {
-          setStatus({ type: "error", message: `Niveaux indisponibles: ${formatApiError(error)}` });
+          setStatus({ type: "error", message: `Donnees d'inscription indisponibles: ${formatApiError(error)}` });
         }
       });
     return () => {
@@ -57,7 +61,7 @@ export function MentorForm() {
       langue_preferee: textValue(formData, "langue_preferee"),
       region: textValue(formData, "region"),
       niveau_academique: Number(textValue(formData, "niveau_academique")),
-      disponibilite: textValue(formData, "disponibilite"),
+      mentorship_period: Number(textValue(formData, "mentorship_period")),
       objectifs: textValue(formData, "objectifs"),
       capacite_mentorat: Number(textValue(formData, "capacite_mentorat")),
       consentement: formData.get("consentement") === "on",
@@ -121,14 +125,23 @@ export function MentorForm() {
           </select>
         </label>
         <label>
+          Periode de mentorat
+          <select name="mentorship_period" required className="field" defaultValue="">
+            <option value="" disabled>
+              Choisir une periode
+            </option>
+            {periods.map((period) => (
+              <option key={period.id} value={period.id}>
+                {period.title}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
           Capacite de mentorat
           <input name="capacite_mentorat" type="number" min={1} required className="field" />
         </label>
       </div>
-      <label>
-        Disponibilite
-        <textarea name="disponibilite" rows={4} className="field" />
-      </label>
       <label>
         Objectifs
         <textarea name="objectifs" rows={4} className="field" />

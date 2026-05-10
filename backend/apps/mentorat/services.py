@@ -10,6 +10,8 @@ from apps.mentorat.models import (
     MentorAvailability,
     MentorAvailabilityException,
     MentorProfile,
+    MentorshipAssignment,
+    MentorshipPeriod,
     Mentorat,
     SessionBooking,
 )
@@ -20,8 +22,33 @@ from apps.users.models import NiveauAcademique, Utilisateur
 MAX_SLOT_RANGE_DAYS = 120
 
 
-def get_mentors_disponibles_for_niveau(niveau_id):
+def mentor_has_capacity_for_period(
+    mentor: Utilisateur,
+    period: MentorshipPeriod | None = None,
+    mentore: Utilisateur | None = None,
+) -> bool:
+    active_assignments = MentorshipAssignment.objects.filter(
+        mentor=mentor,
+        status=MentorshipAssignment.Status.ACTIVE,
+    )
+    if period:
+        active_assignments = active_assignments.filter(period=period)
+
+    if mentore and active_assignments.filter(mentoree=mentore).exists():
+        return True
+
+    return active_assignments.count() < mentor.capacite_effective()
+
+
+def get_mentors_disponibles_for_niveau(niveau_id, period_id=None):
     niveau = get_object_or_404(NiveauAcademique, pk=niveau_id)
+    period = None
+    if period_id:
+        period = get_object_or_404(
+            MentorshipPeriod,
+            pk=period_id,
+            status__in=[MentorshipPeriod.Status.DRAFT, MentorshipPeriod.Status.ACTIVE],
+        )
     ordre_mentor = niveau.ordre_niveau + 1
     candidats = (
         Utilisateur.objects.select_related("role", "niveau_academique")
@@ -34,10 +61,14 @@ def get_mentors_disponibles_for_niveau(niveau_id):
         )
         .order_by("nom", "prenom")
     )
-    return [mentor for mentor in candidats if mentor.capacite_restante() > 0]
+    return [mentor for mentor in candidats if mentor_has_capacity_for_period(mentor, period)]
 
 
-def validate_mentor_for_mentore_level(mentor: Utilisateur, niveau_mentore: NiveauAcademique):
+def validate_mentor_for_mentore_level(
+    mentor: Utilisateur,
+    niveau_mentore: NiveauAcademique,
+    period: MentorshipPeriod | None = None,
+):
     if not mentor.est_mentor:
         raise serializers.ValidationError({"mentor_choisi": "Le mentor choisi n'a pas un profil mentor."})
     if mentor.statut_compte != Utilisateur.StatutCompte.ACTIF:
@@ -48,7 +79,7 @@ def validate_mentor_for_mentore_level(mentor: Utilisateur, niveau_mentore: Nivea
         raise serializers.ValidationError(
             {"mentor_choisi": "Le mentor choisi doit etre au niveau superieur direct."}
         )
-    if mentor.capacite_restante() <= 0:
+    if not mentor_has_capacity_for_period(mentor, period):
         raise serializers.ValidationError({"mentor_choisi": "Le mentor choisi n'a plus de capacite disponible."})
 
 

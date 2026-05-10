@@ -55,6 +55,9 @@ export function SiteHeader() {
               Admin
             </Link>
           </Button>
+          <Button asChild variant="outline" size="sm">
+            <Link href="/mentor/dashboard">Espace mentor</Link>
+          </Button>
           <Button asChild size="sm">
             <Link href="/inscriptions/mentore">Devenir mentore</Link>
           </Button>
@@ -92,6 +95,11 @@ export function SiteHeader() {
                 <Link href="/admin/login" onClick={() => setIsOpen(false)}>
                   <ShieldCheck aria-hidden="true" />
                   Admin
+                </Link>
+              </Button>
+              <Button asChild>
+                <Link href="/mentor/dashboard" onClick={() => setIsOpen(false)}>
+                  Espace mentor
                 </Link>
               </Button>
               <Button asChild>

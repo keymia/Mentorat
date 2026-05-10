@@ -202,6 +202,268 @@ class SessionBooking(models.Model):
         super().save(*args, **kwargs)
 
 
+class MentorshipPeriod(models.Model):
+    class Status(models.TextChoices):
+        DRAFT = "draft", "Brouillon"
+        ACTIVE = "active", "Active"
+        COMPLETED = "completed", "Terminee"
+        ARCHIVED = "archived", "Archivee"
+
+    title = models.CharField(max_length=180)
+    description = models.TextField(blank=True)
+    start_date = models.DateField()
+    end_date = models.DateField()
+    required_sessions = models.PositiveSmallIntegerField()
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.DRAFT)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-start_date", "title"]
+        indexes = [
+            models.Index(fields=["status", "start_date", "end_date"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.title} ({self.start_date} - {self.end_date})"
+
+    def clean(self):
+        super().clean()
+        if self.start_date and self.end_date and self.start_date >= self.end_date:
+            raise ValidationError({"end_date": "La date de fin doit etre posterieure a la date de debut."})
+        if self.required_sessions is not None and self.required_sessions <= 0:
+            raise ValidationError({"required_sessions": "Le nombre de seances obligatoires doit etre superieur a 0."})
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+
+class MentorshipAssignment(models.Model):
+    class Status(models.TextChoices):
+        ACTIVE = "active", "Active"
+        COMPLETED = "completed", "Terminee"
+        SUSPENDED = "suspended", "Suspendue"
+
+    mentor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="mentorship_assignments_as_mentor",
+    )
+    mentoree = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="mentorship_assignments_as_mentoree",
+    )
+    period = models.ForeignKey(
+        MentorshipPeriod,
+        on_delete=models.PROTECT,
+        related_name="assignments",
+    )
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.ACTIVE)
+    admin_notes = models.TextField(blank=True)
+    assigned_at = models.DateTimeField(default=timezone.now)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-assigned_at"]
+        indexes = [
+            models.Index(fields=["mentor", "period", "status"]),
+            models.Index(fields=["mentoree", "period", "status"]),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["mentoree", "period"],
+                condition=Q(status="active"),
+                name="unique_active_assignment_per_mentoree_period",
+            )
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.mentor} -> {self.mentoree} ({self.period})"
+
+    def clean(self):
+        super().clean()
+        from apps.users.models import Utilisateur
+
+        if self.mentor_id and self.mentoree_id and self.mentor_id == self.mentoree_id:
+            raise ValidationError("Un utilisateur ne peut pas etre son propre mentor.")
+
+        if not self.mentor_id or not self.mentoree_id or not self.period_id:
+            return
+
+        if not self.mentor.est_mentor:
+            raise ValidationError({"mentor": "Le mentor doit avoir le profil MENTOR ou MENTOR_ET_MENTORE."})
+        if self.mentor.statut_compte != Utilisateur.StatutCompte.ACTIF or not self.mentor.is_active:
+            raise ValidationError({"mentor": "Le mentor doit etre actif."})
+        if not self.mentoree.est_mentore:
+            raise ValidationError({"mentoree": "Le mentore doit avoir le profil MENTORE ou MENTOR_ET_MENTORE."})
+        if self.mentoree.statut_compte != Utilisateur.StatutCompte.ACTIF or not self.mentoree.is_active:
+            raise ValidationError({"mentoree": "Le mentore doit etre actif."})
+
+        if not self.mentor.niveau_academique_id or not self.mentoree.niveau_academique_id:
+            raise ValidationError("Le mentor et le mentore doivent avoir un niveau academique.")
+
+        ordre_attendu = self.mentoree.niveau_academique.ordre_niveau + 1
+        if self.mentor.niveau_academique.ordre_niveau != ordre_attendu:
+            raise ValidationError({"mentor": "Le mentor doit appartenir au niveau academique superieur direct."})
+
+        if self.status == self.Status.ACTIVE:
+            existe_deja = (
+                MentorshipAssignment.objects.filter(
+                    mentoree=self.mentoree,
+                    period=self.period,
+                    status=self.Status.ACTIVE,
+                )
+                .exclude(pk=self.pk)
+                .exists()
+            )
+            if existe_deja:
+                raise ValidationError({"mentoree": "Ce mentore a deja une affectation active pour cette periode."})
+
+            active_count = (
+                MentorshipAssignment.objects.filter(
+                    mentor=self.mentor,
+                    period=self.period,
+                    status=self.Status.ACTIVE,
+                )
+                .exclude(pk=self.pk)
+                .count()
+            )
+            if active_count >= self.mentor.capacite_effective():
+                raise ValidationError({"mentor": "Le mentor a atteint sa capacite maximale."})
+
+    def save(self, *args, **kwargs):
+        old_mentor_id = None
+        if self.pk:
+            old_mentor_id = (
+                MentorshipAssignment.objects.filter(pk=self.pk).values_list("mentor_id", flat=True).first()
+            )
+        self.full_clean()
+        super().save(*args, **kwargs)
+        self.actualiser_nombre_mentores(self.mentor_id)
+        if old_mentor_id and old_mentor_id != self.mentor_id:
+            self.actualiser_nombre_mentores(old_mentor_id)
+
+    def delete(self, *args, **kwargs):
+        mentor_id = self.mentor_id
+        result = super().delete(*args, **kwargs)
+        self.actualiser_nombre_mentores(mentor_id)
+        return result
+
+    @classmethod
+    def actualiser_nombre_mentores(cls, mentor_id: int | None):
+        if not mentor_id:
+            return
+        from apps.users.models import Utilisateur
+
+        total = cls.objects.filter(mentor_id=mentor_id, status=cls.Status.ACTIVE).count()
+        Utilisateur.objects.filter(pk=mentor_id).update(nombre_mentores_actuels=total)
+
+
+class MentorshipSession(models.Model):
+    class Status(models.TextChoices):
+        SCHEDULED = "scheduled", "Programmee"
+        COMPLETED = "completed", "Realisee"
+        CANCELLED = "cancelled", "Annulee"
+        POSTPONED = "postponed", "Reportee"
+        ABSENT = "absent", "Absente"
+
+    assignment = models.ForeignKey(
+        MentorshipAssignment,
+        on_delete=models.CASCADE,
+        related_name="sessions",
+    )
+    session_number = models.PositiveSmallIntegerField()
+    scheduled_date = models.DateField()
+    start_time = models.TimeField(null=True, blank=True)
+    end_time = models.TimeField(null=True, blank=True)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.SCHEDULED)
+    summary = models.TextField(blank=True)
+    mentor_comment = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["scheduled_date", "start_time", "session_number"]
+        indexes = [
+            models.Index(fields=["assignment", "status"]),
+            models.Index(fields=["scheduled_date", "status"]),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["assignment", "session_number"],
+                name="unique_session_number_per_assignment",
+            )
+        ]
+
+    def __str__(self) -> str:
+        return f"Seance {self.session_number} - {self.assignment}"
+
+    def clean(self):
+        super().clean()
+        if self.session_number is not None and self.session_number <= 0:
+            raise ValidationError({"session_number": "Le numero de seance doit etre superieur a 0."})
+        if self.start_time and self.end_time and self.start_time >= self.end_time:
+            raise ValidationError({"end_time": "L'heure de fin doit etre posterieure a l'heure de debut."})
+        if not self.assignment_id:
+            return
+        period = self.assignment.period
+        if self.scheduled_date and not (period.start_date <= self.scheduled_date <= period.end_date):
+            raise ValidationError({"scheduled_date": "La seance doit etre planifiee dans la periode de mentorat."})
+        if self.session_number and self.session_number > period.required_sessions:
+            raise ValidationError({"session_number": "Le numero de seance depasse le nombre prevu pour la periode."})
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+
+class MentoreeProgress(models.Model):
+    class ProgressStatus(models.TextChoices):
+        EXCELLENT = "excellent", "Excellent"
+        GOOD = "good", "Bon"
+        AVERAGE = "average", "Moyen"
+        WATCH = "watch", "A surveiller"
+        DIFFICULTY = "difficulty", "En difficulte"
+
+    assignment = models.OneToOneField(
+        MentorshipAssignment,
+        on_delete=models.CASCADE,
+        related_name="progress",
+    )
+    progress_status = models.CharField(
+        max_length=20,
+        choices=ProgressStatus.choices,
+        default=ProgressStatus.AVERAGE,
+    )
+    progress_percentage = models.PositiveSmallIntegerField(null=True, blank=True)
+    difficulties = models.TextField(blank=True)
+    achievements = models.TextField(blank=True)
+    recommendations = models.TextField(blank=True)
+    mentor_opinion = models.TextField(blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["assignment__mentoree__nom", "assignment__mentoree__prenom"]
+
+    def __str__(self) -> str:
+        return f"Suivi - {self.assignment}"
+
+    def clean(self):
+        super().clean()
+        if (
+            self.progress_percentage is not None
+            and not 0 <= self.progress_percentage <= 100
+        ):
+            raise ValidationError({"progress_percentage": "La progression doit etre entre 0 et 100."})
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+
 class Mentorat(models.Model):
     class StatutJumelage(models.TextChoices):
         ACTIF = "ACTIF", "Actif"

@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from apps.inscriptions.models import Inscription
+from apps.mentorat.models import MentorshipPeriod
 from apps.mentorat.services import validate_mentor_for_mentore_level
 from apps.parametres.models import ParametreSysteme
 from apps.users.models import NiveauAcademique, Role, Utilisateur
@@ -10,6 +11,7 @@ from apps.users.serializers import UtilisateurLiteSerializer
 class InscriptionSerializer(serializers.ModelSerializer):
     utilisateur_detail = UtilisateurLiteSerializer(source="utilisateur", read_only=True)
     mentor_choisi_detail = UtilisateurLiteSerializer(source="mentor_choisi", read_only=True)
+    mentorship_period_title = serializers.CharField(source="mentorship_period.title", read_only=True)
 
     class Meta:
         model = Inscription
@@ -23,8 +25,16 @@ class InscriptionSerializer(serializers.ModelSerializer):
             "date_inscription",
             "mentor_choisi",
             "mentor_choisi_detail",
+            "mentorship_period",
+            "mentorship_period_title",
         ]
         read_only_fields = ["date_inscription"]
+
+
+def available_periods_queryset():
+    return MentorshipPeriod.objects.filter(
+        status__in=[MentorshipPeriod.Status.DRAFT, MentorshipPeriod.Status.ACTIVE]
+    )
 
 
 class MentorInscriptionSerializer(serializers.Serializer):
@@ -38,6 +48,7 @@ class MentorInscriptionSerializer(serializers.Serializer):
     disponibilite = serializers.CharField(required=False, allow_blank=True)
     objectifs = serializers.CharField(required=False, allow_blank=True)
     capacite_mentorat = serializers.IntegerField(min_value=1)
+    mentorship_period = serializers.PrimaryKeyRelatedField(queryset=available_periods_queryset())
     consentement = serializers.BooleanField()
 
     def validate(self, attrs):
@@ -63,6 +74,7 @@ class MentorInscriptionSerializer(serializers.Serializer):
 
     def create(self, validated_data):
         consentement = validated_data.pop("consentement")
+        mentorship_period = validated_data.pop("mentorship_period")
         role, _ = Role.objects.get_or_create(
             nom=Role.Nom.MENTOR,
             defaults={"description": "Utilisateur mentor."},
@@ -77,6 +89,7 @@ class MentorInscriptionSerializer(serializers.Serializer):
             utilisateur=utilisateur,
             type_inscription=Inscription.TypeInscription.MENTOR,
             consentement=consentement,
+            mentorship_period=mentorship_period,
         )
 
 
@@ -90,6 +103,7 @@ class MentoreInscriptionSerializer(serializers.Serializer):
     niveau_academique = serializers.PrimaryKeyRelatedField(queryset=NiveauAcademique.objects.all())
     objectifs = serializers.CharField(required=False, allow_blank=True)
     mentor_choisi = serializers.PrimaryKeyRelatedField(queryset=Utilisateur.objects.all())
+    mentorship_period = serializers.PrimaryKeyRelatedField(queryset=available_periods_queryset())
     consentement = serializers.BooleanField()
 
     def validate(self, attrs):
@@ -103,12 +117,13 @@ class MentoreInscriptionSerializer(serializers.Serializer):
                 {"niveau_academique": "Le dernier niveau peut seulement etre mentor."}
             )
         mentor = attrs["mentor_choisi"]
-        validate_mentor_for_mentore_level(mentor, niveau)
+        validate_mentor_for_mentore_level(mentor, niveau, attrs["mentorship_period"])
         return attrs
 
     def create(self, validated_data):
         consentement = validated_data.pop("consentement")
         mentor_choisi = validated_data.pop("mentor_choisi", None)
+        mentorship_period = validated_data.pop("mentorship_period")
         niveau = validated_data["niveau_academique"]
         profil = (
             Utilisateur.ProfilMentorat.MENTORE
@@ -131,4 +146,5 @@ class MentoreInscriptionSerializer(serializers.Serializer):
             type_inscription=Inscription.TypeInscription.MENTORE,
             consentement=consentement,
             mentor_choisi=mentor_choisi,
+            mentorship_period=mentorship_period,
         )

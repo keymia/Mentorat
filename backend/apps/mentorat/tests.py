@@ -1,22 +1,24 @@
-from datetime import datetime, time, timedelta
+from datetime import date, time
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
-from django.utils import timezone
+from rest_framework.test import APITestCase
 
 from apps.mentorat.models import (
-    MentorAvailability,
-    MentorAvailabilityException,
-    MentorProfile,
-    Mentorat,
-    SessionBooking,
+    MentoreeProgress,
+    MentorshipAssignment,
+    MentorshipPeriod,
+    MentorshipSession,
 )
-from apps.mentorat.services import generate_available_slots
 from apps.users.models import NiveauAcademique, Role, Utilisateur
 
 
-class MentorAvailabilityTests(TestCase):
+class MentorshipSetupMixin:
     def setUp(self):
+        self.role_admin, _ = Role.objects.update_or_create(
+            nom=Role.Nom.ADMIN_PRINCIPAL,
+            defaults={"description": "Admin"},
+        )
         self.role_mentor, _ = Role.objects.update_or_create(
             nom=Role.Nom.MENTOR,
             defaults={"description": "Mentor"},
@@ -25,7 +27,7 @@ class MentorAvailabilityTests(TestCase):
             nom=Role.Nom.MENTORE,
             defaults={"description": "Mentore"},
         )
-        self.level_mentore, _ = NiveauAcademique.objects.update_or_create(
+        self.level_mentoree, _ = NiveauAcademique.objects.update_or_create(
             ordre_niveau=1,
             defaults={
                 "nom": "12e annee",
@@ -41,6 +43,17 @@ class MentorAvailabilityTests(TestCase):
                 "est_dernier_niveau": True,
             },
         )
+        self.admin = Utilisateur.objects.create_user(
+            email="admin@example.com",
+            password="Testpass123!",
+            nom="Admin",
+            prenom="Awa",
+            role=self.role_admin,
+            statut_compte=Utilisateur.StatutCompte.ACTIF,
+            is_active=True,
+            is_staff=True,
+            is_superuser=True,
+        )
         self.mentor = Utilisateur.objects.create_user(
             email="mentor@example.com",
             password="Testpass123!",
@@ -53,180 +66,229 @@ class MentorAvailabilityTests(TestCase):
             is_active=True,
             capacite_mentorat=5,
         )
-        self.mentore = Utilisateur.objects.create_user(
-            email="mentore@example.com",
+        self.other_mentor = Utilisateur.objects.create_user(
+            email="other.mentor@example.com",
+            password="Testpass123!",
+            nom="Fall",
+            prenom="Ibra",
+            role=self.role_mentor,
+            profil_mentorat=Utilisateur.ProfilMentorat.MENTOR,
+            niveau_academique=self.level_mentor,
+            statut_compte=Utilisateur.StatutCompte.ACTIF,
+            is_active=True,
+            capacite_mentorat=5,
+        )
+        self.mentoree = Utilisateur.objects.create_user(
+            email="mentoree@example.com",
             password="Testpass123!",
             nom="Barry",
             prenom="Moussa",
             role=self.role_mentore,
             profil_mentorat=Utilisateur.ProfilMentorat.MENTORE,
-            niveau_academique=self.level_mentore,
+            niveau_academique=self.level_mentoree,
             statut_compte=Utilisateur.StatutCompte.ACTIF,
             is_active=True,
         )
-        MentorProfile.objects.create(
-            mentor=self.mentor,
-            max_mentores=5,
-            max_sessions_per_week=5,
-            default_session_duration=MentorProfile.SessionDuration.MIN_60,
+        self.period = MentorshipPeriod.objects.create(
+            title="Session hiver 2026",
+            description="Periode de test",
+            start_date=date(2026, 1, 15),
+            end_date=date(2026, 4, 30),
+            required_sessions=8,
+            status=MentorshipPeriod.Status.ACTIVE,
         )
 
-    def next_weekday(self, weekday: int):
-        today = timezone.localdate()
-        days_until = (weekday - today.weekday()) % 7
-        if days_until == 0:
-            days_until = 7
-        return today + timedelta(days=days_until)
 
-    def make_datetime(self, date_value, hour: int, minute: int = 0):
-        return timezone.make_aware(
-            datetime.combine(date_value, time(hour, minute)),
-            timezone.get_current_timezone(),
+class MentorshipModelTests(MentorshipSetupMixin, TestCase):
+    def test_creation_periode_valide(self):
+        period = MentorshipPeriod.objects.create(
+            title="Session ete 2026",
+            start_date=date(2026, 6, 1),
+            end_date=date(2026, 8, 31),
+            required_sessions=4,
+            status=MentorshipPeriod.Status.DRAFT,
         )
 
-    def add_availability(self, date_value, start_hour=18, end_hour=21):
-        return MentorAvailability.objects.create(
-            mentor=self.mentor,
-            weekday=date_value.weekday(),
-            start_time=time(start_hour, 0),
-            end_time=time(end_hour, 0),
-            is_active=True,
-        )
+        self.assertEqual(period.required_sessions, 4)
+        self.assertEqual(period.status, MentorshipPeriod.Status.DRAFT)
 
-    def test_creation_disponibilite_hebdomadaire(self):
-        slot_day = self.next_weekday(0)
-
-        availability = self.add_availability(slot_day)
-
-        self.assertEqual(availability.mentor, self.mentor)
-        self.assertEqual(availability.weekday, slot_day.weekday())
-        self.assertTrue(availability.is_active)
-
-    def test_refus_disponibilite_qui_se_chevauche(self):
-        slot_day = self.next_weekday(0)
-        self.add_availability(slot_day, 18, 21)
-
+    def test_refus_periode_avec_date_debut_apres_date_fin(self):
         with self.assertRaises(ValidationError):
-            MentorAvailability.objects.create(
-                mentor=self.mentor,
-                weekday=slot_day.weekday(),
-                start_time=time(20, 0),
-                end_time=time(22, 0),
-                is_active=True,
+            MentorshipPeriod.objects.create(
+                title="Periode invalide",
+                start_date=date(2026, 5, 1),
+                end_date=date(2026, 4, 1),
+                required_sessions=3,
             )
 
-    def test_generation_des_creneaux_disponibles(self):
-        slot_day = self.next_weekday(0)
-        self.add_availability(slot_day, 18, 20)
-
-        slots = generate_available_slots(self.mentor, slot_day, slot_day)
-
-        self.assertEqual(len(slots), 2)
-        self.assertEqual(slots[0]["starts_at"], self.make_datetime(slot_day, 18))
-        self.assertEqual(slots[1]["starts_at"], self.make_datetime(slot_day, 19))
-
-    def test_generation_exclut_les_exceptions(self):
-        slot_day = self.next_weekday(0)
-        self.add_availability(slot_day, 18, 20)
-        MentorAvailabilityException.objects.create(
+    def test_creation_affectation_mentor_mentore(self):
+        assignment = MentorshipAssignment.objects.create(
             mentor=self.mentor,
-            start_date=slot_day,
-            end_date=slot_day,
-            reason="Examens",
+            mentoree=self.mentoree,
+            period=self.period,
         )
 
-        slots = generate_available_slots(self.mentor, slot_day, slot_day)
+        self.assertEqual(assignment.status, MentorshipAssignment.Status.ACTIVE)
+        self.mentor.refresh_from_db()
+        self.assertEqual(self.mentor.nombre_mentores_actuels, 1)
 
-        self.assertEqual(slots, [])
-
-    def test_refus_double_reservation(self):
-        slot_day = self.next_weekday(0)
-        self.add_availability(slot_day, 18, 21)
-        SessionBooking.objects.create(
+    def test_refus_double_affectation_active_meme_periode(self):
+        MentorshipAssignment.objects.create(
             mentor=self.mentor,
-            mentore=self.mentore,
-            starts_at=self.make_datetime(slot_day, 18),
-            ends_at=self.make_datetime(slot_day, 19),
-            status=SessionBooking.Status.CONFIRMED,
+            mentoree=self.mentoree,
+            period=self.period,
         )
 
         with self.assertRaises(ValidationError):
-            SessionBooking.objects.create(
-                mentor=self.mentor,
-                mentore=self.mentore,
-                starts_at=self.make_datetime(slot_day, 18, 30),
-                ends_at=self.make_datetime(slot_day, 19, 30),
-                status=SessionBooking.Status.PENDING,
+            MentorshipAssignment.objects.create(
+                mentor=self.other_mentor,
+                mentoree=self.mentoree,
+                period=self.period,
             )
 
-    def test_refus_si_capacite_maximale_de_mentores_est_atteinte(self):
-        MentorProfile.objects.filter(mentor=self.mentor).update(max_mentores=1)
-        autre_mentore = Utilisateur.objects.create_user(
-            email="autre.mentore@example.com",
-            password="Testpass123!",
-            nom="Diallo",
-            prenom="Fatou",
-            role=self.role_mentore,
-            profil_mentorat=Utilisateur.ProfilMentorat.MENTORE,
-            niveau_academique=self.level_mentore,
-            statut_compte=Utilisateur.StatutCompte.ACTIF,
-            is_active=True,
-        )
-        Mentorat.objects.create(
+    def test_creation_seance_dans_la_periode(self):
+        assignment = MentorshipAssignment.objects.create(
             mentor=self.mentor,
-            mentore=autre_mentore,
-            statut_jumelage=Mentorat.StatutJumelage.ACTIF,
-        )
-        slot_day = self.next_weekday(0)
-        self.add_availability(slot_day, 18, 21)
-
-        with self.assertRaises(ValidationError):
-            SessionBooking.objects.create(
-                mentor=self.mentor,
-                mentore=self.mentore,
-                starts_at=self.make_datetime(slot_day, 18),
-                ends_at=self.make_datetime(slot_day, 19),
-                status=SessionBooking.Status.PENDING,
-            )
-
-    def test_mentore_deja_jumele_peut_reserver_si_capacite_est_atteinte(self):
-        MentorProfile.objects.filter(mentor=self.mentor).update(max_mentores=1)
-        Mentorat.objects.create(
-            mentor=self.mentor,
-            mentore=self.mentore,
-            statut_jumelage=Mentorat.StatutJumelage.ACTIF,
-        )
-        slot_day = self.next_weekday(0)
-        self.add_availability(slot_day, 18, 21)
-
-        booking = SessionBooking.objects.create(
-            mentor=self.mentor,
-            mentore=self.mentore,
-            starts_at=self.make_datetime(slot_day, 18),
-            ends_at=self.make_datetime(slot_day, 19),
-            status=SessionBooking.Status.PENDING,
+            mentoree=self.mentoree,
+            period=self.period,
         )
 
-        self.assertEqual(booking.mentor, self.mentor)
-        self.assertEqual(booking.mentore, self.mentore)
+        session = MentorshipSession.objects.create(
+            assignment=assignment,
+            session_number=1,
+            scheduled_date=date(2026, 2, 10),
+            start_time=time(17, 0),
+            end_time=time(18, 0),
+        )
 
-    def test_refus_si_limite_de_seances_hebdomadaires_est_atteinte(self):
-        MentorProfile.objects.filter(mentor=self.mentor).update(max_sessions_per_week=1)
-        slot_day = self.next_weekday(0)
-        self.add_availability(slot_day, 18, 22)
-        SessionBooking.objects.create(
+        self.assertEqual(session.status, MentorshipSession.Status.SCHEDULED)
+
+    def test_refus_seance_hors_periode(self):
+        assignment = MentorshipAssignment.objects.create(
             mentor=self.mentor,
-            mentore=self.mentore,
-            starts_at=self.make_datetime(slot_day, 18),
-            ends_at=self.make_datetime(slot_day, 19),
-            status=SessionBooking.Status.CONFIRMED,
+            mentoree=self.mentoree,
+            period=self.period,
         )
 
         with self.assertRaises(ValidationError):
-            SessionBooking.objects.create(
-                mentor=self.mentor,
-                mentore=self.mentore,
-                starts_at=self.make_datetime(slot_day, 19),
-                ends_at=self.make_datetime(slot_day, 20),
-                status=SessionBooking.Status.PENDING,
+            MentorshipSession.objects.create(
+                assignment=assignment,
+                session_number=1,
+                scheduled_date=date(2026, 5, 10),
             )
+
+    def test_refus_numero_seance_superieur_nombre_prevu(self):
+        assignment = MentorshipAssignment.objects.create(
+            mentor=self.mentor,
+            mentoree=self.mentoree,
+            period=self.period,
+        )
+
+        with self.assertRaises(ValidationError):
+            MentorshipSession.objects.create(
+                assignment=assignment,
+                session_number=9,
+                scheduled_date=date(2026, 2, 10),
+            )
+
+
+class MentorshipApiTests(MentorshipSetupMixin, APITestCase):
+    def test_mise_a_jour_suivi_mentore_par_mentor(self):
+        assignment = MentorshipAssignment.objects.create(
+            mentor=self.mentor,
+            mentoree=self.mentoree,
+            period=self.period,
+        )
+        self.client.force_authenticate(self.mentor)
+
+        response = self.client.patch(
+            f"/api/mentor/assignments/{assignment.id}/progress/",
+            {
+                "progress_status": MentoreeProgress.ProgressStatus.GOOD,
+                "progress_percentage": 70,
+                "achievements": "Bonne participation.",
+                "mentor_opinion": "Progression solide.",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        progress = MentoreeProgress.objects.get(assignment=assignment)
+        self.assertEqual(progress.progress_percentage, 70)
+        self.assertEqual(progress.progress_status, MentoreeProgress.ProgressStatus.GOOD)
+
+    def test_permissions_admin_et_mentor(self):
+        assignment = MentorshipAssignment.objects.create(
+            mentor=self.mentor,
+            mentoree=self.mentoree,
+            period=self.period,
+        )
+        session = MentorshipSession.objects.create(
+            assignment=assignment,
+            session_number=1,
+            scheduled_date=date(2026, 2, 10),
+        )
+
+        response = self.client.get("/api/mentor/dashboard/")
+        self.assertIn(response.status_code, [401, 403])
+
+        self.client.force_authenticate(self.admin)
+        response = self.client.get("/api/mentorship-periods/")
+        self.assertEqual(response.status_code, 200)
+
+        self.client.force_authenticate(self.mentor)
+        response = self.client.get("/api/mentorship-periods/")
+        self.assertEqual(response.status_code, 403)
+
+        response = self.client.patch(
+            f"/api/mentor/sessions/{session.id}/complete/",
+            {"summary": "Seance realisee."},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200)
+        session.refresh_from_db()
+        self.assertEqual(session.status, MentorshipSession.Status.COMPLETED)
+
+        self.client.force_authenticate(self.other_mentor)
+        response = self.client.patch(
+            f"/api/mentor/sessions/{session.id}/",
+            {"summary": "Acces non autorise."},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 404)
+
+    def test_ancien_endpoint_disponibilites_est_desactive(self):
+        response = self.client.get(f"/api/mentors/{self.mentor.id}/available-slots/")
+
+        self.assertEqual(response.status_code, 410)
+
+    def test_mentor_peut_reconduire_affectation_sur_nouvelle_periode(self):
+        assignment = MentorshipAssignment.objects.create(
+            mentor=self.mentor,
+            mentoree=self.mentoree,
+            period=self.period,
+        )
+        next_period = MentorshipPeriod.objects.create(
+            title="Session 2027",
+            start_date=date(2027, 1, 15),
+            end_date=date(2027, 4, 30),
+            required_sessions=6,
+            status=MentorshipPeriod.Status.DRAFT,
+        )
+        self.client.force_authenticate(self.mentor)
+
+        response = self.client.post(
+            f"/api/mentor/assignments/{assignment.id}/continue/",
+            {"period": next_period.id},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 201)
+        self.assertTrue(
+            MentorshipAssignment.objects.filter(
+                mentor=self.mentor,
+                mentoree=self.mentoree,
+                period=next_period,
+                status=MentorshipAssignment.Status.ACTIVE,
+            ).exists()
+        )

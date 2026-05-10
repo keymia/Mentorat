@@ -1,4 +1,4 @@
-import { BookingPlanner } from "@/components/mentore/BookingPlanner";
+import { Alert } from "@/components/ui/alert";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { SiteHeader } from "@/components/layout/SiteHeader";
@@ -9,11 +9,14 @@ export default function MentoreBookingsPage() {
       <SiteHeader />
       <PageHeader
         eyebrow="Espace mentore"
-        title="Reserver une seance"
-        description="Choisissez un mentor compatible avec votre niveau et reservez un creneau disponible."
+        title="Reservations automatiques desactivees"
+        description="Les rencontres sont maintenant programmees par le mentor dans le cadre de la periode active."
       />
-      <main className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
-        <BookingPlanner />
+      <main className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
+        <Alert variant="info">
+          Votre mentor vous communiquera les dates des seances. Les commentaires et suivis sont geres par le mentor et visibles par
+          l&apos;administration.
+        </Alert>
       </main>
       <SiteFooter />
     </div>

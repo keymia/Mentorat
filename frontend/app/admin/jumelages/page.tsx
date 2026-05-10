@@ -4,7 +4,7 @@ import { AdminShell } from "@/components/admin/AdminShell";
 export default function AdminJumelagesPage() {
   return (
     <AdminShell>
-      <AdminResourcePage title="Gestion jumelages" description="Mentorats actifs, termines ou suspendus." endpoint="/mentorat/" />
+      <AdminResourcePage title="Gestion jumelages" description="Affectations mentorales par periode." endpoint="/mentorship-assignments/" />
     </AdminShell>
   );
 }
