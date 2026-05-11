@@ -1517,3 +1517,854 @@ https://react.dev/link/hydration-mismatch
     at performWorkOnRootViaSchedulerTask (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10255:9)
     at MessagePort.performWorkUntilDeadline (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:2647:64) (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:3439:25)
 ⚠ Fast Refresh had to perform a full reload when ./node_modules/next/dist/client/image-component.js changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+[browser] You have Reduced Motion enabled on your device. Animations may not appear as expected.. For more information and steps for solving, visit https://motion.dev/troubleshooting/reduced-motion-disabled (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_115brz8._.js:2477:13)
+[browser] A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <LoadingBoundary name="/" loading={null}>
+      <HTTPAccessFallbackBoundary notFound={{...}} forbidden={undefined} unauthorized={undefined}>
+        <HTTPAccessFallbackErrorBoundary pathname="/" notFound={{...}} forbidden={undefined} unauthorized={undefined} ...>
+          <RedirectBoundary>
+            <RedirectErrorBoundary router={{...}}>
+              <InnerLayoutRouter url="/" tree={[...]} params={{}} cacheNode={{rsc:{...}, ...}} segmentPath={[...]} ...>
+                <SegmentViewNode type="page" pagePath="page.tsx">
+                  <SegmentTrieNode>
+                  <Home>
+                    <div className="min-h-scre...">
+                      <SiteHeader>
+                      <main>
+                        <section className="premium-gr...">
+                          <div>
+                          <div className="relative m...">
+                            <Reveal>
+                              <motion.div initial={false} whileInView={undefined} viewport={{once:true, ...}} ...>
+                                <div
+                                  className=""
+                                  style={{
+-                                   opacity: "0"
+-                                   transform: "translateY(18px)"
+                                  }}
+                                  ref={function useMotionRef.useCallback}
+                                >
+                            <Reveal delay={0.12} className="relative">
+                              <motion.div initial={false} whileInView={undefined} viewport={{once:true, ...}} ...>
+                                <div
+                                  className="relative"
+                                  style={{
+-                                   opacity: "0"
+-                                   transform: "translateY(18px)"
+                                  }}
+                                  ref={function useMotionRef.useCallback}
+                                >
+                        <section className="mx-auto gr...">
+                          <Reveal delay={0}>
+                            <motion.div initial={false} whileInView={undefined} viewport={{once:true, ...}} ...>
+                              <div
+                                className=""
+                                style={{
+-                                 opacity: "0"
+-                                 transform: "translateY(18px)"
+                                }}
+                                ref={function useMotionRef.useCallback}
+                              >
+                          <Reveal delay={0.08}>
+                            <motion.div initial={false} whileInView={undefined} viewport={{once:true, ...}} ...>
+                              <div
+                                className=""
+                                style={{
+-                                 opacity: "0"
+-                                 transform: "translateY(18px)"
+                                }}
+                                ref={function useMotionRef.useCallback}
+                              >
+                          <Reveal delay={0.16}>
+                            <motion.div initial={false} whileInView={undefined} viewport={{once:true, ...}} ...>
+                              <div
+                                className=""
+                                style={{
+-                                 opacity: "0"
+-                                 transform: "translateY(18px)"
+                                }}
+                                ref={function useMotionRef.useCallback}
+                              >
+                        ...
+                      ...
+                ...
+              ...
+ 
+    at <unknown> (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:3439:25)
+    at runWithFiberInDEV (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:965:74)
+    at emitPendingHydrationWarnings (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:3438:13)
+    at completeWork (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6885:102)
+    at runWithFiberInDEV (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:965:131)
+    at completeUnitOfWork (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9622:23)
+    at performUnitOfWork (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9557:28)
+    at workLoopConcurrentByScheduler (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9551:58)
+    at renderRootConcurrent (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9534:71)
+    at performWorkOnRoot (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9061:150)
+    at performWorkOnRootViaSchedulerTask (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10255:9)
+    at MessagePort.performWorkUntilDeadline (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:2647:64) (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:3439:25)
+[browser] You have Reduced Motion enabled on your device. Animations may not appear as expected.. For more information and steps for solving, visit https://motion.dev/troubleshooting/reduced-motion-disabled (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_115brz8._.js:2477:13)
+[browser] A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <LoadingBoundary name="/" loading={null}>
+      <HTTPAccessFallbackBoundary notFound={{...}} forbidden={undefined} unauthorized={undefined}>
+        <HTTPAccessFallbackErrorBoundary pathname="/" notFound={{...}} forbidden={undefined} unauthorized={undefined} ...>
+          <RedirectBoundary>
+            <RedirectErrorBoundary router={{...}}>
+              <InnerLayoutRouter url="/" tree={[...]} params={{}} cacheNode={{rsc:{...}, ...}} segmentPath={[...]} ...>
+                <SegmentViewNode type="page" pagePath="page.tsx">
+                  <SegmentTrieNode>
+                  <Home>
+                    <div className="min-h-scre...">
+                      <SiteHeader>
+                      <main>
+                        <section className="premium-gr...">
+                          <div>
+                          <div className="relative m...">
+                            <Reveal>
+                              <motion.div initial={false} whileInView={undefined} viewport={{once:true, ...}} ...>
+                                <div
+                                  className=""
+                                  style={{
+-                                   opacity: "0"
+-                                   transform: "translateY(18px)"
+                                  }}
+                                  ref={function useMotionRef.useCallback}
+                                >
+                            <Reveal delay={0.12} className="relative">
+                              <motion.div initial={false} whileInView={undefined} viewport={{once:true, ...}} ...>
+                                <div
+                                  className="relative"
+                                  style={{
+-                                   opacity: "0"
+-                                   transform: "translateY(18px)"
+                                  }}
+                                  ref={function useMotionRef.useCallback}
+                                >
+                        <section className="mx-auto gr...">
+                          <Reveal delay={0}>
+                            <motion.div initial={false} whileInView={undefined} viewport={{once:true, ...}} ...>
+                              <div
+                                className=""
+                                style={{
+-                                 opacity: "0"
+-                                 transform: "translateY(18px)"
+                                }}
+                                ref={function useMotionRef.useCallback}
+                              >
+                          <Reveal delay={0.08}>
+                            <motion.div initial={false} whileInView={undefined} viewport={{once:true, ...}} ...>
+                              <div
+                                className=""
+                                style={{
+-                                 opacity: "0"
+-                                 transform: "translateY(18px)"
+                                }}
+                                ref={function useMotionRef.useCallback}
+                              >
+                          <Reveal delay={0.16}>
+                            <motion.div initial={false} whileInView={undefined} viewport={{once:true, ...}} ...>
+                              <div
+                                className=""
+                                style={{
+-                                 opacity: "0"
+-                                 transform: "translateY(18px)"
+                                }}
+                                ref={function useMotionRef.useCallback}
+                              >
+                        ...
+                      ...
+                ...
+              ...
+ 
+    at <unknown> (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:3439:25)
+    at runWithFiberInDEV (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:965:74)
+    at emitPendingHydrationWarnings (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:3438:13)
+    at completeWork (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6885:102)
+    at runWithFiberInDEV (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:965:131)
+    at completeUnitOfWork (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9622:23)
+    at performUnitOfWork (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9557:28)
+    at workLoopConcurrentByScheduler (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9551:58)
+    at renderRootConcurrent (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9534:71)
+    at performWorkOnRoot (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9061:150)
+    at performWorkOnRootViaSchedulerTask (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10255:9)
+    at MessagePort.performWorkUntilDeadline (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:2647:64) (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:3439:25)
+[browser] Image with src "http://127.0.0.1:8000/media/evenements/images/reseautage.jpg" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_115brz8._.js:2477:13)
+[browser] Image with src "http://127.0.0.1:8000/media/evenements/images/reseautage.jpg" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_115brz8._.js:2477:13)
+[browser] You have Reduced Motion enabled on your device. Animations may not appear as expected.. For more information and steps for solving, visit https://motion.dev/troubleshooting/reduced-motion-disabled (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_115brz8._.js:2477:13)
+⚠ Fast Refresh had to perform a full reload when ./node_modules/next/dist/client/image-component.js changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+⚠ Fast Refresh had to perform a full reload when ./node_modules/next/dist/client/image-component.js changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+⚠ Fast Refresh had to perform a full reload when ./node_modules/next/dist/client/image-component.js changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+⚠ Fast Refresh had to perform a full reload when ./node_modules/next/dist/client/image-component.js changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+⚠ Fast Refresh had to perform a full reload when ./node_modules/next/dist/client/image-component.js changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+⚠ Fast Refresh had to perform a full reload when ./node_modules/next/dist/client/image-component.js changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+[browser] ./components/mentor/MentorShell.tsx:130:11
+Expression expected
+  128 |             <link.icon className="size-4" aria-hidden="true" />
+  129 |             {link.label}
+> 130 |           </Link>
+      |           ^
+  131 |         );
+  132 |       })}
+  133 |     </nav>
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./components/mentor/MentorShell.tsx
+    ./app/mentor/layout.tsx 
+    at handleErrors (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:13851:21)
+    at processMessage (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:13914:21)
+    at WebSocket.handleMessage (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:13358:52) (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:13851:21)
+[browser] ./components/mentor/MentorShell.tsx:130:12
+Unterminated regexp literal
+  128 |             <link.icon className="size-4" aria-hidden="true" />
+  129 |             {link.label}
+> 130 |           </Link>
+      |            ^^^^^^
+  131 |         );
+  132 |       })}
+  133 |     </nav>
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./components/mentor/MentorShell.tsx
+    ./app/mentor/layout.tsx 
+    at handleErrors (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:13851:21)
+    at processMessage (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:13914:21)
+    at WebSocket.handleMessage (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:13358:52) (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:13851:21)
+⨯ ./components/mentor/MentorShell.tsx:127:11
+Expression expected
+  [90m125 |[0m   );
+  [90m126 |[0m }
+[31m[1m>[0m [90m127 |[0m           >
+  [90m    |[0m           [31m[1m^[0m
+  [90m128 |[0m             <link.icon className=[32m"size-4"[0m aria-hidden=[32m"true"[0m />
+  [90m129 |[0m             {link.label}
+  [90m130 |[0m           </[33mLink[0m>
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./components/mentor/MentorShell.tsx
+    ./app/mentor/layout.tsx
+
+
+
+./components/mentor/MentorShell.tsx:130:11
+Expression expected
+  [90m128 |[0m             <link.icon className=[32m"size-4"[0m aria-hidden=[32m"true"[0m />
+  [90m129 |[0m             {link.label}
+[31m[1m>[0m [90m130 |[0m           </[33mLink[0m>
+  [90m    |[0m           [31m[1m^[0m
+  [90m131 |[0m         );
+  [90m132 |[0m       })}
+  [90m133 |[0m     </nav>
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./components/mentor/MentorShell.tsx
+    ./app/mentor/layout.tsx
+
+
+
+./components/mentor/MentorShell.tsx:130:12
+Unterminated regexp literal
+  [90m128 |[0m             <link.icon className=[32m"size-4"[0m aria-hidden=[32m"true"[0m />
+  [90m129 |[0m             {link.label}
+[31m[1m>[0m [90m130 |[0m           </[33mLink[0m>
+  [90m    |[0m            [31m[1m^^^^^^[0m
+  [90m131 |[0m         );
+  [90m132 |[0m       })}
+  [90m133 |[0m     </nav>
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./components/mentor/MentorShell.tsx
+    ./app/mentor/layout.tsx
+
+
+[browser] ./components/mentor/MentorShell.tsx:130:11
+Expression expected
+  128 |             <link.icon className="size-4" aria-hidden="true" />
+  129 |             {link.label}
+> 130 |           </Link>
+      |           ^
+  131 |         );
+  132 |       })}
+  133 |     </nav>
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./components/mentor/MentorShell.tsx
+    ./app/mentor/layout.tsx 
+    at handleErrors (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:13851:21)
+    at processMessage (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:13914:21)
+    at WebSocket.handleMessage (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:13358:52) (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:13851:21)
+[browser] ./components/mentor/MentorShell.tsx:130:12
+Unterminated regexp literal
+  128 |             <link.icon className="size-4" aria-hidden="true" />
+  129 |             {link.label}
+> 130 |           </Link>
+      |            ^^^^^^
+  131 |         );
+  132 |       })}
+  133 |     </nav>
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./components/mentor/MentorShell.tsx
+    ./app/mentor/layout.tsx 
+    at handleErrors (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:13851:21)
+    at processMessage (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:13914:21)
+    at WebSocket.handleMessage (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:13358:52) (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:13851:21)
+⨯ ./components/mentor/MentorShell.tsx:127:11
+Expression expected
+  [90m125 |[0m   );
+  [90m126 |[0m }
+[31m[1m>[0m [90m127 |[0m           >
+  [90m    |[0m           [31m[1m^[0m
+  [90m128 |[0m             <link.icon className=[32m"size-4"[0m aria-hidden=[32m"true"[0m />
+  [90m129 |[0m             {link.label}
+  [90m130 |[0m           </[33mLink[0m>
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./components/mentor/MentorShell.tsx
+    ./app/mentor/layout.tsx
+
+
+
+./components/mentor/MentorShell.tsx:130:11
+Expression expected
+  [90m128 |[0m             <link.icon className=[32m"size-4"[0m aria-hidden=[32m"true"[0m />
+  [90m129 |[0m             {link.label}
+[31m[1m>[0m [90m130 |[0m           </[33mLink[0m>
+  [90m    |[0m           [31m[1m^[0m
+  [90m131 |[0m         );
+  [90m132 |[0m       })}
+  [90m133 |[0m     </nav>
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./components/mentor/MentorShell.tsx
+    ./app/mentor/layout.tsx
+
+
+
+./components/mentor/MentorShell.tsx:130:12
+Unterminated regexp literal
+  [90m128 |[0m             <link.icon className=[32m"size-4"[0m aria-hidden=[32m"true"[0m />
+  [90m129 |[0m             {link.label}
+[31m[1m>[0m [90m130 |[0m           </[33mLink[0m>
+  [90m    |[0m            [31m[1m^^^^^^[0m
+  [90m131 |[0m         );
+  [90m132 |[0m       })}
+  [90m133 |[0m     </nav>
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./components/mentor/MentorShell.tsx
+    ./app/mentor/layout.tsx
+
+
+⨯ ./components/mentor/MentorShell.tsx:127:11
+Expression expected
+  [90m125 |[0m   );
+  [90m126 |[0m }
+[31m[1m>[0m [90m127 |[0m           >
+  [90m    |[0m           [31m[1m^[0m
+  [90m128 |[0m             <link.icon className=[32m"size-4"[0m aria-hidden=[32m"true"[0m />
+  [90m129 |[0m             {link.label}
+  [90m130 |[0m           </[33mLink[0m>
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./components/mentor/MentorShell.tsx
+    ./app/mentor/layout.tsx
+
+
+
+./components/mentor/MentorShell.tsx:130:11
+Expression expected
+  [90m128 |[0m             <link.icon className=[32m"size-4"[0m aria-hidden=[32m"true"[0m />
+  [90m129 |[0m             {link.label}
+[31m[1m>[0m [90m130 |[0m           </[33mLink[0m>
+  [90m    |[0m           [31m[1m^[0m
+  [90m131 |[0m         );
+  [90m132 |[0m       })}
+  [90m133 |[0m     </nav>
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./components/mentor/MentorShell.tsx
+    ./app/mentor/layout.tsx
+
+
+
+./components/mentor/MentorShell.tsx:130:12
+Unterminated regexp literal
+  [90m128 |[0m             <link.icon className=[32m"size-4"[0m aria-hidden=[32m"true"[0m />
+  [90m129 |[0m             {link.label}
+[31m[1m>[0m [90m130 |[0m           </[33mLink[0m>
+  [90m    |[0m            [31m[1m^^^^^^[0m
+  [90m131 |[0m         );
+  [90m132 |[0m       })}
+  [90m133 |[0m     </nav>
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./components/mentor/MentorShell.tsx
+    ./app/mentor/layout.tsx
+
+
+[browser] Uncaught Error: ./components/mentor/MentorShell.tsx:130:11
+Expression expected
+  128 |             <link.icon className="size-4" aria-hidden="true" />
+  129 |             {link.label}
+> 130 |           </Link>
+      |           ^
+  131 |         );
+  132 |       })}
+  133 |     </nav>
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./components/mentor/MentorShell.tsx
+    ./app/mentor/layout.tsx
+
+
+    at <unknown> (Error: ./components/mentor/MentorShell.tsx:130:11)
+    at <unknown> (Error: (./components/mentor/MentorShell.tsx:130:11)
+[browser] Uncaught Error: ./components/mentor/MentorShell.tsx:130:11
+Expression expected
+  128 |             <link.icon className="size-4" aria-hidden="true" />
+  129 |             {link.label}
+> 130 |           </Link>
+      |           ^
+  131 |         );
+  132 |       })}
+  133 |     </nav>
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./components/mentor/MentorShell.tsx
+    ./app/mentor/layout.tsx
+
+
+    at <unknown> (Error: ./components/mentor/MentorShell.tsx:130:11)
+    at <unknown> (Error: (./components/mentor/MentorShell.tsx:130:11)
+[browser] Uncaught Error: ./components/mentor/MentorShell.tsx:130:11
+Expression expected
+  128 |             <link.icon className="size-4" aria-hidden="true" />
+  129 |             {link.label}
+> 130 |           </Link>
+      |           ^
+  131 |         );
+  132 |       })}
+  133 |     </nav>
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./components/mentor/MentorShell.tsx
+    ./app/mentor/layout.tsx
+
+
+    at <unknown> (Error: ./components/mentor/MentorShell.tsx:130:11)
+    at <unknown> (Error: (./components/mentor/MentorShell.tsx:130:11)
+[browser] ./components/mentor/MentorShell.tsx:130:11
+Expression expected
+  128 |             <link.icon className="size-4" aria-hidden="true" />
+  129 |             {link.label}
+> 130 |           </Link>
+      |           ^
+  131 |         );
+  132 |       })}
+  133 |     </nav>
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./components/mentor/MentorShell.tsx
+    ./app/mentor/layout.tsx 
+    at handleErrors (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2774:21)
+    at processMessage (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2835:28)
+    at <unknown> (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2680:13)
+    at WebSocket.handleMessage (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2325:17) (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2774:21)
+[browser] ./components/mentor/MentorShell.tsx:130:12
+Unterminated regexp literal
+  128 |             <link.icon className="size-4" aria-hidden="true" />
+  129 |             {link.label}
+> 130 |           </Link>
+      |            ^^^^^^
+  131 |         );
+  132 |       })}
+  133 |     </nav>
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./components/mentor/MentorShell.tsx
+    ./app/mentor/layout.tsx 
+    at handleErrors (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2774:21)
+    at processMessage (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2835:28)
+    at <unknown> (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2680:13)
+    at WebSocket.handleMessage (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2325:17) (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2774:21)
+[browser] ./components/mentor/MentorShell.tsx:130:11
+Expression expected
+  128 |             <link.icon className="size-4" aria-hidden="true" />
+  129 |             {link.label}
+> 130 |           </Link>
+      |           ^
+  131 |         );
+  132 |       })}
+  133 |     </nav>
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./components/mentor/MentorShell.tsx
+    ./app/mentor/layout.tsx 
+    at handleErrors (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2774:21)
+    at processMessage (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2835:28)
+    at <unknown> (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2680:13)
+    at WebSocket.handleMessage (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2325:17) (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2774:21)
+[browser] ./components/mentor/MentorShell.tsx:130:12
+Unterminated regexp literal
+  128 |             <link.icon className="size-4" aria-hidden="true" />
+  129 |             {link.label}
+> 130 |           </Link>
+      |            ^^^^^^
+  131 |         );
+  132 |       })}
+  133 |     </nav>
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./components/mentor/MentorShell.tsx
+    ./app/mentor/layout.tsx 
+    at handleErrors (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2774:21)
+    at processMessage (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2835:28)
+    at <unknown> (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2680:13)
+    at WebSocket.handleMessage (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2325:17) (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2774:21)
+[browser] ./components/mentor/MentorShell.tsx:130:11
+Expression expected
+  128 |             <link.icon className="size-4" aria-hidden="true" />
+  129 |             {link.label}
+> 130 |           </Link>
+      |           ^
+  131 |         );
+  132 |       })}
+  133 |     </nav>
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./components/mentor/MentorShell.tsx
+    ./app/mentor/layout.tsx 
+    at handleErrors (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2774:21)
+    at processMessage (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2835:28)
+    at <unknown> (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2680:13)
+    at WebSocket.handleMessage (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2325:17) (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2774:21)
+[browser] ./components/mentor/MentorShell.tsx:130:12
+Unterminated regexp literal
+  128 |             <link.icon className="size-4" aria-hidden="true" />
+  129 |             {link.label}
+> 130 |           </Link>
+      |            ^^^^^^
+  131 |         );
+  132 |       })}
+  133 |     </nav>
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./components/mentor/MentorShell.tsx
+    ./app/mentor/layout.tsx 
+    at handleErrors (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2774:21)
+    at processMessage (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2835:28)
+    at <unknown> (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2680:13)
+    at WebSocket.handleMessage (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2325:17) (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2774:21)
+[browser] ./components/mentor/MentorShell.tsx:130:11
+Expression expected
+  128 |             <link.icon className="size-4" aria-hidden="true" />
+  129 |             {link.label}
+> 130 |           </Link>
+      |           ^
+  131 |         );
+  132 |       })}
+  133 |     </nav>
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./components/mentor/MentorShell.tsx
+    ./app/mentor/layout.tsx 
+    at handleErrors (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2774:21)
+    at processMessage (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2835:28)
+    at <unknown> (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2680:13)
+    at WebSocket.handleMessage (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2325:17) (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2774:21)
+[browser] ./components/mentor/MentorShell.tsx:130:12
+Unterminated regexp literal
+  128 |             <link.icon className="size-4" aria-hidden="true" />
+  129 |             {link.label}
+> 130 |           </Link>
+      |            ^^^^^^
+  131 |         );
+  132 |       })}
+  133 |     </nav>
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./components/mentor/MentorShell.tsx
+    ./app/mentor/layout.tsx 
+    at handleErrors (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2774:21)
+    at processMessage (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2835:28)
+    at <unknown> (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2680:13)
+    at WebSocket.handleMessage (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2325:17) (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2774:21)
+[browser] ./components/mentor/MentorShell.tsx:130:11
+Expression expected
+  128 |             <link.icon className="size-4" aria-hidden="true" />
+  129 |             {link.label}
+> 130 |           </Link>
+      |           ^
+  131 |         );
+  132 |       })}
+  133 |     </nav>
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./components/mentor/MentorShell.tsx
+    ./app/mentor/layout.tsx 
+    at handleErrors (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2774:21)
+    at processMessage (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2835:28)
+    at <unknown> (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2680:13)
+    at WebSocket.handleMessage (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2325:17) (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2774:21)
+[browser] ./components/mentor/MentorShell.tsx:130:12
+Unterminated regexp literal
+  128 |             <link.icon className="size-4" aria-hidden="true" />
+  129 |             {link.label}
+> 130 |           </Link>
+      |            ^^^^^^
+  131 |         );
+  132 |       })}
+  133 |     </nav>
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./components/mentor/MentorShell.tsx
+    ./app/mentor/layout.tsx 
+    at handleErrors (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2774:21)
+    at processMessage (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2835:28)
+    at <unknown> (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2680:13)
+    at WebSocket.handleMessage (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2325:17) (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2774:21)
+[browser] ./components/mentor/MentorShell.tsx:130:11
+Expression expected
+  128 |             <link.icon className="size-4" aria-hidden="true" />
+  129 |             {link.label}
+> 130 |           </Link>
+      |           ^
+  131 |         );
+  132 |       })}
+  133 |     </nav>
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./components/mentor/MentorShell.tsx
+    ./app/mentor/layout.tsx 
+    at handleErrors (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2774:21)
+    at processMessage (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2835:28)
+    at <unknown> (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2680:13)
+    at WebSocket.handleMessage (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2325:17) (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2774:21)
+[browser] ./components/mentor/MentorShell.tsx:130:12
+Unterminated regexp literal
+  128 |             <link.icon className="size-4" aria-hidden="true" />
+  129 |             {link.label}
+> 130 |           </Link>
+      |            ^^^^^^
+  131 |         );
+  132 |       })}
+  133 |     </nav>
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./components/mentor/MentorShell.tsx
+    ./app/mentor/layout.tsx 
+    at handleErrors (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2774:21)
+    at processMessage (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2835:28)
+    at <unknown> (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2680:13)
+    at WebSocket.handleMessage (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2325:17) (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2774:21)
+[browser] ./components/mentor/MentorShell.tsx:130:11
+Expression expected
+  128 |             <link.icon className="size-4" aria-hidden="true" />
+  129 |             {link.label}
+> 130 |           </Link>
+      |           ^
+  131 |         );
+  132 |       })}
+  133 |     </nav>
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./components/mentor/MentorShell.tsx
+    ./app/mentor/layout.tsx 
+    at handleErrors (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2774:21)
+    at processMessage (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2835:28)
+    at <unknown> (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2680:13)
+    at WebSocket.handleMessage (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2325:17) (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2774:21)
+[browser] ./components/mentor/MentorShell.tsx:130:12
+Unterminated regexp literal
+  128 |             <link.icon className="size-4" aria-hidden="true" />
+  129 |             {link.label}
+> 130 |           </Link>
+      |            ^^^^^^
+  131 |         );
+  132 |       })}
+  133 |     </nav>
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./components/mentor/MentorShell.tsx
+    ./app/mentor/layout.tsx 
+    at handleErrors (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2774:21)
+    at processMessage (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2835:28)
+    at <unknown> (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2680:13)
+    at WebSocket.handleMessage (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2325:17) (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2774:21)
+[browser] ./components/mentor/MentorShell.tsx:130:11
+Expression expected
+  128 |             <link.icon className="size-4" aria-hidden="true" />
+  129 |             {link.label}
+> 130 |           </Link>
+      |           ^
+  131 |         );
+  132 |       })}
+  133 |     </nav>
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./components/mentor/MentorShell.tsx
+    ./app/mentor/layout.tsx 
+    at handleErrors (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2774:21)
+    at processMessage (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2835:28)
+    at <unknown> (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2680:13)
+    at WebSocket.handleMessage (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2325:17) (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2774:21)
+[browser] ./components/mentor/MentorShell.tsx:130:12
+Unterminated regexp literal
+  128 |             <link.icon className="size-4" aria-hidden="true" />
+  129 |             {link.label}
+> 130 |           </Link>
+      |            ^^^^^^
+  131 |         );
+  132 |       })}
+  133 |     </nav>
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./components/mentor/MentorShell.tsx
+    ./app/mentor/layout.tsx 
+    at handleErrors (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2774:21)
+    at processMessage (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2835:28)
+    at <unknown> (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2680:13)
+    at WebSocket.handleMessage (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2325:17) (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2774:21)
+[browser] Uncaught ReferenceError: sections is not defined
+    at MentorSettingsPanel (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/_0pn018m._.js:1155:35)
+    at Object.react_stack_bottom_frame (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:15037:24)
+    at renderWithHooks (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:4620:24)
+    at updateFunctionComponent (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6081:21)
+    at beginWork (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6691:24)
+    at runWithFiberInDEV (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:965:74)
+    at performUnitOfWork (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9555:97)
+    at workLoopSync (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9449:40)
+    at renderRootSync (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9433:13)
+    at performWorkOnRoot (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9098:47)
+    at performWorkOnRootViaSchedulerTask (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10255:9)
+    at MessagePort.performWorkUntilDeadline (file://C:/Users/DUC/Desktop/Programme X/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:2647:64)
+    at MentorSettingsPage (app\mentor\parametres\page.tsx:15:9)
+  13 |       />
+  14 |       <Suspense fallback={<Skeleton className="h-96" />}>
+> 15 |         <MentorSettingsPanel />
+     |         ^
+  16 |       </Suspense>
+  17 |     </div>
+  18 |   );
+⚠ Fast Refresh had to perform a full reload due to a runtime error.

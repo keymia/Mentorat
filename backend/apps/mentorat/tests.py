@@ -272,6 +272,69 @@ class MentorshipApiTests(MentorshipSetupMixin, APITestCase):
         )
         self.assertEqual(response.status_code, 404)
 
+    def test_mentor_liste_et_cree_seance_depuis_endpoint_direct(self):
+        assignment = MentorshipAssignment.objects.create(
+            mentor=self.mentor,
+            mentoree=self.mentoree,
+            period=self.period,
+        )
+        self.client.force_authenticate(self.mentor)
+
+        response = self.client.post(
+            "/api/mentor/sessions/",
+            {
+                "assignment": assignment.id,
+                "session_number": 1,
+                "scheduled_date": "2026-02-10",
+                "start_time": "17:00",
+                "end_time": "18:00",
+                "summary": "Objectifs de debut de periode.",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 201)
+        response = self.client.get("/api/mentor/sessions/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data), 1)
+
+    def test_mentor_follow_up_complete_seance_et_genere_progression(self):
+        assignment = MentorshipAssignment.objects.create(
+            mentor=self.mentor,
+            mentoree=self.mentoree,
+            period=self.period,
+        )
+        MentorshipSession.objects.create(
+            assignment=assignment,
+            session_number=1,
+            scheduled_date=date(2026, 2, 3),
+            status=MentorshipSession.Status.COMPLETED,
+        )
+        session = MentorshipSession.objects.create(
+            assignment=assignment,
+            session_number=2,
+            scheduled_date=date(2026, 2, 10),
+        )
+        self.client.force_authenticate(self.mentor)
+
+        response = self.client.patch(
+            f"/api/mentor/follow-ups/{session.id}/",
+            {
+                "progress_status": MentoreeProgress.ProgressStatus.GOOD,
+                "appreciation": "Tres bon",
+                "observation": "Bonne participation.",
+                "recommendations": "Continuer les exercices.",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        session.refresh_from_db()
+        self.assertEqual(session.status, MentorshipSession.Status.COMPLETED)
+        progress = MentoreeProgress.objects.get(assignment=assignment)
+        self.assertEqual(progress.progress_percentage, 25)
+        self.assertEqual(progress.progress_status, MentoreeProgress.ProgressStatus.GOOD)
+
     def test_ancien_endpoint_disponibilites_est_desactive(self):
         response = self.client.get(f"/api/mentors/{self.mentor.id}/available-slots/")
 

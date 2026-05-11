@@ -1,33 +1,24 @@
 "use client";
 
-import { CalendarPlus, CheckCircle2, Save, TrendingUp } from "lucide-react";
+import { CalendarPlus, Eye } from "lucide-react";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import {
   MentorMenteeDetail,
-  MentoreeProgressStatus,
-  MentorshipPeriod,
   MentorshipSession,
-  MentorshipSessionStatus,
-  completeMentorSession,
-  continueMentorAssignment,
   createMentorAssignmentSession,
   formatApiError,
-  getAvailableMentorshipPeriods,
   getMentorMenteeDetail,
-  updateMentorAssignmentProgress,
-  updateMentorSession,
 } from "@/lib/api";
 import {
-  displayUser,
   formatDate,
   normalizeTime,
   progressStatusLabels,
@@ -42,14 +33,18 @@ function nullableTime(value: string) {
   return value ? value : null;
 }
 
+function displayName(user: MentorMenteeDetail["mentee"]) {
+  const name = `${user.prenom ?? ""} ${user.nom ?? ""}`.trim();
+  return name || "Mentore non renseigne";
+}
+
 export function MentorMenteeWorkspace({ menteeId }: { menteeId: number }) {
   const [detail, setDetail] = useState<MentorMenteeDetail | null>(null);
-  const [availablePeriods, setAvailablePeriods] = useState<MentorshipPeriod[]>([]);
-  const [renewalPeriodId, setRenewalPeriodId] = useState("");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isCreateSessionOpen, setIsCreateSessionOpen] = useState(false);
+  const [selectedFollowUpSession, setSelectedFollowUpSession] = useState<MentorshipSession | null>(null);
 
   const loadDetail = useCallback(async () => {
     try {
@@ -64,11 +59,10 @@ export function MentorMenteeWorkspace({ menteeId }: { menteeId: number }) {
 
   useEffect(() => {
     let isMounted = true;
-    Promise.all([getMentorMenteeDetail(menteeId), getAvailableMentorshipPeriods()])
-      .then(([data, periods]) => {
+    getMentorMenteeDetail(menteeId)
+      .then((data) => {
         if (isMounted) {
           setDetail(data);
-          setAvailablePeriods(periods);
           setError("");
         }
       })
@@ -124,78 +118,6 @@ export function MentorMenteeWorkspace({ menteeId }: { menteeId: number }) {
     setIsCreateSessionOpen(false);
   }
 
-  async function handleSessionSubmit(event: FormEvent<HTMLFormElement>, session: MentorshipSession) {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    const submitter = (event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null;
-    const payload = {
-      session_number: Number(formString(formData, "session_number")),
-      scheduled_date: formString(formData, "scheduled_date"),
-      start_time: nullableTime(formString(formData, "start_time")),
-      end_time: nullableTime(formString(formData, "end_time")),
-      status: formString(formData, "status") as MentorshipSessionStatus,
-      summary: formString(formData, "summary"),
-      mentor_comment: formString(formData, "mentor_comment"),
-    };
-
-    setError("");
-    setMessage("");
-    try {
-      if (submitter?.name === "complete") {
-        await completeMentorSession(session.id, payload);
-        setMessage("Seance marquee comme realisee.");
-      } else {
-        await updateMentorSession(session.id, payload);
-        setMessage("Seance mise a jour.");
-      }
-      await loadDetail();
-    } catch (apiError) {
-      setError(formatApiError(apiError));
-    }
-  }
-
-  async function handleProgressSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!detail) {
-      return;
-    }
-    const formData = new FormData(event.currentTarget);
-    const percentage = formString(formData, "progress_percentage");
-    setError("");
-    setMessage("");
-    try {
-      await updateMentorAssignmentProgress(detail.current_assignment.id, {
-        progress_status: formString(formData, "progress_status") as MentoreeProgressStatus,
-        progress_percentage: percentage ? Number(percentage) : null,
-        difficulties: formString(formData, "difficulties"),
-        achievements: formString(formData, "achievements"),
-        recommendations: formString(formData, "recommendations"),
-        mentor_opinion: formString(formData, "mentor_opinion"),
-      });
-      setMessage("Suivi mis a jour.");
-      await loadDetail();
-    } catch (apiError) {
-      setError(formatApiError(apiError));
-    }
-  }
-
-  async function handleRenewalSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!detail || !renewalPeriodId) {
-      return;
-    }
-    setError("");
-    setMessage("");
-    try {
-      await continueMentorAssignment(detail.current_assignment.id, Number(renewalPeriodId));
-      setRenewalPeriodId("");
-      setMessage("Affectation reconduite pour la nouvelle periode.");
-      await loadDetail();
-    } catch (apiError) {
-      setError(formatApiError(apiError));
-    }
-  }
-
   if (isLoading && !detail) {
     return <Skeleton className="h-96" />;
   }
@@ -210,9 +132,8 @@ export function MentorMenteeWorkspace({ menteeId }: { menteeId: number }) {
 
   const assignment = detail.current_assignment;
   const progress = detail.progress;
-  const renewalPeriods = availablePeriods.filter(
-    (period) => period.id !== assignment.period && period.start_date > (assignment.period_detail?.start_date ?? ""),
-  );
+  const progressStatus = progress?.progress_status ?? assignment.progress_status ?? "average";
+  const progressPercentage = progress?.progress_percentage ?? assignment.progress_percentage ?? 0;
 
   function renderCreateSessionForm() {
     return (
@@ -249,6 +170,14 @@ export function MentorMenteeWorkspace({ menteeId }: { menteeId: number }) {
     );
   }
 
+  function getSessionProgressPercentage(session: MentorshipSession) {
+    const requiredSessions = assignment.required_sessions || 0;
+    if (!requiredSessions) {
+      return progressPercentage;
+    }
+    return Math.min(Math.round((session.session_number / requiredSessions) * 100), 100);
+  }
+
   return (
     <div className="grid gap-6">
       {error ? <Alert variant="error">{error}</Alert> : null}
@@ -263,19 +192,109 @@ export function MentorMenteeWorkspace({ menteeId }: { menteeId: number }) {
         {renderCreateSessionForm()}
       </Modal>
 
-      <Card>
-        <CardContent className="grid gap-4 p-5 xl:grid-cols-[1.1fr_1fr_auto] xl:items-start">
-          <div>
-            <h2 className="text-2xl font-semibold">{displayUser(detail.mentee)}</h2>
-            <p className="mt-2 text-sm text-muted-foreground">
-              {assignment.period_detail?.title ?? "Periode"} | {formatDate(assignment.period_detail?.start_date)} -{" "}
-              {formatDate(assignment.period_detail?.end_date)}
-            </p>
+      <Modal
+        open={Boolean(selectedFollowUpSession)}
+        title={selectedFollowUpSession ? `Suivi - Seance ${selectedFollowUpSession.session_number}` : "Suivi de seance"}
+        description="Informations de la seance et details du suivi lorsque la rencontre est realisee."
+        onClose={() => setSelectedFollowUpSession(null)}
+      >
+        {selectedFollowUpSession ? (
+          <div className="grid gap-5">
+            <div className="grid gap-3 rounded-lg border border-border bg-muted/25 p-4 text-sm md:grid-cols-2">
+              <p>
+                <span className="block text-muted-foreground">Statut de la seance</span>
+                <span className="font-semibold text-foreground">{sessionStatusLabels[selectedFollowUpSession.status]}</span>
+              </p>
+              <p>
+                <span className="block text-muted-foreground">Date</span>
+                <span className="font-semibold text-foreground">{formatDate(selectedFollowUpSession.scheduled_date)}</span>
+              </p>
+              <p>
+                <span className="block text-muted-foreground">Heure de debut</span>
+                <span className="font-semibold text-foreground">
+                  {normalizeTime(selectedFollowUpSession.start_time) || "Non renseignee"}
+                </span>
+              </p>
+              <p>
+                <span className="block text-muted-foreground">Heure de fin</span>
+                <span className="font-semibold text-foreground">
+                  {normalizeTime(selectedFollowUpSession.end_time) || "Non renseignee"}
+                </span>
+              </p>
+              <p className="md:col-span-2">
+                <span className="block text-muted-foreground">Resume de seance</span>
+                <span className="font-semibold text-foreground">{selectedFollowUpSession.summary || "Non renseigne"}</span>
+              </p>
+              <p className="md:col-span-2">
+                <span className="block text-muted-foreground">Commentaires du mentor</span>
+                <span className="font-semibold text-foreground">{selectedFollowUpSession.mentor_comment || "Aucun commentaire"}</span>
+              </p>
+            </div>
+
+            {selectedFollowUpSession.status === "completed" ? (
+              <div className="grid gap-3 rounded-lg border border-border bg-card p-4 text-sm md:grid-cols-2">
+                <p>
+                  <span className="block text-muted-foreground">Appreciation</span>
+                  <span className="font-semibold text-foreground">{progressStatusLabels[progressStatus]}</span>
+                </p>
+                <p>
+                  <span className="block text-muted-foreground">Pourcentage d&apos;avancement</span>
+                  <span className="font-semibold text-foreground">{getSessionProgressPercentage(selectedFollowUpSession)}%</span>
+                </p>
+                <p className="md:col-span-2">
+                  <span className="block text-muted-foreground">Observations</span>
+                  <span className="font-semibold text-foreground">{progress?.achievements || "Non renseignees"}</span>
+                </p>
+                <p className="md:col-span-2">
+                  <span className="block text-muted-foreground">Difficultes</span>
+                  <span className="font-semibold text-foreground">{progress?.difficulties || "Non renseignees"}</span>
+                </p>
+                <p className="md:col-span-2">
+                  <span className="block text-muted-foreground">Recommandations</span>
+                  <span className="font-semibold text-foreground">{progress?.recommendations || "Non renseignees"}</span>
+                </p>
+                <p className="md:col-span-2">
+                  <span className="block text-muted-foreground">Avis general</span>
+                  <span className="font-semibold text-foreground">{progress?.mentor_opinion || "Non renseigne"}</span>
+                </p>
+              </div>
+            ) : (
+              <Alert>
+                Le suivi detaille sera disponible lorsque cette seance sera marquee comme realisee.
+              </Alert>
+            )}
           </div>
-          <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4 lg:text-right">
+        ) : null}
+      </Modal>
+
+      <Card>
+        <CardContent className="grid gap-5 p-5 xl:grid-cols-[1.1fr_1fr_auto] xl:items-start">
+          <div className="grid gap-3">
+            <div>
+              <h2 className="text-2xl font-semibold">{displayName(detail.mentee)}</h2>
+            </div>
+            <div className="grid gap-2 text-sm sm:grid-cols-2">
+              <p>
+                <span className="block text-muted-foreground">Niveau</span>
+                <span className="font-semibold text-foreground">{detail.mentee.niveau_academique_nom ?? "Non renseigne"}</span>
+              </p>
+              <p>
+                <span className="block text-muted-foreground">Statut global</span>
+                <span className="font-semibold text-foreground">{progressStatusLabels[progressStatus]}</span>
+              </p>
+              <p className="sm:col-span-2">
+                <span className="block text-muted-foreground">Periode active</span>
+                <span className="font-semibold text-foreground">
+                  {assignment.period_detail?.title ?? "Periode"} | {formatDate(assignment.period_detail?.start_date)} -{" "}
+                  {formatDate(assignment.period_detail?.end_date)}
+                </span>
+              </p>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-5 xl:text-right">
             <p>
               <span className="block font-semibold text-foreground">{assignment.required_sessions ?? 0}</span>
-              Obligatoires
+              Prevues
             </p>
             <p>
               <span className="block font-semibold text-foreground">{assignment.scheduled_sessions_count}</span>
@@ -288,6 +307,10 @@ export function MentorMenteeWorkspace({ menteeId }: { menteeId: number }) {
             <p>
               <span className="block font-semibold text-foreground">{assignment.remaining_sessions_count}</span>
               Restantes
+            </p>
+            <p>
+              <span className="block font-semibold text-foreground">{progressPercentage}%</span>
+              Avancement
             </p>
           </div>
           <div className="flex xl:justify-end">
@@ -302,144 +325,55 @@ export function MentorMenteeWorkspace({ menteeId }: { menteeId: number }) {
       <Card>
         <CardHeader>
           <CardTitle>Seances</CardTitle>
+          <CardDescription>Liste des rencontres, statuts, resumes et commentaires.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
-          {detail.sessions.map((session) => (
-            <form key={session.id} onSubmit={(event) => void handleSessionSubmit(event, session)} className="rounded-lg border border-border bg-muted/25 p-4">
-              <div className="mb-4 flex flex-wrap items-center gap-2">
-                <Badge variant={session.status === "completed" ? "success" : "outline"}>
-                  {sessionStatusLabels[session.status]}
-                </Badge>
-                <span className="text-sm font-semibold">Seance {session.session_number}</span>
-              </div>
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-                <label>
-                  Numero
-                  <Input name="session_number" type="number" min={1} defaultValue={session.session_number} required />
-                </label>
-                <label>
-                  Date
-                  <Input name="scheduled_date" type="date" defaultValue={session.scheduled_date} required />
-                </label>
-                <label>
-                  Debut
-                  <Input name="start_time" type="time" defaultValue={normalizeTime(session.start_time)} />
-                </label>
-                <label>
-                  Fin
-                  <Input name="end_time" type="time" defaultValue={normalizeTime(session.end_time)} />
-                </label>
-                <label>
-                  Statut
-                  <select name="status" className="field" defaultValue={session.status}>
-                    {Object.entries(sessionStatusLabels).map(([value, label]) => (
-                      <option key={value} value={value}>
-                        {label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className="md:col-span-2 xl:col-span-5">
-                  Resume
-                  <Textarea name="summary" defaultValue={session.summary} />
-                </label>
-                <label className="md:col-span-2 xl:col-span-5">
-                  Commentaire
-                  <Textarea name="mentor_comment" defaultValue={session.mentor_comment} />
-                </label>
-              </div>
-              <div className="mt-4 flex flex-wrap gap-2">
-                <Button type="submit" variant="outline" size="sm" name="save">
-                  <Save aria-hidden="true" />
-                  Enregistrer
-                </Button>
-                <Button type="submit" variant="secondary" size="sm" name="complete">
-                  <CheckCircle2 aria-hidden="true" />
-                  Realisee
-                </Button>
-              </div>
-            </form>
-          ))}
-        </CardContent>
-      </Card>
+          {detail.sessions.length > 0 ? (
+            <ul className="grid gap-3">
+              {detail.sessions.map((session) => (
+                <li key={session.id} className="rounded-lg border border-border bg-muted/25 p-4">
+                  <div className="grid gap-4 xl:grid-cols-[1fr_1.4fr_auto] xl:items-center">
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge variant={session.status === "completed" ? "success" : "outline"}>
+                          {sessionStatusLabels[session.status]}
+                        </Badge>
+                        <span className="font-semibold">Seance {session.session_number}</span>
+                      </div>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        {formatDate(session.scheduled_date)} | {normalizeTime(session.start_time) || "Heure non renseignee"}
+                        {session.end_time ? ` - ${normalizeTime(session.end_time)}` : ""}
+                      </p>
+                    </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Avancement du mentore</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleProgressSubmit} className="grid gap-4 md:grid-cols-2">
-            <label>
-              Statut
-              <select name="progress_status" className="field" defaultValue={progress?.progress_status ?? "average"}>
-                {Object.entries(progressStatusLabels).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Pourcentage
-              <Input name="progress_percentage" type="number" min={0} max={100} defaultValue={progress?.progress_percentage ?? ""} />
-            </label>
-            <label>
-              Progres observes
-              <Textarea name="achievements" defaultValue={progress?.achievements ?? ""} />
-            </label>
-            <label>
-              Difficultes
-              <Textarea name="difficulties" defaultValue={progress?.difficulties ?? ""} />
-            </label>
-            <label>
-              Recommandations
-              <Textarea name="recommendations" defaultValue={progress?.recommendations ?? ""} />
-            </label>
-            <label>
-              Avis general
-              <Textarea name="mentor_opinion" defaultValue={progress?.mentor_opinion ?? ""} />
-            </label>
-            <Button type="submit" className="w-fit">
-              <TrendingUp aria-hidden="true" />
-              Mettre a jour
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+                    <div className="grid gap-2 text-sm md:grid-cols-2">
+                      <p>
+                        <span className="block text-muted-foreground">Resume</span>
+                        <span className="font-semibold text-foreground">{session.summary || "Non renseigne"}</span>
+                      </p>
+                      <p>
+                        <span className="block text-muted-foreground">Commentaire</span>
+                        <span className="font-semibold text-foreground">{session.mentor_comment || "Aucun commentaire"}</span>
+                      </p>
+                    </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Continuer avec une nouvelle periode</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleRenewalSubmit} className="grid gap-4 md:grid-cols-[1fr_auto]">
-            <label>
-              Nouvelle periode definie par l&apos;administration
-              <select
-                className="field"
-                value={renewalPeriodId}
-                onChange={(event) => setRenewalPeriodId(event.target.value)}
-                disabled={renewalPeriods.length === 0}
-              >
-                <option value="">Choisir une periode</option>
-                {renewalPeriods.map((period) => (
-                  <option key={period.id} value={period.id}>
-                    {period.title} - {formatDate(period.start_date)} au {formatDate(period.end_date)}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <div className="flex items-end">
-              <Button type="submit" disabled={!renewalPeriodId}>
-                Reconduire
-              </Button>
-            </div>
-          </form>
-          {renewalPeriods.length === 0 ? (
-            <p className="mt-3 text-sm text-muted-foreground">
-              Aucune nouvelle periode disponible pour le moment.
-            </p>
-          ) : null}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="w-fit xl:justify-self-end"
+                      onClick={() => setSelectedFollowUpSession(session)}
+                    >
+                      <Eye aria-hidden="true" />
+                      Voir le suivi
+                    </Button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-muted-foreground">Aucune seance programmee pour ce mentore.</p>
+          )}
         </CardContent>
       </Card>
     </div>

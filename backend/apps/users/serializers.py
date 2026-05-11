@@ -198,6 +198,7 @@ class LoginSerializer(serializers.Serializer):
 
 
 class PasswordUpdateSerializer(serializers.Serializer):
+    ancien_mot_de_passe = serializers.CharField(write_only=True)
     mot_de_passe = serializers.CharField(write_only=True, min_length=8)
 
     def validate(self, attrs):
@@ -206,4 +207,6 @@ class PasswordUpdateSerializer(serializers.Serializer):
             raise serializers.ValidationError(
                 {"mot_de_passe": "Le mot de passe sera activable lorsque ce compte deviendra mentor."}
             )
+        if not user.check_password(attrs["ancien_mot_de_passe"]):
+            raise serializers.ValidationError({"ancien_mot_de_passe": "Ancien mot de passe incorrect."})
         return attrs

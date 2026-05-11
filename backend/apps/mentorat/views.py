@@ -85,6 +85,7 @@ def select_assignment_queryset():
         "mentoree__role",
         "mentoree__niveau_academique",
         "period",
+        "progress",
     ).prefetch_related("sessions")
 
 
@@ -292,6 +293,12 @@ class MentorDashboardView(APIView):
         completed_sessions = sessions.filter(status=MentorshipSession.Status.COMPLETED).count()
         scheduled_sessions = sessions.count()
         required_sessions = sum(assignment.period.required_sessions for assignment in active_assignments)
+        global_progress = round((completed_sessions / required_sessions) * 100) if required_sessions else 0
+        last_sessions = sessions.order_by("-scheduled_date", "-start_time", "-session_number")[:5]
+        mentees_needing_follow_up = active_assignments.filter(
+            Q(progress__isnull=True)
+            | Q(progress__progress_status__in=[MentoreeProgress.ProgressStatus.WATCH, MentoreeProgress.ProgressStatus.DIFFICULTY])
+        ).distinct()[:5]
 
         return Response(
             {
@@ -309,6 +316,9 @@ class MentorDashboardView(APIView):
                     "remaining_sessions": max(required_sessions - completed_sessions, 0),
                     "missing_sessions": max(required_sessions - scheduled_sessions, 0),
                 },
+                "global_progress": global_progress,
+                "last_sessions": MentorshipSessionSerializer(last_sessions, many=True).data,
+                "mentees_needing_follow_up": MentorshipAssignmentSerializer(mentees_needing_follow_up, many=True).data,
                 "assignments": MentorshipAssignmentSerializer(active_assignments, many=True).data,
             }
         )
@@ -379,6 +389,46 @@ class MentorAssignmentSessionsView(APIView):
         return Response(MentorshipSessionSerializer(session).data, status=status.HTTP_201_CREATED)
 
 
+class MentorSessionsView(APIView):
+    permission_classes = [IsAuthenticated, IsMentorUser]
+
+    def get_assignment(self, request, payload):
+        assignment_id = payload.get("assignment")
+        if assignment_id:
+            return get_object_or_404(select_assignment_queryset(), pk=assignment_id, mentor=request.user)
+
+        mentoree_id = payload.get("mentoree") or payload.get("mentoree_id")
+        if not mentoree_id:
+            return None
+        return get_object_or_404(
+            select_assignment_queryset(),
+            mentor=request.user,
+            mentoree_id=mentoree_id,
+            status=MentorshipAssignment.Status.ACTIVE,
+        )
+
+    def get(self, request):
+        sessions = filter_sessions(
+            select_session_queryset().filter(assignment__mentor=request.user),
+            request.query_params,
+        )
+        return Response(MentorshipSessionSerializer(sessions, many=True).data)
+
+    def post(self, request):
+        payload = request.data.copy()
+        assignment = self.get_assignment(request, payload)
+        if assignment is None:
+            return Response(
+                {"mentoree": "Selectionnez un mentore ou une affectation."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        payload["assignment"] = assignment.id
+        serializer = MentorshipSessionSerializer(data=payload)
+        serializer.is_valid(raise_exception=True)
+        session = serializer.save()
+        return Response(MentorshipSessionSerializer(session).data, status=status.HTTP_201_CREATED)
+
+
 class MentorSessionDetailView(APIView):
     permission_classes = [IsAuthenticated, IsMentorUser]
 
@@ -429,6 +479,60 @@ class MentorAssignmentProgressView(APIView):
         serializer.is_valid(raise_exception=True)
         updated = serializer.save()
         return Response(MentoreeProgressSerializer(updated).data)
+
+
+class MentorFollowUpsView(APIView):
+    permission_classes = [IsAuthenticated, IsMentorUser]
+
+    def get(self, request):
+        sessions = filter_sessions(
+            select_session_queryset().filter(
+                assignment__mentor=request.user,
+                status=MentorshipSession.Status.COMPLETED,
+            ),
+            request.query_params,
+        )
+        return Response(MentorshipSessionSerializer(sessions, many=True).data)
+
+
+class MentorFollowUpDetailView(APIView):
+    permission_classes = [IsAuthenticated, IsMentorUser]
+
+    def patch(self, request, pk: int):
+        session = get_object_or_404(select_session_queryset(), pk=pk, assignment__mentor=request.user)
+        payload = request.data.copy()
+        session_payload = {
+            "assignment": session.assignment_id,
+            "status": MentorshipSession.Status.COMPLETED,
+            "summary": payload.get("summary", session.summary),
+            "mentor_comment": payload.get("observation", payload.get("mentor_comment", session.mentor_comment)),
+        }
+        session_serializer = MentorshipSessionSerializer(session, data=session_payload, partial=True)
+        session_serializer.is_valid(raise_exception=True)
+        updated_session = session_serializer.save()
+
+        required_sessions = session.assignment.period.required_sessions or 1
+        completed_count = session.assignment.sessions.filter(status=MentorshipSession.Status.COMPLETED).count()
+        progress_percentage = min(int((completed_count / required_sessions) * 100), 100)
+        progress, _ = MentoreeProgress.objects.get_or_create(assignment=session.assignment)
+        progress_payload = {
+            "assignment": session.assignment_id,
+            "progress_status": payload.get("progress_status", progress.progress_status),
+            "progress_percentage": progress_percentage,
+            "achievements": payload.get("observation", progress.achievements),
+            "recommendations": payload.get("recommendations", progress.recommendations),
+            "mentor_opinion": payload.get("appreciation", payload.get("mentor_opinion", progress.mentor_opinion)),
+        }
+        progress_serializer = MentoreeProgressSerializer(progress, data=progress_payload, partial=True)
+        progress_serializer.is_valid(raise_exception=True)
+        updated_progress = progress_serializer.save()
+
+        return Response(
+            {
+                "session": MentorshipSessionSerializer(updated_session).data,
+                "progress": MentoreeProgressSerializer(updated_progress).data,
+            }
+        )
 
 
 class MentorContinueAssignmentView(APIView):

@@ -9,6 +9,8 @@ from apps.mentorat.views import (
     AvailableMentorshipPeriodsView,
     DisabledLegacyMentorshipFeatureView,
     MentorContinueAssignmentView,
+    MentorFollowUpDetailView,
+    MentorFollowUpsView,
     MentorAssignmentProgressView,
     MentorAssignmentsView,
     MentorAssignmentSessionsView,
@@ -17,6 +19,7 @@ from apps.mentorat.views import (
     MentorMenteesView,
     MentorSessionCompleteView,
     MentorSessionDetailView,
+    MentorSessionsView,
     MentoratViewSet,
     MentorshipAssignmentViewSet,
     MentorshipPeriodViewSet,
@@ -39,6 +42,7 @@ urlpatterns = [
     path("mentor/mentees/", MentorMenteesView.as_view(), name="mentor-mentees"),
     path("mentor/mentees/<int:pk>/", MentorMenteeDetailView.as_view(), name="mentor-mentee-detail"),
     path("mentor/assignments/", MentorAssignmentsView.as_view(), name="mentor-assignments"),
+    path("mentor/sessions/", MentorSessionsView.as_view(), name="mentor-sessions"),
     path(
         "mentor/assignments/<int:pk>/sessions/",
         MentorAssignmentSessionsView.as_view(),
@@ -55,6 +59,8 @@ urlpatterns = [
         MentorAssignmentProgressView.as_view(),
         name="mentor-assignment-progress",
     ),
+    path("mentor/follow-ups/", MentorFollowUpsView.as_view(), name="mentor-follow-ups"),
+    path("mentor/follow-ups/<int:pk>/", MentorFollowUpDetailView.as_view(), name="mentor-follow-up-detail"),
     path(
         "mentor/assignments/<int:pk>/continue/",
         MentorContinueAssignmentView.as_view(),

@@ -1,6 +1,17 @@
 "use client";
 
-import { CalendarClock, LayoutDashboard, LogOut, Menu, Settings, TrendingUp, UsersRound, X } from "lucide-react";
+import {
+  CalendarClock,
+  ChevronDown,
+  ChevronRight,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  Settings,
+  TrendingUp,
+  UsersRound,
+  X,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
@@ -12,16 +23,27 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const mentorLinks = [
-  { href: "/mentor/dashboard", label: "Tableau de bord", icon: LayoutDashboard },
+  { href: "/mentor/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/mentor/mentees", label: "Mentores", icon: UsersRound },
   { href: "/mentor/sessions", label: "Seances", icon: CalendarClock },
-  { href: "/mentor/progress", label: "Suivis", icon: TrendingUp },
+  { href: "/mentor/follow-ups", label: "Suivis", icon: TrendingUp },
+];
+
+const mentorUtilityLinks = [
   { href: "/mentor/parametres", label: "Parametres", icon: Settings },
+];
+
+const mentorSettingsLinks = [
+  { href: "/mentor/parametres?section=account", label: "Compte" },
+  { href: "/mentor/parametres?section=session", label: "Session de mentorat" },
 ];
 
 function isActivePath(pathname: string, href: string) {
   if (href === "/mentor/mentees") {
     return pathname === href || pathname.startsWith("/mentor/mentees/");
+  }
+  if (href === "/mentor/follow-ups") {
+    return pathname === href || pathname === "/mentor/progress";
   }
 
   return pathname === href;
@@ -51,6 +73,51 @@ function MentorNav({ onNavigate }: MentorNavProps) {
             <link.icon className="size-4" aria-hidden="true" />
             {link.label}
           </Link>
+        );
+      })}
+    </nav>
+  );
+}
+
+function MentorUtilityNav({ onNavigate }: MentorNavProps) {
+  const pathname = usePathname();
+  const [isSettingsOpenByUser, setIsSettingsOpenByUser] = useState(false);
+  const isSettingsOpen = pathname === "/mentor/parametres" || isSettingsOpenByUser;
+
+  return (
+    <nav className="grid gap-1 text-sm" aria-label="Navigation compte mentor">
+      {mentorUtilityLinks.map((link) => {
+        const isActive = isActivePath(pathname, link.href);
+        return (
+          <div key={link.href} className="grid gap-1">
+            <button
+              type="button"
+              onClick={() => setIsSettingsOpenByUser((current) => !current)}
+              className={cn(
+                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-left text-white/65 transition hover:bg-white/10 hover:text-white",
+                isActive && "bg-white/10 text-white",
+              )}
+              aria-expanded={isSettingsOpen}
+            >
+              <link.icon className="size-4" aria-hidden="true" />
+              <span className="flex-1">{link.label}</span>
+              {isSettingsOpen ? <ChevronDown className="size-4" aria-hidden="true" /> : <ChevronRight className="size-4" aria-hidden="true" />}
+            </button>
+            {isSettingsOpen ? (
+              <div className="ml-5 grid gap-1 border-l border-white/10 pl-3">
+                {mentorSettingsLinks.map((settingsLink) => (
+                  <Link
+                    key={settingsLink.href}
+                    href={settingsLink.href}
+                    onClick={onNavigate}
+                    className="rounded-lg px-3 py-2 text-xs font-medium text-white/60 transition hover:bg-white/10 hover:text-white"
+                  >
+                    {settingsLink.label}
+                  </Link>
+                ))}
+              </div>
+            ) : null}
+          </div>
         );
       })}
     </nav>
@@ -111,6 +178,9 @@ export function MentorShell({ children }: { children: ReactNode }) {
               </p>
             </div>
             <MentorNav onNavigate={() => setIsMobileOpen(false)} />
+            <div className="border-t border-white/10 pt-4">
+              <MentorUtilityNav onNavigate={() => setIsMobileOpen(false)} />
+            </div>
             <Button type="button" onClick={logout} variant="outline" className="w-full border-white/15 bg-white/5 text-white hover:bg-white/10">
               <LogOut aria-hidden="true" />
               Deconnexion
@@ -134,6 +204,10 @@ export function MentorShell({ children }: { children: ReactNode }) {
 
           <div className="mt-5">
             <MentorNav />
+          </div>
+
+          <div className="mt-5 border-t border-white/10 pt-4">
+            <MentorUtilityNav />
           </div>
 
           <div className="mt-5">

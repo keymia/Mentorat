@@ -315,6 +315,8 @@ class MentorshipAssignmentSerializer(CleanModelSerializer):
     completed_sessions_count = serializers.SerializerMethodField()
     remaining_sessions_count = serializers.SerializerMethodField()
     missing_sessions_count = serializers.SerializerMethodField()
+    progress_status = serializers.SerializerMethodField()
+    progress_percentage = serializers.SerializerMethodField()
 
     class Meta:
         model = MentorshipAssignment
@@ -333,6 +335,8 @@ class MentorshipAssignmentSerializer(CleanModelSerializer):
             "completed_sessions_count",
             "remaining_sessions_count",
             "missing_sessions_count",
+            "progress_status",
+            "progress_percentage",
             "assigned_at",
             "created_at",
             "updated_at",
@@ -350,6 +354,24 @@ class MentorshipAssignmentSerializer(CleanModelSerializer):
 
     def get_missing_sessions_count(self, obj: MentorshipAssignment) -> int:
         return max(obj.period.required_sessions - self.get_scheduled_sessions_count(obj), 0)
+
+    def get_progress(self, obj: MentorshipAssignment):
+        try:
+            return obj.progress
+        except MentoreeProgress.DoesNotExist:
+            return None
+
+    def get_progress_status(self, obj: MentorshipAssignment) -> str:
+        progress = self.get_progress(obj)
+        return progress.progress_status if progress else MentoreeProgress.ProgressStatus.AVERAGE
+
+    def get_progress_percentage(self, obj: MentorshipAssignment) -> int:
+        progress = self.get_progress(obj)
+        if progress and progress.progress_percentage is not None:
+            return progress.progress_percentage
+        if not obj.period.required_sessions:
+            return 0
+        return round((self.get_completed_sessions_count(obj) / obj.period.required_sessions) * 100)
 
     def validate(self, attrs):
         instance = MentorshipAssignment(

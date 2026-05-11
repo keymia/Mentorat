@@ -29,9 +29,9 @@ export const sessionStatusLabels: Record<MentorshipSessionStatus, string> = {
 
 export const progressStatusLabels: Record<MentoreeProgressStatus, string> = {
   excellent: "Excellent",
-  good: "Bon",
-  average: "Moyen",
-  watch: "A surveiller",
+  good: "Tres bon",
+  average: "Bon",
+  watch: "Moyen",
   difficulty: "En difficulte",
 };
 
@@ -40,7 +40,7 @@ export function displayUser(user?: Pick<UtilisateurDetail, "prenom" | "nom" | "e
     return "Non renseigne";
   }
   const name = `${user.prenom ?? ""} ${user.nom ?? ""}`.trim();
-  return name ? `${name} <${user.email}>` : user.email;
+  return name || "Non renseigne";
 }
 
 export function formatDate(value?: string | null) {

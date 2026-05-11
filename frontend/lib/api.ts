@@ -135,6 +135,8 @@ export type MentorshipAssignment = {
   completed_sessions_count: number;
   remaining_sessions_count: number;
   missing_sessions_count: number;
+  progress_status: MentoreeProgressStatus;
+  progress_percentage: number;
   assigned_at: string;
   created_at: string;
   updated_at: string;
@@ -188,6 +190,9 @@ export type MentorDashboard = {
     remaining_sessions: number;
     missing_sessions: number;
   };
+  global_progress: number;
+  last_sessions: MentorshipSession[];
+  mentees_needing_follow_up: MentorshipAssignment[];
   assignments: MentorshipAssignment[];
 };
 
@@ -384,10 +389,10 @@ export function login(email: string, mot_de_passe: string) {
   });
 }
 
-export function updateOwnPassword(motDePasse: string) {
+export function updateOwnPassword(ancienMotDePasse: string, motDePasse: string) {
   return apiFetch<{ detail: string }>("/auth/password/", {
     method: "POST",
-    body: JSON.stringify({ mot_de_passe: motDePasse }),
+    body: JSON.stringify({ ancien_mot_de_passe: ancienMotDePasse, mot_de_passe: motDePasse }),
   });
 }
 
@@ -585,11 +590,29 @@ export function getMentorAssignmentSessions(assignmentId: number) {
   return apiFetch<MentorshipSession[]>(`/mentor/assignments/${assignmentId}/sessions/`);
 }
 
+export function getMentorSessions() {
+  return apiFetch<MentorshipSession[]>("/mentor/sessions/");
+}
+
 export function createMentorAssignmentSession(
   assignmentId: number,
   payload: Pick<MentorshipSession, "session_number" | "scheduled_date" | "start_time" | "end_time" | "status" | "summary" | "mentor_comment">,
 ) {
   return apiFetch<MentorshipSession>(`/mentor/assignments/${assignmentId}/sessions/`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function createMentorSession(
+  payload: Pick<MentorshipSession, "session_number" | "scheduled_date" | "start_time" | "end_time" | "summary"> & {
+    assignment?: number;
+    mentoree?: number;
+    mentor_comment?: string;
+    status?: MentorshipSessionStatus;
+  },
+) {
+  return apiFetch<MentorshipSession>("/mentor/sessions/", {
     method: "POST",
     body: JSON.stringify(payload),
   });
@@ -615,6 +638,26 @@ export function getMentorAssignmentProgress(assignmentId: number) {
 
 export function updateMentorAssignmentProgress(assignmentId: number, payload: Partial<MentoreeProgress>) {
   return apiFetch<MentoreeProgress>(`/mentor/assignments/${assignmentId}/progress/`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function getMentorFollowUps() {
+  return apiFetch<MentorshipSession[]>("/mentor/follow-ups/");
+}
+
+export function updateMentorFollowUp(
+  id: number,
+  payload: {
+    progress_status: MentoreeProgressStatus;
+    appreciation: string;
+    observation?: string;
+    recommendations?: string;
+    summary?: string;
+  },
+) {
+  return apiFetch<{ session: MentorshipSession; progress: MentoreeProgress }>(`/mentor/follow-ups/${id}/`, {
     method: "PATCH",
     body: JSON.stringify(payload),
   });
