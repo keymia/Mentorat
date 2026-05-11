@@ -9,6 +9,12 @@ export type NiveauAcademique = {
   est_dernier_niveau: boolean;
 };
 
+export type Role = {
+  id: number;
+  nom: string;
+  description: string;
+};
+
 export type MentorDisponible = {
   id: number;
   nom: string;
@@ -19,6 +25,7 @@ export type MentorDisponible = {
   region: string;
   niveau_academique: number;
   niveau_academique_nom: string;
+  niveau_academique_est_premier_niveau?: boolean;
   disponibilite: string;
   objectifs: string;
   capacite_mentorat: number;
@@ -74,6 +81,24 @@ export type UtilisateurDetail = MentorDisponible & {
   role_nom?: string;
   profil_mentorat?: "MENTOR" | "MENTORE" | "MENTOR_ET_MENTORE" | null;
   statut_compte?: string;
+  is_active?: boolean;
+};
+
+export type UtilisateurPayload = {
+  nom?: string;
+  prenom?: string;
+  email?: string;
+  telephone?: string;
+  mot_de_passe?: string;
+  langue_preferee?: "FR" | "EN";
+  region?: string;
+  objectifs?: string;
+  profil_mentorat?: "MENTOR" | "MENTORE" | "MENTOR_ET_MENTORE" | "";
+  capacite_mentorat?: number;
+  statut_compte?: string;
+  role?: number | null;
+  niveau_academique?: number | null;
+  is_active?: boolean;
 };
 
 export type MentorshipPeriodStatus = "draft" | "active" | "completed" | "archived";
@@ -359,8 +384,30 @@ export function login(email: string, mot_de_passe: string) {
   });
 }
 
+export function updateOwnPassword(motDePasse: string) {
+  return apiFetch<{ detail: string }>("/auth/password/", {
+    method: "POST",
+    body: JSON.stringify({ mot_de_passe: motDePasse }),
+  });
+}
+
+export function getCurrentUser() {
+  return apiFetch<UtilisateurDetail>("/auth/me/");
+}
+
+export function updateOwnProfile(payload: Pick<UtilisateurPayload, "nom" | "prenom" | "email" | "telephone" | "langue_preferee" | "region" | "objectifs">) {
+  return apiFetch<UtilisateurDetail>("/auth/me/", {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
 export function getNiveaux() {
   return apiFetch<NiveauAcademique[]>("/niveaux/", { auth: false });
+}
+
+export function getRoles() {
+  return apiFetch<Role[]>("/roles/");
 }
 
 export function getMentorsDisponibles(niveauId: number, periodId?: number | string) {
@@ -436,6 +483,20 @@ function toQueryString(filters: MentorshipFilters = {}) {
 
 export function getUsersByProfil(profilMentorat: string) {
   return apiFetch<UtilisateurDetail[]>(`/users/?profil_mentorat=${profilMentorat}`);
+}
+
+export function createUtilisateur(payload: UtilisateurPayload) {
+  return apiFetch<UtilisateurDetail>("/users/", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function updateUtilisateur(id: number, payload: UtilisateurPayload) {
+  return apiFetch<UtilisateurDetail>(`/users/${id}/`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
 }
 
 export function getMentorshipPeriods() {

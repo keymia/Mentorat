@@ -1,17 +1,26 @@
-import { PageHeader } from "@/components/layout/PageHeader";
-import { SiteFooter } from "@/components/layout/SiteFooter";
-import { SiteHeader } from "@/components/layout/SiteHeader";
+import { Settings } from "lucide-react";
+import Link from "next/link";
+
+import { MentorPageHeader } from "@/components/mentor/MentorPageHeader";
 import { MentorDashboardPanel } from "@/components/mentor/mentorship/MentorDashboardPanel";
+import { Button } from "@/components/ui/button";
 
 export default function MentorDashboardPage() {
   return (
-    <div className="min-h-screen bg-background">
-      <SiteHeader />
-      <PageHeader eyebrow="Espace mentor" title="Tableau de bord" description="Vue d'ensemble de vos mentores et seances." />
-      <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
-        <MentorDashboardPanel />
-      </main>
-      <SiteFooter />
+    <div className="grid gap-6">
+      <MentorPageHeader
+        title="Tableau de bord"
+        description="Affectations, seances et suivis actifs."
+        actions={
+          <Button asChild variant="outline">
+            <Link href="/mentor/parametres">
+              <Settings aria-hidden="true" />
+              Parametres
+            </Link>
+          </Button>
+        }
+      />
+      <MentorDashboardPanel />
     </div>
   );
 }

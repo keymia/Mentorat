@@ -10,6 +10,10 @@ export default function AdminMentorsPage() {
         endpoint="/mentors/"
         emptyMessage="Aucun mentor a afficher pour le moment."
         showCapacity
+        defaultRoleName="MENTOR"
+        defaultProfile="MENTOR"
+        profileOptions={["MENTOR", "MENTOR_ET_MENTORE"]}
+        createButtonLabel="Creer un mentor"
       />
     </AdminShell>
   );

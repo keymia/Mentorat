@@ -3,6 +3,9 @@ from django.core.exceptions import ValidationError
 from django.db import models
 
 
+DEFAULT_MENTORAT_PASSWORD = "mentor123"
+
+
 class Role(models.Model):
     class Nom(models.TextChoices):
         ADMIN_PRINCIPAL = "ADMIN_PRINCIPAL", "Administrateur principal"
@@ -38,11 +41,14 @@ class UtilisateurManager(BaseUserManager):
         if not email:
             raise ValueError("L'adresse email est obligatoire.")
         email = self.normalize_email(email)
+        if not password and extra_fields.get("profil_mentorat"):
+            password = DEFAULT_MENTORAT_PASSWORD
         utilisateur = self.model(email=email, **extra_fields)
         if password:
             utilisateur.set_password(password)
         else:
             utilisateur.set_unusable_password()
+        utilisateur.full_clean()
         utilisateur.save(using=self._db)
         return utilisateur
 
@@ -163,6 +169,13 @@ class Utilisateur(AbstractBaseUser, PermissionsMixin):
             self.ProfilMentorat.MENTOR_ET_MENTORE,
         }
 
+    @classmethod
+    def profil_inclut_mentor(cls, profil: str | None) -> bool:
+        return profil in {
+            cls.ProfilMentorat.MENTOR,
+            cls.ProfilMentorat.MENTOR_ET_MENTORE,
+        }
+
     def capacite_effective(self) -> int:
         from apps.parametres.models import ParametreSysteme
 
@@ -179,12 +192,9 @@ class Utilisateur(AbstractBaseUser, PermissionsMixin):
         if not self.niveau_academique or not self.profil_mentorat:
             return
 
-        if (
-            self.niveau_academique.est_premier_niveau
-            and self.profil_mentorat != self.ProfilMentorat.MENTORE
-        ):
+        if self.niveau_academique.est_premier_niveau and self.profil_inclut_mentor(self.profil_mentorat):
             raise ValidationError(
-                {"profil_mentorat": "Le premier niveau academique peut seulement etre mentore."}
+                {"niveau_academique": "Un mentor ne peut pas etre en 12e annee."}
             )
 
         if (

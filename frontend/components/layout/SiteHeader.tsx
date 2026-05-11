@@ -1,6 +1,6 @@
 "use client";
 
-import { Menu, ShieldCheck, X } from "lucide-react";
+import { LogIn, Menu, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -51,8 +51,8 @@ export function SiteHeader() {
           <ThemeToggle />
           <Button asChild variant="outline" size="sm">
             <Link href="/admin/login">
-              <ShieldCheck aria-hidden="true" />
-              Admin
+              <LogIn aria-hidden="true" />
+              Connexion
             </Link>
           </Button>
           <Button asChild variant="outline" size="sm">
@@ -93,8 +93,8 @@ export function SiteHeader() {
             <div className="mt-3 grid gap-2 sm:grid-cols-2">
               <Button asChild variant="outline">
                 <Link href="/admin/login" onClick={() => setIsOpen(false)}>
-                  <ShieldCheck aria-hidden="true" />
-                  Admin
+                  <LogIn aria-hidden="true" />
+                  Connexion
                 </Link>
               </Button>
               <Button asChild>

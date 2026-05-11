@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   MentoreeProgress,
+  MentorshipFilters,
   MentorshipPeriod,
   UtilisateurDetail,
   formatApiError,
@@ -18,22 +19,35 @@ import {
 } from "@/lib/api";
 import { displayUser, formatDateTime, progressStatusLabels } from "@/lib/mentorship";
 
-export function AdminMentorshipProgress() {
+type AdminMentorshipProgressProps = {
+  showHeader?: boolean;
+  showFilters?: boolean;
+  filters?: MentorshipFilters;
+};
+
+const emptyFilters = { period: "", mentor: "", mentoree: "", progress_status: "" };
+
+export function AdminMentorshipProgress({
+  showHeader = true,
+  showFilters = true,
+  filters,
+}: AdminMentorshipProgressProps) {
   const [periods, setPeriods] = useState<MentorshipPeriod[]>([]);
   const [mentors, setMentors] = useState<UtilisateurDetail[]>([]);
   const [mentees, setMentees] = useState<UtilisateurDetail[]>([]);
   const [progressRows, setProgressRows] = useState<MentoreeProgress[]>([]);
-  const [filters, setFilters] = useState({ period: "", mentor: "", mentoree: "", progress_status: "" });
+  const [localFilters, setLocalFilters] = useState(emptyFilters);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const activeFilters = filters ?? localFilters;
 
   useEffect(() => {
     let isMounted = true;
     const currentFilters = {
-      period: filters.period,
-      mentor: filters.mentor,
-      mentoree: filters.mentoree,
-      progress_status: filters.progress_status,
+      period: activeFilters.period ?? "",
+      mentor: activeFilters.mentor ?? "",
+      mentoree: activeFilters.mentoree ?? "",
+      progress_status: activeFilters.progress_status ?? "",
     };
     Promise.all([
       getMentorshipPeriods(),
@@ -63,24 +77,27 @@ export function AdminMentorshipProgress() {
     return () => {
       isMounted = false;
     };
-  }, [filters.period, filters.mentor, filters.mentoree, filters.progress_status]);
+  }, [activeFilters.period, activeFilters.mentor, activeFilters.mentoree, activeFilters.progress_status]);
 
   return (
     <div className="grid gap-5">
-      <div>
-        <h1 className="font-display text-3xl font-bold">Suivis des mentores</h1>
-        <p className="mt-2 text-sm leading-6 text-muted-foreground">
-          Consultez les avis, difficultes, progres observes et recommandations.
-        </p>
-      </div>
+      {showHeader ? (
+        <div>
+          <h1 className="font-display text-3xl font-bold">Suivis des mentores</h1>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">
+            Consultez les avis, difficultes, progres observes et recommandations.
+          </p>
+        </div>
+      ) : null}
 
       {error ? <Alert variant="error">{error}</Alert> : null}
 
+      {showFilters ? (
       <Card>
         <CardContent className="grid gap-4 p-5 md:grid-cols-2 xl:grid-cols-4">
           <label>
             Periode
-            <select className="field" value={filters.period} onChange={(event) => setFilters({ ...filters, period: event.target.value })}>
+            <select className="field" value={localFilters.period} onChange={(event) => setLocalFilters({ ...localFilters, period: event.target.value })}>
               <option value="">Toutes</option>
               {periods.map((period) => (
                 <option key={period.id} value={period.id}>
@@ -91,7 +108,7 @@ export function AdminMentorshipProgress() {
           </label>
           <label>
             Mentor
-            <select className="field" value={filters.mentor} onChange={(event) => setFilters({ ...filters, mentor: event.target.value })}>
+            <select className="field" value={localFilters.mentor} onChange={(event) => setLocalFilters({ ...localFilters, mentor: event.target.value })}>
               <option value="">Tous</option>
               {mentors.map((mentor) => (
                 <option key={mentor.id} value={mentor.id}>
@@ -102,7 +119,7 @@ export function AdminMentorshipProgress() {
           </label>
           <label>
             Mentore
-            <select className="field" value={filters.mentoree} onChange={(event) => setFilters({ ...filters, mentoree: event.target.value })}>
+            <select className="field" value={localFilters.mentoree} onChange={(event) => setLocalFilters({ ...localFilters, mentoree: event.target.value })}>
               <option value="">Tous</option>
               {mentees.map((mentee) => (
                 <option key={mentee.id} value={mentee.id}>
@@ -115,8 +132,8 @@ export function AdminMentorshipProgress() {
             Avancement
             <select
               className="field"
-              value={filters.progress_status}
-              onChange={(event) => setFilters({ ...filters, progress_status: event.target.value })}
+              value={localFilters.progress_status}
+              onChange={(event) => setLocalFilters({ ...localFilters, progress_status: event.target.value })}
             >
               <option value="">Tous</option>
               {Object.entries(progressStatusLabels).map(([value, label]) => (
@@ -128,6 +145,7 @@ export function AdminMentorshipProgress() {
           </label>
         </CardContent>
       </Card>
+      ) : null}
 
       {isLoading ? <Skeleton className="h-64" /> : null}
 

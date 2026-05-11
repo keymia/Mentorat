@@ -121,6 +121,21 @@ class MentorshipModelTests(MentorshipSetupMixin, TestCase):
                 required_sessions=3,
             )
 
+    def test_refus_mentor_en_12e_annee(self):
+        with self.assertRaises(ValidationError):
+            Utilisateur.objects.create_user(
+                email="mentor.12e@example.com",
+                password="Testpass123!",
+                nom="Ndiaye",
+                prenom="Soda",
+                role=self.role_mentor,
+                profil_mentorat=Utilisateur.ProfilMentorat.MENTOR,
+                niveau_academique=self.level_mentoree,
+                statut_compte=Utilisateur.StatutCompte.ACTIF,
+                is_active=True,
+                capacite_mentorat=1,
+            )
+
     def test_creation_affectation_mentor_mentore(self):
         assignment = MentorshipAssignment.objects.create(
             mentor=self.mentor,
@@ -292,3 +307,25 @@ class MentorshipApiTests(MentorshipSetupMixin, APITestCase):
                 status=MentorshipAssignment.Status.ACTIVE,
             ).exists()
         )
+
+    def test_inscription_mentor_refuse_12e_annee(self):
+        response = self.client.post(
+            "/api/inscriptions/mentor/",
+            {
+                "nom": "Diallo",
+                "prenom": "Mariama",
+                "email": "mentor.12e.inscription@example.com",
+                "telephone": "",
+                "langue_preferee": "FR",
+                "region": "",
+                "niveau_academique": self.level_mentoree.id,
+                "mentorship_period": self.period.id,
+                "objectifs": "Devenir mentor.",
+                "capacite_mentorat": 1,
+                "consentement": True,
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("niveau_academique", response.data)

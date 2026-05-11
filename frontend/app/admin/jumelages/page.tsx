@@ -1,10 +1,10 @@
-import { AdminResourcePage } from "@/components/admin/AdminResourcePage";
 import { AdminShell } from "@/components/admin/AdminShell";
+import { AdminMentorshipAssignments } from "@/components/admin/mentorship/AdminMentorshipAssignments";
 
 export default function AdminJumelagesPage() {
   return (
     <AdminShell>
-      <AdminResourcePage title="Gestion jumelages" description="Affectations mentorales par periode." endpoint="/mentorship-assignments/" />
+      <AdminMentorshipAssignments />
     </AdminShell>
   );
 }

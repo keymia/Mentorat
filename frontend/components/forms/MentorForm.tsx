@@ -33,7 +33,7 @@ export function MentorForm() {
     Promise.all([getNiveaux(), getAvailableMentorshipPeriods()])
       .then(([niveauxAcademiques, mentorshipPeriods]) => {
         if (isMounted) {
-          setNiveaux(niveauxAcademiques);
+          setNiveaux(niveauxAcademiques.filter((niveau) => !niveau.est_premier_niveau));
           setPeriods(mentorshipPeriods);
         }
       })
@@ -52,7 +52,8 @@ export function MentorForm() {
     setIsSubmitting(true);
     setStatus({ type: "idle", message: "" });
 
-    const formData = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const formData = new FormData(formElement);
     const payload = {
       nom: textValue(formData, "nom"),
       prenom: textValue(formData, "prenom"),
@@ -69,7 +70,7 @@ export function MentorForm() {
 
     try {
       await createMentorInscription(payload);
-      event.currentTarget.reset();
+      formElement.reset();
       setStatus({
         type: "success",
         message: "Votre inscription mentor a ete envoyee et sera validee par l'administration.",

@@ -305,6 +305,9 @@ class MentorshipAssignment(models.Model):
         if not self.mentor.niveau_academique_id or not self.mentoree.niveau_academique_id:
             raise ValidationError("Le mentor et le mentore doivent avoir un niveau academique.")
 
+        if self.mentor.niveau_academique.est_premier_niveau:
+            raise ValidationError({"mentor": "Un mentor ne peut pas etre en 12e annee."})
+
         ordre_attendu = self.mentoree.niveau_academique.ordre_niveau + 1
         if self.mentor.niveau_academique.ordre_niveau != ordre_attendu:
             raise ValidationError({"mentor": "Le mentor doit appartenir au niveau academique superieur direct."})

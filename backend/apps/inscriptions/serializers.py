@@ -59,7 +59,7 @@ class MentorInscriptionSerializer(serializers.Serializer):
         niveau = attrs["niveau_academique"]
         if niveau.est_premier_niveau:
             raise serializers.ValidationError(
-                {"niveau_academique": "Les eleves du premier niveau peuvent seulement etre mentores."}
+                {"niveau_academique": "Un mentor ne peut pas etre en 12e annee."}
             )
         limite_systeme = ParametreSysteme.get_int("MAX_MENTORES_PAR_MENTOR", 5)
         if attrs["capacite_mentorat"] > limite_systeme:

@@ -92,7 +92,8 @@ export function MentorMenteeWorkspace({ menteeId }: { menteeId: number }) {
     if (!detail) {
       return;
     }
-    const formData = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const formData = new FormData(formElement);
     setError("");
     setMessage("");
     try {
@@ -105,7 +106,7 @@ export function MentorMenteeWorkspace({ menteeId }: { menteeId: number }) {
         summary: formString(formData, "summary"),
         mentor_comment: formString(formData, "mentor_comment"),
       });
-      event.currentTarget.reset();
+      formElement.reset();
       setIsCreateSessionOpen(false);
       setMessage("Seance programmee.");
       await loadDetail();

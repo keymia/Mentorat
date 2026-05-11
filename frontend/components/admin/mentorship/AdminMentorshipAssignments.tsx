@@ -1,6 +1,6 @@
 "use client";
 
-import { Handshake, Save } from "lucide-react";
+import { Handshake, RefreshCcw, Save } from "lucide-react";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
 import { Alert } from "@/components/ui/alert";
@@ -51,6 +51,9 @@ export function AdminMentorshipAssignments() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [reassigningAssignment, setReassigningAssignment] = useState<MentorshipAssignment | null>(null);
+  const [reassignMentorId, setReassignMentorId] = useState("");
+  const [isReassigning, setIsReassigning] = useState(false);
 
   const activePeriods = useMemo(() => periods.filter((period) => period.status === "active"), [periods]);
 
@@ -63,7 +66,7 @@ export function AdminMentorshipAssignments() {
         getMentorshipAssignments(filters),
       ]);
       setPeriods(periodData);
-      setMentors(mentorData);
+      setMentors(mentorData.filter((mentor) => !mentor.niveau_academique_est_premier_niveau));
       setMentees(menteeData);
       setAssignments(assignmentData);
       setError("");
@@ -89,7 +92,7 @@ export function AdminMentorshipAssignments() {
       .then(([periodData, mentorData, menteeData, assignmentData]) => {
         if (isMounted) {
           setPeriods(periodData);
-          setMentors(mentorData);
+          setMentors(mentorData.filter((mentor) => !mentor.niveau_academique_est_premier_niveau));
           setMentees(menteeData);
           setAssignments(assignmentData);
           setError("");
@@ -155,6 +158,38 @@ export function AdminMentorshipAssignments() {
   function closeCreateModal() {
     setDraft(emptyDraft);
     setIsCreateOpen(false);
+  }
+
+  function openReassignModal(assignment: MentorshipAssignment) {
+    setReassigningAssignment(assignment);
+    setReassignMentorId(String(assignment.mentor));
+    setMessage("");
+    setError("");
+  }
+
+  function closeReassignModal() {
+    setReassigningAssignment(null);
+    setReassignMentorId("");
+  }
+
+  async function handleReassignSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!reassigningAssignment || !reassignMentorId) {
+      return;
+    }
+    setIsReassigning(true);
+    setError("");
+    setMessage("");
+    try {
+      await updateMentorshipAssignment(reassigningAssignment.id, { mentor: Number(reassignMentorId) });
+      setMessage("Mentore reassigne au nouveau mentor.");
+      closeReassignModal();
+      await loadData();
+    } catch (apiError) {
+      setError(formatApiError(apiError));
+    } finally {
+      setIsReassigning(false);
+    }
   }
 
   function renderAssignmentForm() {
@@ -266,6 +301,55 @@ export function AdminMentorshipAssignments() {
         {renderAssignmentForm()}
       </Modal>
 
+      <Modal
+        open={Boolean(reassigningAssignment)}
+        title="Reassigner le mentore"
+        description="Choisissez le nouveau mentor pour cette affectation."
+        onClose={closeReassignModal}
+      >
+        <form onSubmit={handleReassignSubmit} className="grid gap-4">
+          <div className="rounded-lg border border-border bg-muted/40 p-3 text-sm text-muted-foreground">
+            <p>
+              Mentore:{" "}
+              <span className="font-medium text-foreground">
+                {displayUser(reassigningAssignment?.mentoree_detail)}
+              </span>
+            </p>
+            <p className="mt-1">
+              Periode:{" "}
+              <span className="font-medium text-foreground">
+                {reassigningAssignment?.period_detail?.title ?? "Non renseignee"}
+              </span>
+            </p>
+          </div>
+          <label>
+            Nouveau mentor
+            <select
+              className="field"
+              required
+              value={reassignMentorId}
+              onChange={(event) => setReassignMentorId(event.target.value)}
+            >
+              <option value="">Choisir un mentor</option>
+              {mentors.map((mentor) => (
+                <option key={mentor.id} value={mentor.id}>
+                  {displayUser(mentor)} - {mentor.niveau_academique_nom}
+                </option>
+              ))}
+            </select>
+          </label>
+          <div className="flex flex-wrap gap-2">
+            <Button type="submit" disabled={isReassigning}>
+              <RefreshCcw aria-hidden="true" />
+              {isReassigning ? "Reassignation..." : "Reassigner"}
+            </Button>
+            <Button type="button" variant="outline" onClick={closeReassignModal}>
+              Annuler
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
       <Card>
         <CardContent className="grid gap-4 p-5 md:grid-cols-2">
           <label>
@@ -329,6 +413,10 @@ export function AdminMentorshipAssignments() {
                   <Button type="button" variant="outline" size="sm" onClick={() => void changeStatus(assignment, "active")}>
                     <Save aria-hidden="true" />
                     Active
+                  </Button>
+                  <Button type="button" variant="outline" size="sm" onClick={() => openReassignModal(assignment)}>
+                    <RefreshCcw aria-hidden="true" />
+                    Reassigner
                   </Button>
                   <Button type="button" variant="outline" size="sm" onClick={() => void changeStatus(assignment, "completed")}>
                     Terminer

@@ -89,7 +89,8 @@ export function MentoreForm() {
     setIsSubmitting(true);
     setStatus({ type: "idle", message: "" });
 
-    const formData = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const formData = new FormData(formElement);
     const mentorChoisi = textValue(formData, "mentor_choisi");
     const payload = {
       nom: textValue(formData, "nom"),
@@ -107,7 +108,7 @@ export function MentoreForm() {
 
     try {
       await createMentoreInscription(payload);
-      event.currentTarget.reset();
+      formElement.reset();
       setPeriodId("");
       setNiveauId("");
       setSelectedMentorId("");

@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+  MentorshipFilters,
   MentorshipPeriod,
   MentorshipSession,
   UtilisateurDetail,
@@ -20,22 +21,35 @@ import { displayUser, formatDate, normalizeTime, sessionStatusLabels } from "@/l
 
 const sessionStatusOptions = Object.entries(sessionStatusLabels);
 
-export function AdminMentorshipSessions() {
+type AdminMentorshipSessionsProps = {
+  showHeader?: boolean;
+  showFilters?: boolean;
+  filters?: MentorshipFilters;
+};
+
+const emptyFilters = { period: "", mentor: "", mentoree: "", status: "" };
+
+export function AdminMentorshipSessions({
+  showHeader = true,
+  showFilters = true,
+  filters,
+}: AdminMentorshipSessionsProps) {
   const [periods, setPeriods] = useState<MentorshipPeriod[]>([]);
   const [mentors, setMentors] = useState<UtilisateurDetail[]>([]);
   const [mentees, setMentees] = useState<UtilisateurDetail[]>([]);
   const [sessions, setSessions] = useState<MentorshipSession[]>([]);
-  const [filters, setFilters] = useState({ period: "", mentor: "", mentoree: "", status: "" });
+  const [localFilters, setLocalFilters] = useState(emptyFilters);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const activeFilters = filters ?? localFilters;
 
   useEffect(() => {
     let isMounted = true;
     const currentFilters = {
-      period: filters.period,
-      mentor: filters.mentor,
-      mentoree: filters.mentoree,
-      status: filters.status,
+      period: activeFilters.period ?? "",
+      mentor: activeFilters.mentor ?? "",
+      mentoree: activeFilters.mentoree ?? "",
+      status: activeFilters.status ?? "",
     };
     Promise.all([
       getMentorshipPeriods(),
@@ -65,24 +79,27 @@ export function AdminMentorshipSessions() {
     return () => {
       isMounted = false;
     };
-  }, [filters.period, filters.mentor, filters.mentoree, filters.status]);
+  }, [activeFilters.period, activeFilters.mentor, activeFilters.mentoree, activeFilters.status]);
 
   return (
     <div className="grid gap-5">
-      <div>
-        <h1 className="font-display text-3xl font-bold">Seances de mentorat</h1>
-        <p className="mt-2 text-sm leading-6 text-muted-foreground">
-          Consultez les seances programmees, realisees, reportees ou annulees.
-        </p>
-      </div>
+      {showHeader ? (
+        <div>
+          <h1 className="font-display text-3xl font-bold">Seances de mentorat</h1>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">
+            Consultez les seances programmees, realisees, reportees ou annulees.
+          </p>
+        </div>
+      ) : null}
 
       {error ? <Alert variant="error">{error}</Alert> : null}
 
+      {showFilters ? (
       <Card>
         <CardContent className="grid gap-4 p-5 md:grid-cols-2 xl:grid-cols-4">
           <label>
             Periode
-            <select className="field" value={filters.period} onChange={(event) => setFilters({ ...filters, period: event.target.value })}>
+            <select className="field" value={localFilters.period} onChange={(event) => setLocalFilters({ ...localFilters, period: event.target.value })}>
               <option value="">Toutes</option>
               {periods.map((period) => (
                 <option key={period.id} value={period.id}>
@@ -93,7 +110,7 @@ export function AdminMentorshipSessions() {
           </label>
           <label>
             Mentor
-            <select className="field" value={filters.mentor} onChange={(event) => setFilters({ ...filters, mentor: event.target.value })}>
+            <select className="field" value={localFilters.mentor} onChange={(event) => setLocalFilters({ ...localFilters, mentor: event.target.value })}>
               <option value="">Tous</option>
               {mentors.map((mentor) => (
                 <option key={mentor.id} value={mentor.id}>
@@ -104,7 +121,7 @@ export function AdminMentorshipSessions() {
           </label>
           <label>
             Mentore
-            <select className="field" value={filters.mentoree} onChange={(event) => setFilters({ ...filters, mentoree: event.target.value })}>
+            <select className="field" value={localFilters.mentoree} onChange={(event) => setLocalFilters({ ...localFilters, mentoree: event.target.value })}>
               <option value="">Tous</option>
               {mentees.map((mentee) => (
                 <option key={mentee.id} value={mentee.id}>
@@ -115,7 +132,7 @@ export function AdminMentorshipSessions() {
           </label>
           <label>
             Statut
-            <select className="field" value={filters.status} onChange={(event) => setFilters({ ...filters, status: event.target.value })}>
+            <select className="field" value={localFilters.status} onChange={(event) => setLocalFilters({ ...localFilters, status: event.target.value })}>
               <option value="">Tous</option>
               {sessionStatusOptions.map(([value, label]) => (
                 <option key={value} value={value}>
@@ -126,6 +143,7 @@ export function AdminMentorshipSessions() {
           </label>
         </CardContent>
       </Card>
+      ) : null}
 
       {isLoading ? <Skeleton className="h-64" /> : null}
 

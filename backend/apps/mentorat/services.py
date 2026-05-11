@@ -75,6 +75,8 @@ def validate_mentor_for_mentore_level(
         raise serializers.ValidationError({"mentor_choisi": "Le mentor choisi n'est pas actif."})
     if not mentor.niveau_academique_id:
         raise serializers.ValidationError({"mentor_choisi": "Le mentor choisi n'a pas de niveau academique."})
+    if mentor.niveau_academique.est_premier_niveau:
+        raise serializers.ValidationError({"mentor_choisi": "Un mentor ne peut pas etre en 12e annee."})
     if mentor.niveau_academique.ordre_niveau != niveau_mentore.ordre_niveau + 1:
         raise serializers.ValidationError(
             {"mentor_choisi": "Le mentor choisi doit etre au niveau superieur direct."}

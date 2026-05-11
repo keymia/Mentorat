@@ -1,10 +1,10 @@
 import { AdminShell } from "@/components/admin/AdminShell";
-import { AdminMentorshipProgress } from "@/components/admin/mentorship/AdminMentorshipProgress";
+import { AdminMentorshipFollowUpCenter } from "@/components/admin/mentorship/AdminMentorshipFollowUpCenter";
 
 export default function AdminMentorshipProgressPage() {
   return (
     <AdminShell>
-      <AdminMentorshipProgress />
+      <AdminMentorshipFollowUpCenter />
     </AdminShell>
   );
 }

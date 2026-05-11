@@ -12,7 +12,9 @@ from apps.users.serializers import (
     LoginSerializer,
     MentorDisponibleSerializer,
     NiveauAcademiqueSerializer,
+    PasswordUpdateSerializer,
     RoleSerializer,
+    SelfProfileSerializer,
     UtilisateurSerializer,
 )
 
@@ -46,6 +48,23 @@ class MeView(APIView):
 
     def get(self, request):
         return Response(UtilisateurSerializer(request.user).data)
+
+    def patch(self, request):
+        serializer = SelfProfileSerializer(request.user, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(UtilisateurSerializer(request.user).data)
+
+
+class PasswordUpdateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = PasswordUpdateSerializer(data=request.data, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        request.user.set_password(serializer.validated_data["mot_de_passe"])
+        request.user.save(update_fields=["password"])
+        return Response({"detail": "Mot de passe mis a jour."}, status=status.HTTP_200_OK)
 
 
 class RoleViewSet(viewsets.ModelViewSet):
@@ -110,6 +129,7 @@ class MentorViewSet(viewsets.ReadOnlyModelViewSet):
                     Utilisateur.ProfilMentorat.MENTOR_ET_MENTORE,
                 ]
             )
+            .filter(niveau_academique__est_premier_niveau=False)
             .order_by("niveau_academique__ordre_niveau", "nom", "prenom")
         )
 

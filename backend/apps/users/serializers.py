@@ -18,6 +18,10 @@ class NiveauAcademiqueSerializer(serializers.ModelSerializer):
 
 class UtilisateurLiteSerializer(serializers.ModelSerializer):
     niveau_academique_nom = serializers.CharField(source="niveau_academique.nom", read_only=True)
+    niveau_academique_est_premier_niveau = serializers.BooleanField(
+        source="niveau_academique.est_premier_niveau",
+        read_only=True,
+    )
     role_nom = serializers.CharField(source="role.nom", read_only=True)
     capacite_restante = serializers.IntegerField(read_only=True)
 
@@ -40,6 +44,7 @@ class UtilisateurLiteSerializer(serializers.ModelSerializer):
             "role_nom",
             "niveau_academique",
             "niveau_academique_nom",
+            "niveau_academique_est_premier_niveau",
         ]
 
 
@@ -47,6 +52,10 @@ class UtilisateurSerializer(serializers.ModelSerializer):
     mot_de_passe = serializers.CharField(write_only=True, required=False, allow_blank=True, min_length=8)
     role_nom = serializers.CharField(source="role.nom", read_only=True)
     niveau_academique_nom = serializers.CharField(source="niveau_academique.nom", read_only=True)
+    niveau_academique_est_premier_niveau = serializers.BooleanField(
+        source="niveau_academique.est_premier_niveau",
+        read_only=True,
+    )
     capacite_restante = serializers.IntegerField(read_only=True)
 
     class Meta:
@@ -71,6 +80,7 @@ class UtilisateurSerializer(serializers.ModelSerializer):
             "role_nom",
             "niveau_academique",
             "niveau_academique_nom",
+            "niveau_academique_est_premier_niveau",
             "cree_par",
             "date_creation",
             "is_active",
@@ -81,9 +91,9 @@ class UtilisateurSerializer(serializers.ModelSerializer):
         niveau = attrs.get("niveau_academique", getattr(self.instance, "niveau_academique", None))
         profil = attrs.get("profil_mentorat", getattr(self.instance, "profil_mentorat", None))
         if niveau and profil:
-            if niveau.est_premier_niveau and profil != Utilisateur.ProfilMentorat.MENTORE:
+            if niveau.est_premier_niveau and Utilisateur.profil_inclut_mentor(profil):
                 raise serializers.ValidationError(
-                    {"profil_mentorat": "Le premier niveau academique peut seulement etre mentore."}
+                    {"niveau_academique": "Un mentor ne peut pas etre en 12e annee."}
                 )
             if niveau.est_dernier_niveau and profil != Utilisateur.ProfilMentorat.MENTOR:
                 raise serializers.ValidationError(
@@ -121,6 +131,42 @@ class UtilisateurSerializer(serializers.ModelSerializer):
         return instance
 
 
+class SelfProfileSerializer(serializers.ModelSerializer):
+    role_nom = serializers.CharField(source="role.nom", read_only=True)
+    niveau_academique_nom = serializers.CharField(source="niveau_academique.nom", read_only=True)
+    capacite_restante = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = Utilisateur
+        fields = [
+            "id",
+            "nom",
+            "prenom",
+            "email",
+            "telephone",
+            "langue_preferee",
+            "region",
+            "objectifs",
+            "profil_mentorat",
+            "capacite_mentorat",
+            "nombre_mentores_actuels",
+            "capacite_restante",
+            "statut_compte",
+            "role_nom",
+            "niveau_academique_nom",
+        ]
+        read_only_fields = [
+            "id",
+            "profil_mentorat",
+            "capacite_mentorat",
+            "nombre_mentores_actuels",
+            "capacite_restante",
+            "statut_compte",
+            "role_nom",
+            "niveau_academique_nom",
+        ]
+
+
 class MentorDisponibleSerializer(UtilisateurLiteSerializer):
     capacite_restante = serializers.SerializerMethodField()
 
@@ -148,4 +194,16 @@ class LoginSerializer(serializers.Serializer):
         if not user.is_active or user.statut_compte != Utilisateur.StatutCompte.ACTIF:
             raise serializers.ValidationError("Compte inactif ou en attente de validation.")
         attrs["user"] = user
+        return attrs
+
+
+class PasswordUpdateSerializer(serializers.Serializer):
+    mot_de_passe = serializers.CharField(write_only=True, min_length=8)
+
+    def validate(self, attrs):
+        user = self.context["request"].user
+        if not user.est_mentor:
+            raise serializers.ValidationError(
+                {"mot_de_passe": "Le mot de passe sera activable lorsque ce compte deviendra mentor."}
+            )
         return attrs
