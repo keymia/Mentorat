@@ -20,6 +20,7 @@ import { useState } from "react";
 import { BrandMark } from "@/components/layout/BrandMark";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { Button } from "@/components/ui/button";
+import { clearStoredAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
 const mentorLinks = [
@@ -129,11 +130,8 @@ export function MentorShell({ children }: { children: ReactNode }) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   function logout() {
-    window.localStorage.removeItem("mentorat_access");
-    window.localStorage.removeItem("mentorat_refresh");
-    document.cookie = "mentorat_access=; path=/; max-age=0; SameSite=Lax";
-    document.cookie = "mentorat_home=; path=/; max-age=0; SameSite=Lax";
-    router.push("/admin/login");
+    clearStoredAuth();
+    router.replace("/");
   }
 
   return (
