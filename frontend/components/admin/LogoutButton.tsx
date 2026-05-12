@@ -4,16 +4,14 @@ import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { clearStoredAuth } from "@/lib/auth";
 
 export function LogoutButton() {
   const router = useRouter();
 
   function logout() {
-    window.localStorage.removeItem("mentorat_access");
-    window.localStorage.removeItem("mentorat_refresh");
-    document.cookie = "mentorat_access=; path=/; max-age=0; SameSite=Lax";
-    document.cookie = "mentorat_home=; path=/; max-age=0; SameSite=Lax";
-    router.push("/admin/login");
+    clearStoredAuth();
+    router.replace("/");
   }
 
   return (

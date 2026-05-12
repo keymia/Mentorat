@@ -29,7 +29,7 @@ export function SiteHeader() {
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
         <BrandMark />
 
-        <nav className="hidden items-center gap-1 lg:flex" aria-label="Navigation principale">
+        <nav className="hidden items-center gap-2 lg:flex" aria-label="Navigation principale">
           {publicLinks.map((link) => {
             const isActive = pathname === link.href;
             return (
@@ -37,7 +37,7 @@ export function SiteHeader() {
                 key={link.href}
                 href={link.href}
                 className={cn(
-                  "rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition hover:bg-muted hover:text-foreground",
+                  "inline-flex h-9 items-center rounded-lg px-3 text-sm font-medium leading-none text-muted-foreground transition hover:bg-muted hover:text-foreground",
                   isActive && "bg-secondary text-foreground",
                 )}
               >
@@ -54,12 +54,6 @@ export function SiteHeader() {
               <LogIn aria-hidden="true" />
               Connexion
             </Link>
-          </Button>
-          <Button asChild variant="outline" size="sm">
-            <Link href="/mentor/dashboard">Espace mentor</Link>
-          </Button>
-          <Button asChild size="sm">
-            <Link href="/inscriptions/mentore">Devenir mentore</Link>
           </Button>
         </div>
 
@@ -90,21 +84,11 @@ export function SiteHeader() {
                 {link.label}
               </Link>
             ))}
-            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            <div className="mt-3">
               <Button asChild variant="outline">
                 <Link href="/admin/login" onClick={() => setIsOpen(false)}>
                   <LogIn aria-hidden="true" />
                   Connexion
-                </Link>
-              </Button>
-              <Button asChild>
-                <Link href="/mentor/dashboard" onClick={() => setIsOpen(false)}>
-                  Espace mentor
-                </Link>
-              </Button>
-              <Button asChild>
-                <Link href="/inscriptions/mentore" onClick={() => setIsOpen(false)}>
-                  Devenir mentore
                 </Link>
               </Button>
             </div>

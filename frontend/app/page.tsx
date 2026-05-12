@@ -1,7 +1,8 @@
-import { ArrowRight, BookOpenCheck, GraduationCap, HeartHandshake, ShieldCheck, UsersRound } from "lucide-react";
+import { BookOpenCheck, GraduationCap, HeartHandshake, ShieldCheck, UsersRound } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
+import { InscriptionModalOptions } from "@/components/forms/InscriptionModalOptions";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { Badge } from "@/components/ui/badge";
@@ -60,17 +61,7 @@ export default function Home() {
                 BMC Mentorat connecte mentors et mentores dans un cadre exigeant, humain et structure autour de la
                 progression academique.
               </p>
-              <div className="mt-8 flex flex-wrap gap-3">
-                <Button asChild size="lg">
-                  <Link href="/inscriptions/mentore">
-                    Trouver un mentor
-                    <ArrowRight aria-hidden="true" />
-                  </Link>
-                </Button>
-                <Button asChild variant="outline" size="lg">
-                  <Link href="/inscriptions/mentor">Devenir mentor</Link>
-                </Button>
-              </div>
+              <InscriptionModalOptions variant="hero" />
             </Reveal>
 
             <Reveal delay={0.12} className="relative">

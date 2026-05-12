@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Libre_Baskerville } from "next/font/google";
 
+import { FloatingSiteControls } from "@/components/layout/FloatingSiteControls";
+
 import "./globals.css";
 
 const geistSans = Geist({
@@ -71,6 +73,18 @@ const themeInitScript = `
   })();
 `;
 
+const languageInitScript = `
+  (() => {
+    try {
+      const language = window.localStorage.getItem("bmc-language");
+      if (language === "en" || language === "fr") {
+        document.documentElement.lang = language;
+        document.documentElement.dataset.language = language;
+      }
+    } catch {}
+  })();
+`;
+
 export const metadata: Metadata = {
   title: "BMC Mentorat",
   description: "Plateforme de mentorat academique BMC.",
@@ -90,9 +104,11 @@ export default function RootLayout({
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+        <script dangerouslySetInnerHTML={{ __html: languageInitScript }} />
       </head>
       <body className="min-h-full bg-background text-foreground antialiased">
         {children}
+        <FloatingSiteControls />
       </body>
     </html>
   );

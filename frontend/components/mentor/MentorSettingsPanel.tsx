@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarClock, CalendarPlus, KeyRound, Pencil, Save } from "lucide-react";
+import { CalendarClock, CalendarPlus, Pencil, Save } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
@@ -20,7 +20,6 @@ import {
   getAvailableMentorshipPeriods,
   getCurrentUser,
   getMentorAssignments,
-  updateOwnPassword,
   updateOwnProfile,
 } from "@/lib/api";
 
@@ -65,16 +64,12 @@ export function MentorSettingsPanel() {
   const [renewalPeriodId, setRenewalPeriodId] = useState("");
   const [error, setError] = useState("");
   const [profileMessage, setProfileMessage] = useState("");
-  const [passwordMessage, setPasswordMessage] = useState("");
   const [sessionMessage, setSessionMessage] = useState("");
   const [profileError, setProfileError] = useState("");
-  const [passwordError, setPasswordError] = useState("");
   const [sessionError, setSessionError] = useState("");
   const [isProfileSaving, setIsProfileSaving] = useState(false);
-  const [isPasswordSaving, setIsPasswordSaving] = useState(false);
   const [isSessionSaving, setIsSessionSaving] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
-  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -145,11 +140,6 @@ export function MentorSettingsPanel() {
     setIsProfileModalOpen(true);
   }
 
-  function openPasswordModal() {
-    setPasswordError("");
-    setIsPasswordModalOpen(true);
-  }
-
   async function handleContinueSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSessionMessage("");
@@ -211,34 +201,6 @@ export function MentorSettingsPanel() {
     }
   }
 
-  async function handlePasswordSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const formElement = event.currentTarget;
-    const formData = new FormData(formElement);
-    const oldPassword = formString(formData, "ancien_mot_de_passe");
-    const password = formString(formData, "mot_de_passe");
-    const confirmation = formString(formData, "confirmation");
-    setPasswordMessage("");
-    setPasswordError("");
-
-    if (password !== confirmation) {
-      setPasswordError("Les deux mots de passe ne correspondent pas.");
-      return;
-    }
-
-    setIsPasswordSaving(true);
-    try {
-      const response = await updateOwnPassword(oldPassword, password);
-      formElement.reset();
-      setPasswordMessage(response.detail);
-      setIsPasswordModalOpen(false);
-    } catch (apiError) {
-      setPasswordError(formatApiError(apiError));
-    } finally {
-      setIsPasswordSaving(false);
-    }
-  }
-
   if (error) {
     return <Alert variant="error">{error}</Alert>;
   }
@@ -296,34 +258,6 @@ export function MentorSettingsPanel() {
         {profileError ? <Alert variant="error">{profileError}</Alert> : null}
       </Modal>
 
-      <Modal
-        open={isPasswordModalOpen}
-        title="Reinitialiser le mot de passe"
-        description="Saisissez d'abord l'ancien mot de passe, puis le nouveau."
-        className="max-w-2xl"
-        onClose={() => setIsPasswordModalOpen(false)}
-      >
-        <form onSubmit={handlePasswordSubmit} className="grid gap-4">
-          <label>
-            Ancien mot de passe
-            <Input name="ancien_mot_de_passe" type="password" required />
-          </label>
-          <label>
-            Nouveau mot de passe
-            <Input name="mot_de_passe" type="password" minLength={8} required />
-          </label>
-          <label>
-            Confirmation
-            <Input name="confirmation" type="password" minLength={8} required />
-          </label>
-          <Button type="submit" className="w-fit" disabled={isPasswordSaving}>
-            <KeyRound aria-hidden="true" />
-            {isPasswordSaving ? "Enregistrement..." : "Modifier"}
-          </Button>
-        </form>
-        {passwordError ? <Alert variant="error">{passwordError}</Alert> : null}
-      </Modal>
-
       {section === "account" ? (
         <Card>
           <CardHeader className="gap-4 lg:flex lg:flex-row lg:items-start lg:justify-between">
@@ -336,15 +270,10 @@ export function MentorSettingsPanel() {
                 <Pencil aria-hidden="true" />
                 Modifier
               </Button>
-              <Button type="button" variant="secondary" onClick={openPasswordModal}>
-                <KeyRound aria-hidden="true" />
-                Reinitialiser le mot de passe
-              </Button>
             </div>
           </CardHeader>
           <CardContent className="grid gap-4">
             {profileMessage ? <Alert variant="success">{profileMessage}</Alert> : null}
-            {passwordMessage ? <Alert variant="success">{passwordMessage}</Alert> : null}
             <ul className="overflow-hidden rounded-lg border border-border">
               {accountRows.map((row, index) => (
                 <li
