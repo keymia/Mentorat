@@ -6,6 +6,7 @@ const englishDictionary: Record<string, string> = {
   Accueil: "Home",
   "A propos": "About",
   Programme: "Program",
+  Equipes: "Team",
   Inscriptions: "Registration",
   Evenements: "Events",
   Partenaires: "Partners",
@@ -25,7 +26,6 @@ const englishDictionary: Record<string, string> = {
   "BMC Mentorat connecte mentors et mentores dans un cadre exigeant, humain et structure autour de la progression academique.":
     "BMC Mentorship connects mentors and mentees in a rigorous, human-centered, and structured framework built around academic progress.",
   "Trouver un mentor": "Find a mentor",
-  "Devenir mentor": "Become a mentor",
   "Cadre fiable": "Trusted framework",
   "Mentors inscrits, valides et suivis par l'administration.": "Mentors are registered, validated, and monitored by the administration.",
   "Progression claire": "Clear progression",
@@ -46,6 +46,7 @@ const englishDictionary: Record<string, string> = {
   "Inscrivez-vous comme mentor ou mentore. L'administration valide ensuite les profils et les jumelages.":
     "Register as a mentor or mentee. The administration then validates profiles and matches.",
   "Voir le programme": "View the program",
+  "Voir les equipes": "View the team",
   "S'inscrire": "Register",
   "Choisir le bon formulaire": "Choose the right form",
   "Les inscriptions sont creees en attente, puis validees par l'administration.":
@@ -57,7 +58,7 @@ const englishDictionary: Record<string, string> = {
   "Pour choisir un mentor du niveau academique superieur direct.": "To choose a mentor from the directly higher academic level.",
   "Ouvrir le formulaire mentore": "Open mentee form",
   "Inscription mentor": "Mentor registration",
-  "Indiquez votre niveau academique et votre capacite d'accompagnement.": "Provide your academic level and mentoring capacity.",
+  "Indiquez votre niveau academique et vos informations de profil.": "Provide your academic level and profile information.",
   "Inscription mentore": "Mentee registration",
   "Choisissez la periode, votre niveau et un mentor disponible.": "Choose the period, your level, and an available mentor.",
   Nom: "Last name",
@@ -70,10 +71,10 @@ const englishDictionary: Record<string, string> = {
   Region: "Region",
   "Niveau academique": "Academic level",
   "Choisir un niveau": "Choose a level",
-  "Periode de mentorat": "Mentorship period",
   "Choisir une periode": "Choose a period",
   "Capacite de mentorat": "Mentoring capacity",
   Objectifs: "Goals",
+  "Mini bio": "Short bio",
   "Je consens au traitement de mes informations pour le programme Mentorat.":
     "I consent to the processing of my information for the Mentorship program.",
   "Envoi...": "Sending...",
@@ -119,8 +120,8 @@ const englishDictionary: Record<string, string> = {
   "Aucun partenaire actif a afficher pour le moment.": "There are no active partners to display right now.",
   "Site web": "Website",
   "Devenir mentor": "Become a mentor",
-  "Indiquez votre niveau academique et la capacite de mentorat que vous pouvez assumer.":
-    "Specify your academic level and the mentoring capacity you can take on.",
+  "Indiquez votre niveau academique et les informations utiles a votre profil mentor.":
+    "Specify your academic level and the information useful for your mentor profile.",
   "Choisir un mentor admissible": "Choose an eligible mentor",
   "Apres le choix du niveau academique, la liste affiche uniquement les mentors actifs du niveau superieur direct avec une capacite disponible.":
     "After selecting the academic level, the list shows only active mentors from the directly higher level with available capacity.",
@@ -217,7 +218,6 @@ const englishDictionary: Record<string, string> = {
   "Evenements planifies dans le programme.": "Events scheduled in the program.",
   "Partenaires visibles sur le site public.": "Partners visible on the public site.",
   "Aucune donnee pour le moment.": "No data at the moment.",
-  "Dashboard": "Dashboard",
 };
 
 const exactFrenchToEnglish = new Map(

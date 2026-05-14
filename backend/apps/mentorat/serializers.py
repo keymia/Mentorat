@@ -277,13 +277,14 @@ class MentorshipPeriodSerializer(CleanModelSerializer):
             "end_date",
             "required_sessions",
             "status",
+            "auto_completed_at",
             "assignments_count",
             "sessions_count",
             "completed_sessions_count",
             "created_at",
             "updated_at",
         ]
-        read_only_fields = ["created_at", "updated_at"]
+        read_only_fields = ["auto_completed_at", "created_at", "updated_at"]
 
     def validate(self, attrs):
         instance = MentorshipPeriod(

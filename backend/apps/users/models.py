@@ -1,9 +1,17 @@
+import secrets
+import uuid
+from datetime import timedelta
+
+from django.contrib.auth.hashers import check_password, make_password
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils import timezone
 
 
 DEFAULT_MENTORAT_PASSWORD = "mentor123"
+MENTOR_ACADEMIC_LEVEL_ORDERS = {2, 3, 4}
+MENTOREE_ACADEMIC_LEVEL_ORDERS = {1, 2, 3}
 
 
 class Role(models.Model):
@@ -25,6 +33,7 @@ class Role(models.Model):
 
 class NiveauAcademique(models.Model):
     nom = models.CharField(max_length=100, unique=True)
+    code = models.CharField(max_length=50, unique=True, null=True, blank=True)
     ordre_niveau = models.PositiveSmallIntegerField(unique=True)
     est_premier_niveau = models.BooleanField(default=False)
     est_dernier_niveau = models.BooleanField(default=False)
@@ -85,7 +94,6 @@ class Utilisateur(AbstractBaseUser, PermissionsMixin):
         EN_ATTENTE = "EN_ATTENTE", "En attente"
         ACTIF = "ACTIF", "Actif"
         INACTIF = "INACTIF", "Inactif"
-        REFUSE = "REFUSE", "Refuse"
         SUSPENDU = "SUSPENDU", "Suspendu"
 
     nom = models.CharField(max_length=150)
@@ -96,6 +104,16 @@ class Utilisateur(AbstractBaseUser, PermissionsMixin):
     region = models.CharField(max_length=150, blank=True)
     disponibilite = models.TextField(blank=True)
     objectifs = models.TextField(blank=True)
+    mini_bio = models.TextField(blank=True)
+    profile_photo = models.ImageField(upload_to="mentor_profiles/", blank=True, null=True)
+    domaine_specialite = models.CharField(max_length=180, blank=True)
+    wants_to_appear_on_team_page = models.BooleanField(default=False)
+    is_team_approved = models.BooleanField(default=False)
+    team_display_order = models.PositiveSmallIntegerField(default=0)
+    can_appear_on_about_page = models.BooleanField(default=False)
+    public_title = models.CharField(max_length=120, blank=True)
+    public_description = models.TextField(blank=True)
+    public_photo = models.ImageField(upload_to="admin_profiles/", blank=True, null=True)
     profil_mentorat = models.CharField(
         max_length=20,
         choices=ProfilMentorat.choices,
@@ -169,12 +187,31 @@ class Utilisateur(AbstractBaseUser, PermissionsMixin):
             self.ProfilMentorat.MENTOR_ET_MENTORE,
         }
 
+    @property
+    def requiert_double_authentification(self) -> bool:
+        return self.est_administrateur or self.est_mentor
+
     @classmethod
     def profil_inclut_mentor(cls, profil: str | None) -> bool:
         return profil in {
             cls.ProfilMentorat.MENTOR,
             cls.ProfilMentorat.MENTOR_ET_MENTORE,
         }
+
+    @classmethod
+    def profil_inclut_mentore(cls, profil: str | None) -> bool:
+        return profil in {
+            cls.ProfilMentorat.MENTORE,
+            cls.ProfilMentorat.MENTOR_ET_MENTORE,
+        }
+
+    @staticmethod
+    def niveau_autorise_pour_mentor(niveau: NiveauAcademique | None) -> bool:
+        return bool(niveau and niveau.ordre_niveau in MENTOR_ACADEMIC_LEVEL_ORDERS)
+
+    @staticmethod
+    def niveau_autorise_pour_mentore(niveau: NiveauAcademique | None) -> bool:
+        return bool(niveau and niveau.ordre_niveau in MENTOREE_ACADEMIC_LEVEL_ORDERS)
 
     def capacite_effective(self) -> int:
         from apps.parametres.models import ParametreSysteme
@@ -189,32 +226,119 @@ class Utilisateur(AbstractBaseUser, PermissionsMixin):
 
     def clean(self):
         super().clean()
+        if self.pk and self.niveau_academique_id:
+            ancien_niveau_id = (
+                type(self)
+                .objects.filter(pk=self.pk)
+                .values_list("niveau_academique_id", flat=True)
+                .first()
+            )
+            if ancien_niveau_id and ancien_niveau_id != self.niveau_academique_id:
+                ancien_niveau = NiveauAcademique.objects.filter(pk=ancien_niveau_id).first()
+                if ancien_niveau and self.niveau_academique.ordre_niveau < ancien_niveau.ordre_niveau:
+                    raise ValidationError(
+                        {"niveau_academique": "Le niveau academique ne peut pas diminuer."}
+                    )
+
+        if self.can_appear_on_about_page and not self.public_title.strip():
+            raise ValidationError(
+                {"public_title": "Le titre public est obligatoire pour apparaitre sur la page A propos."}
+            )
+
         if not self.niveau_academique or not self.profil_mentorat:
             return
 
-        if self.niveau_academique.est_premier_niveau and self.profil_inclut_mentor(self.profil_mentorat):
-            raise ValidationError(
-                {"niveau_academique": "Un mentor ne peut pas etre en 12e annee."}
-            )
-
-        if (
-            self.niveau_academique.est_dernier_niveau
-            and self.profil_mentorat != self.ProfilMentorat.MENTOR
+        if self.profil_inclut_mentor(self.profil_mentorat) and not self.niveau_autorise_pour_mentor(
+            self.niveau_academique
         ):
             raise ValidationError(
-                {"profil_mentorat": "Le dernier niveau academique peut seulement etre mentor."}
+                {"niveau_academique": "Ce niveau academique n'est pas autorise pour un mentor."}
             )
+        if self.profil_inclut_mentor(self.profil_mentorat):
+            from apps.parametres.models import ParametreSysteme
 
-        if (
-            not self.niveau_academique.est_premier_niveau
-            and not self.niveau_academique.est_dernier_niveau
-            and self.profil_mentorat == self.ProfilMentorat.MENTORE
+            limite_systeme = ParametreSysteme.get_int("MAX_MENTORES_PAR_MENTOR", 5)
+            if self.capacite_mentorat > limite_systeme:
+                raise ValidationError(
+                    {
+                        "capacite_mentorat": (
+                            f"La capacite ne peut pas depasser le maximum autorise de "
+                            f"{limite_systeme} mentores."
+                        )
+                    }
+                )
+
+        if self.profil_inclut_mentore(self.profil_mentorat) and not self.niveau_autorise_pour_mentore(
+            self.niveau_academique
         ):
             raise ValidationError(
-                {
-                    "profil_mentorat": (
-                        "Un niveau intermediaire doit etre mentor seulement "
-                        "ou mentor et mentore."
-                    )
-                }
+                {"niveau_academique": "Ce niveau academique n'est pas autorise pour un mentore."}
             )
+
+        if self.wants_to_appear_on_team_page:
+            errors = {}
+            if not self.niveau_academique:
+                errors["niveau_academique"] = "Le niveau academique est obligatoire pour apparaitre sur la page Equipes."
+            if not self.domaine_specialite.strip():
+                errors["domaine_specialite"] = "Le domaine ou la specialite est obligatoire."
+            if not self.profile_photo:
+                errors["profile_photo"] = "La photo est obligatoire pour apparaitre sur la page Equipes."
+            if not self.mini_bio.strip():
+                errors["mini_bio"] = "La mini bio est obligatoire pour apparaitre sur la page Equipes."
+            if errors:
+                raise ValidationError(errors)
+
+        if self.is_team_approved and self.team_display_order < 1:
+            raise ValidationError(
+                {"team_display_order": "L'ordre d'affichage doit etre superieur a 0."}
+            )
+
+
+class LoginVerificationCode(models.Model):
+    CODE_TTL_MINUTES = 15
+
+    user = models.ForeignKey(
+        Utilisateur,
+        on_delete=models.CASCADE,
+        related_name="login_verification_codes",
+    )
+    challenge_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    code_hash = models.CharField(max_length=128)
+    expires_at = models.DateTimeField()
+    used_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["challenge_id", "used_at", "expires_at"]),
+            models.Index(fields=["user", "created_at"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"Code de connexion pour {self.user.email}"
+
+    @property
+    def is_expired(self) -> bool:
+        return timezone.now() >= self.expires_at
+
+    @property
+    def is_used(self) -> bool:
+        return self.used_at is not None
+
+    @classmethod
+    def create_for_user(cls, user: Utilisateur) -> tuple["LoginVerificationCode", str]:
+        code = f"{secrets.randbelow(1_000_000):06d}"
+        challenge = cls.objects.create(
+            user=user,
+            code_hash=make_password(code),
+            expires_at=timezone.now() + timedelta(minutes=cls.CODE_TTL_MINUTES),
+        )
+        return challenge, code
+
+    def check_code(self, code: str) -> bool:
+        return not self.is_used and not self.is_expired and check_password(code, self.code_hash)
+
+    def mark_used(self):
+        self.used_at = timezone.now()
+        self.save(update_fields=["used_at"])

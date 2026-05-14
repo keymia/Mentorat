@@ -14,11 +14,22 @@ ROLES_DEFAUT = [
 ]
 
 NIVEAUX_DEFAUT = [
-    ("12e annee", 1, True, False),
-    ("Niveau 1", 2, False, False),
-    ("Niveau 2", 3, False, False),
-    ("Niveau 3", 4, False, False),
-    ("Niveau 4", 5, False, True),
+    ("Je suis au secondaire", "mentoree_secondary", 1, True, False),
+    (
+        "Je suis etudiant(e) au college ou en 1ere / 2e annee de baccalaureat",
+        "mentor_level_1",
+        2,
+        False,
+        False,
+    ),
+    (
+        "Je suis etudiant(e) en 3e / 4e annee de baccalaureat ou a la maitrise",
+        "mentor_level_2",
+        3,
+        False,
+        False,
+    ),
+    ("Je suis etudiant(e) en medecine", "mentor_level_3", 4, False, True),
 ]
 
 
@@ -44,11 +55,12 @@ class Command(BaseCommand):
         self.stdout.write("Roles par defaut verifies.")
 
     def _creer_niveaux(self):
-        for nom, ordre_niveau, est_premier_niveau, est_dernier_niveau in NIVEAUX_DEFAUT:
+        for nom, code, ordre_niveau, est_premier_niveau, est_dernier_niveau in NIVEAUX_DEFAUT:
             NiveauAcademique.objects.update_or_create(
                 ordre_niveau=ordre_niveau,
                 defaults={
                     "nom": nom,
+                    "code": code,
                     "est_premier_niveau": est_premier_niveau,
                     "est_dernier_niveau": est_dernier_niveau,
                 },

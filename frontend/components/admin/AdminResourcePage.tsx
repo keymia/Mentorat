@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import { FileText } from "lucide-react";
 
-import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ListTable } from "@/components/ui/list-table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatApiError, getAdminCollection } from "@/lib/api";
 
@@ -58,27 +58,27 @@ export function AdminResourcePage({ title, description, endpoint }: AdminResourc
       {isLoading ? <Skeleton className="h-56" /> : null}
       {error ? <p className="notice error">{error}</p> : null}
       {!isLoading && !error ? (
-        <Card className="overflow-hidden">
-          <div className="border-b border-border bg-muted px-4 py-3 text-sm font-medium">
-            {rows.length} element{rows.length > 1 ? "s" : ""}
-          </div>
-          <div className="max-h-[560px] overflow-auto">
-            {rows.length === 0 ? (
-              <div className="p-4">
-                <EmptyState icon={FileText} title="Aucune donnee pour le moment." />
-              </div>
-            ) : (
-              rows.map((row, index) => (
-                <pre
-                  key={String(row.id ?? index)}
-                  className="border-b border-border px-4 py-3 text-xs text-muted-foreground"
-                >
+        <ListTable
+          title="Liste des donnees"
+          countLabel={`${rows.length} element${rows.length > 1 ? "s" : ""}`}
+          minWidth={880}
+          headers={[
+            { label: "Element" },
+            { label: "Donnees" },
+          ]}
+          emptyState={rows.length === 0 ? <EmptyState icon={FileText} title="Aucune donnee pour le moment." /> : null}
+        >
+          {rows.map((row, index) => (
+            <tr key={String(row.id ?? index)} className="align-top">
+              <td className="px-4 py-3 font-medium text-foreground">#{String(row.id ?? index + 1)}</td>
+              <td className="px-4 py-3">
+                <pre className="max-h-40 overflow-auto whitespace-pre-wrap text-xs text-muted-foreground">
                   {JSON.stringify(row, null, 2)}
                 </pre>
-              ))
-            )}
-          </div>
-        </Card>
+              </td>
+            </tr>
+          ))}
+        </ListTable>
       ) : null}
     </div>
   );

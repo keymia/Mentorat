@@ -6,8 +6,8 @@ import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ListTable } from "@/components/ui/list-table";
 import { Modal } from "@/components/ui/modal";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
@@ -280,31 +280,47 @@ export function MentorFollowUpsPanel() {
         {updateSession ? renderUpdateForm(updateSession) : null}
       </Modal>
 
-      <div className="grid gap-3">
+      <ListTable
+        title="Liste des seances achevees"
+        countLabel={`${sessions.length} seance${sessions.length > 1 ? "s" : ""}`}
+        minWidth={1080}
+        headers={[
+          { label: "Mentore" },
+          { label: "Seance" },
+          { label: "Objet" },
+          { label: "Avancement" },
+          { label: "Statut" },
+          { label: "Actions", className: "text-right" },
+        ]}
+      >
         {sessions.map((session) => {
           const assignment = getAssignment(session);
           const progress = getProgress(session);
           const progressStatus = progress?.progress_status ?? assignment?.progress_status ?? "average";
           return (
-            <Card key={session.id}>
-              <CardContent className="grid gap-4 p-5 xl:grid-cols-[1.25fr_1fr_auto] xl:items-center">
-                <div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="font-semibold">{displayUser(session.mentoree_detail ?? assignment?.mentoree_detail)}</h3>
-                    <Badge variant="success">{sessionStatusLabels[session.status]}</Badge>
-                  </div>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    Seance {session.session_number} | {formatDate(session.scheduled_date)} |{" "}
-                    {normalizeTime(session.start_time) || "Heure non renseignee"}
-                    {session.end_time ? ` - ${normalizeTime(session.end_time)}` : ""}
-                  </p>
-                  <p className="mt-1 text-sm text-muted-foreground">Objet: {session.summary || "Non renseigne"}</p>
-                </div>
-                <div className="grid gap-1 text-sm text-muted-foreground">
-                  <p>{progressStatusLabels[progressStatus]}</p>
-                  <p>{generatedPercentage(assignment)}% d&apos;avancement</p>
-                </div>
-                <div className="flex flex-wrap gap-2 xl:justify-end">
+            <tr key={session.id} className="align-top">
+              <td className="px-4 py-3">
+                <p className="font-medium text-foreground">{displayUser(session.mentoree_detail ?? assignment?.mentoree_detail)}</p>
+              </td>
+              <td className="px-4 py-3 text-muted-foreground">
+                <p className="font-medium text-foreground">Seance {session.session_number}</p>
+                <p className="mt-1 text-xs">
+                  {formatDate(session.scheduled_date)} | {normalizeTime(session.start_time) || "Heure non renseignee"}
+                  {session.end_time ? ` - ${normalizeTime(session.end_time)}` : ""}
+                </p>
+              </td>
+              <td className="px-4 py-3 text-muted-foreground">
+                <p className="line-clamp-2 max-w-sm">{session.summary || "Non renseigne"}</p>
+              </td>
+              <td className="px-4 py-3 text-muted-foreground">
+                <p>{generatedPercentage(assignment)}%</p>
+                <p className="mt-1 text-xs">{progressStatusLabels[progressStatus]}</p>
+              </td>
+              <td className="px-4 py-3">
+                <Badge variant="success">{sessionStatusLabels[session.status]}</Badge>
+              </td>
+              <td className="px-4 py-3">
+                <div className="flex flex-wrap justify-end gap-2">
                   <Button type="button" variant="outline" size="sm" onClick={() => setDetailSession(session)}>
                     <Eye aria-hidden="true" />
                     Details
@@ -314,11 +330,11 @@ export function MentorFollowUpsPanel() {
                     Mise a jour
                   </Button>
                 </div>
-              </CardContent>
-            </Card>
+              </td>
+            </tr>
           );
         })}
-      </div>
+      </ListTable>
     </div>
   );
 }

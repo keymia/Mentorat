@@ -1,6 +1,7 @@
 import { BookOpenCheck, GraduationCap, HeartHandshake, ShieldCheck, UsersRound } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { Suspense } from "react";
 
 import { InscriptionModalOptions } from "@/components/forms/InscriptionModalOptions";
 import { SiteFooter } from "@/components/layout/SiteFooter";
@@ -61,7 +62,9 @@ export default function Home() {
                 BMC Mentorat connecte mentors et mentores dans un cadre exigeant, humain et structure autour de la
                 progression academique.
               </p>
-              <InscriptionModalOptions variant="hero" />
+              <Suspense fallback={null}>
+                <InscriptionModalOptions variant="hero" />
+              </Suspense>
             </Reveal>
 
             <Reveal delay={0.12} className="relative">
@@ -138,9 +141,9 @@ export default function Home() {
               </div>
               <div className="flex flex-wrap gap-3">
                 <Button asChild variant="secondary">
-                  <Link href="/programme">
+                  <Link href="/equipes">
                     <BookOpenCheck aria-hidden="true" />
-                    Voir le programme
+                    Voir les equipes
                   </Link>
                 </Button>
                 <Button asChild>

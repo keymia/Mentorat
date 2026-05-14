@@ -1,11 +1,15 @@
 "use client";
 
-import { TrendingUp } from "lucide-react";
+import { Eye, TrendingUp } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
+import { ListTable } from "@/components/ui/list-table";
+import { Modal } from "@/components/ui/modal";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   MentoreeProgress,
@@ -37,6 +41,7 @@ export function AdminMentorshipProgress({
   const [mentees, setMentees] = useState<UtilisateurDetail[]>([]);
   const [progressRows, setProgressRows] = useState<MentoreeProgress[]>([]);
   const [localFilters, setLocalFilters] = useState(emptyFilters);
+  const [detailsProgress, setDetailsProgress] = useState<MentoreeProgress | null>(null);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const activeFilters = filters ?? localFilters;
@@ -149,36 +154,77 @@ export function AdminMentorshipProgress({
 
       {isLoading ? <Skeleton className="h-64" /> : null}
 
-      <div className="grid gap-3">
-        {progressRows.map((progress) => (
-          <Card key={progress.id}>
-            <CardContent className="p-5">
-              <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-                <div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <TrendingUp className="size-4 text-muted-foreground" aria-hidden="true" />
-                    <h2 className="font-semibold">{displayUser(progress.mentoree_detail)}</h2>
-                    <Badge variant={progress.progress_status === "difficulty" ? "outline" : "success"}>
-                      {progressStatusLabels[progress.progress_status]}
-                    </Badge>
-                  </div>
-                  <p className="mt-2 text-sm text-muted-foreground">Mentor: {displayUser(progress.mentor_detail)}</p>
-                  <p className="mt-1 text-sm text-muted-foreground">Mise a jour: {formatDateTime(progress.updated_at)}</p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Progression: {progress.progress_percentage ?? "Non renseignee"}%
-                  </p>
+      {!isLoading ? (
+        <ListTable
+          title="Liste des suivis"
+          countLabel={`${progressRows.length} suivi${progressRows.length > 1 ? "s" : ""}`}
+          minWidth={1120}
+          headers={[
+            { label: "Mentore" },
+            { label: "Mentor" },
+            { label: "Statut" },
+            { label: "Pourcentage" },
+            { label: "Mise a jour" },
+            { label: "Actions", className: "text-right" },
+          ]}
+          emptyState={progressRows.length === 0 ? <EmptyState icon={TrendingUp} title="Aucun suivi a afficher." /> : null}
+        >
+          {progressRows.map((progress) => (
+            <tr key={progress.id} className="align-top">
+              <td className="px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="size-4 text-muted-foreground" aria-hidden="true" />
+                  <p className="font-medium text-foreground">{displayUser(progress.mentoree_detail)}</p>
                 </div>
-                <div className="grid max-w-2xl gap-2 text-sm leading-6 text-muted-foreground">
-                  {progress.achievements ? <p>Progres: {progress.achievements}</p> : null}
-                  {progress.difficulties ? <p>Difficultes: {progress.difficulties}</p> : null}
-                  {progress.recommendations ? <p>Recommandations: {progress.recommendations}</p> : null}
-                  {progress.mentor_opinion ? <p>Avis: {progress.mentor_opinion}</p> : null}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+              </td>
+              <td className="px-4 py-3 text-muted-foreground">{displayUser(progress.mentor_detail)}</td>
+              <td className="px-4 py-3">
+                <Badge variant={progress.progress_status === "difficulty" ? "outline" : "success"}>
+                  {progressStatusLabels[progress.progress_status]}
+                </Badge>
+              </td>
+              <td className="px-4 py-3 text-muted-foreground">{progress.progress_percentage ?? "Non renseignee"}%</td>
+              <td className="px-4 py-3 text-muted-foreground">{formatDateTime(progress.updated_at)}</td>
+              <td className="px-4 py-3 text-right">
+                <Button type="button" variant="ghost" size="sm" onClick={() => setDetailsProgress(progress)}>
+                  <Eye aria-hidden="true" />
+                  Details
+                </Button>
+              </td>
+            </tr>
+          ))}
+        </ListTable>
+      ) : null}
+
+      <Modal
+        open={Boolean(detailsProgress)}
+        title="Details du suivi"
+        description="Synthese complete du suivi selectionne."
+        className="max-w-3xl"
+        onClose={() => setDetailsProgress(null)}
+      >
+        {detailsProgress ? (
+          <div className="grid gap-3 rounded-lg border border-border bg-muted/30 p-4 md:grid-cols-2">
+            <DetailItem label="Mentore" value={displayUser(detailsProgress.mentoree_detail)} />
+            <DetailItem label="Mentor" value={displayUser(detailsProgress.mentor_detail)} />
+            <DetailItem label="Statut" value={progressStatusLabels[detailsProgress.progress_status]} />
+            <DetailItem label="Pourcentage" value={`${detailsProgress.progress_percentage ?? "Non renseigne"}%`} />
+            <DetailItem label="Progres" value={detailsProgress.achievements || "Non renseigne"} className="md:col-span-2" />
+            <DetailItem label="Difficultes" value={detailsProgress.difficulties || "Non renseigne"} className="md:col-span-2" />
+            <DetailItem label="Recommandations" value={detailsProgress.recommendations || "Non renseigne"} className="md:col-span-2" />
+            <DetailItem label="Avis du mentor" value={detailsProgress.mentor_opinion || "Non renseigne"} className="md:col-span-2" />
+          </div>
+        ) : null}
+      </Modal>
+    </div>
+  );
+}
+
+function DetailItem({ label, value, className = "" }: { label: string; value: string; className?: string }) {
+  return (
+    <div className={className}>
+      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{label}</p>
+      <p className="mt-1 text-sm font-medium text-foreground">{value}</p>
     </div>
   );
 }

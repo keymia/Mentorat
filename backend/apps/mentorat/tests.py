@@ -383,8 +383,120 @@ class MentorshipApiTests(MentorshipSetupMixin, APITestCase):
                 "region": "",
                 "niveau_academique": self.level_mentoree.id,
                 "mentorship_period": self.period.id,
-                "objectifs": "Devenir mentor.",
+                "mini_bio": "Je souhaite accompagner la releve.",
                 "capacite_mentorat": 1,
+                "consentement": True,
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("niveau_academique", response.data)
+
+    def test_profil_mentor_public_requiert_mini_bio(self):
+        self.client.force_authenticate(self.mentor)
+
+        response = self.client.patch(
+            "/api/mentor/profile/",
+            {"wants_to_appear_on_team_page": True, "mini_bio": ""},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("mini_bio", response.data)
+        self.assertIn("domaine_specialite", response.data)
+        self.assertIn("profile_photo", response.data)
+
+    def test_profil_mentor_ne_modifie_pas_le_niveau_academique(self):
+        self.mentor.profile_photo = "mentor_profiles/mentor.jpg"
+        self.mentor.save(update_fields=["profile_photo"])
+        self.client.force_authenticate(self.mentor)
+
+        response = self.client.patch(
+            "/api/mentor/profile/",
+            {
+                "niveau_academique": self.level_mentoree.id,
+                "mini_bio": "Mentore engagee.",
+                "domaine_specialite": "Sciences de la sante",
+                "wants_to_appear_on_team_page": True,
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.mentor.refresh_from_db()
+        self.assertEqual(self.mentor.niveau_academique, self.level_mentor)
+
+    def test_admin_valide_affichage_equipe_et_api_publique_filtre(self):
+        self.mentor.mini_bio = "Mentore engagee en sciences de la sante."
+        self.mentor.domaine_specialite = "Sciences de la sante"
+        self.mentor.profile_photo = "mentor_profiles/mentor.jpg"
+        self.mentor.wants_to_appear_on_team_page = True
+        self.mentor.save(
+            update_fields=[
+                "mini_bio",
+                "domaine_specialite",
+                "profile_photo",
+                "wants_to_appear_on_team_page",
+            ]
+        )
+
+        response = self.client.get("/api/public/team/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data, [])
+
+        self.client.force_authenticate(self.admin)
+        response = self.client.patch(
+            f"/api/admin/team-members/{self.mentor.id}/",
+            {"is_team_approved": True, "team_display_order": 1},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200)
+
+        self.client.force_authenticate(user=None)
+        response = self.client.get("/api/public/team/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]["nom_complet"], self.mentor.nom_complet)
+
+    def test_admin_refuse_approbation_equipe_sans_ordre_positif(self):
+        self.mentor.mini_bio = "Mentore engagee."
+        self.mentor.wants_to_appear_on_team_page = True
+        self.mentor.save(update_fields=["mini_bio", "wants_to_appear_on_team_page"])
+        self.client.force_authenticate(self.admin)
+
+        response = self.client.patch(
+            f"/api/admin/team-members/{self.mentor.id}/",
+            {"is_team_approved": True, "team_display_order": 0},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("team_display_order", response.data)
+
+    def test_inscription_mentore_refuse_niveau_medecine(self):
+        medecine, _ = NiveauAcademique.objects.update_or_create(
+            ordre_niveau=4,
+            defaults={
+                "nom": "Je suis etudiant(e) en medecine",
+                "est_premier_niveau": False,
+                "est_dernier_niveau": True,
+            },
+        )
+
+        response = self.client.post(
+            "/api/inscriptions/mentore/",
+            {
+                "nom": "Kane",
+                "prenom": "Fatou",
+                "email": "mentore.medecine@example.com",
+                "telephone": "",
+                "langue_preferee": "FR",
+                "region": "",
+                "niveau_academique": medecine.id,
+                "mentorship_period": self.period.id,
+                "objectifs": "Trouver un mentor.",
+                "mentor_choisi": self.mentor.id,
                 "consentement": True,
             },
             format="json",

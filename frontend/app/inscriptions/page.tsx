@@ -1,3 +1,5 @@
+import { Suspense } from "react";
+
 import { InscriptionModalOptions } from "@/components/forms/InscriptionModalOptions";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { PageHeader } from "@/components/PageHeader";
@@ -13,7 +15,9 @@ export default function InscriptionsPage() {
         description="Les inscriptions sont creees en attente, puis validees par l'administration."
       />
       <main className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
-        <InscriptionModalOptions />
+        <Suspense fallback={null}>
+          <InscriptionModalOptions />
+        </Suspense>
       </main>
       <SiteFooter />
     </div>

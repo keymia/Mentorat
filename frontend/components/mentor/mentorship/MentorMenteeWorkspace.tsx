@@ -6,8 +6,9 @@ import { FormEvent, useCallback, useEffect, useState } from "react";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { ListTable } from "@/components/ui/list-table";
 import { Modal } from "@/components/ui/modal";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
@@ -322,60 +323,58 @@ export function MentorMenteeWorkspace({ menteeId }: { menteeId: number }) {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Seances</CardTitle>
-          <CardDescription>Liste des rencontres, statuts, resumes et commentaires.</CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-4">
-          {detail.sessions.length > 0 ? (
-            <ul className="grid gap-3">
-              {detail.sessions.map((session) => (
-                <li key={session.id} className="rounded-lg border border-border bg-muted/25 p-4">
-                  <div className="grid gap-4 xl:grid-cols-[1fr_1.4fr_auto] xl:items-center">
-                    <div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Badge variant={session.status === "completed" ? "success" : "outline"}>
-                          {sessionStatusLabels[session.status]}
-                        </Badge>
-                        <span className="font-semibold">Seance {session.session_number}</span>
-                      </div>
-                      <p className="mt-2 text-sm text-muted-foreground">
-                        {formatDate(session.scheduled_date)} | {normalizeTime(session.start_time) || "Heure non renseignee"}
-                        {session.end_time ? ` - ${normalizeTime(session.end_time)}` : ""}
-                      </p>
-                    </div>
-
-                    <div className="grid gap-2 text-sm md:grid-cols-2">
-                      <p>
-                        <span className="block text-muted-foreground">Resume</span>
-                        <span className="font-semibold text-foreground">{session.summary || "Non renseigne"}</span>
-                      </p>
-                      <p>
-                        <span className="block text-muted-foreground">Commentaire</span>
-                        <span className="font-semibold text-foreground">{session.mentor_comment || "Aucun commentaire"}</span>
-                      </p>
-                    </div>
-
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="w-fit xl:justify-self-end"
-                      onClick={() => setSelectedFollowUpSession(session)}
-                    >
-                      <Eye aria-hidden="true" />
-                      Voir le suivi
-                    </Button>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          ) : (
+      <ListTable
+        title="Seances"
+        countLabel="Liste des rencontres, statuts, resumes et commentaires."
+        minWidth={980}
+        headers={[
+          { label: "Seance" },
+          { label: "Resume" },
+          { label: "Commentaire" },
+          { label: "Statut" },
+          { label: "Actions", className: "text-right" },
+        ]}
+        emptyState={
+          detail.sessions.length === 0 ? (
             <p className="text-sm text-muted-foreground">Aucune seance programmee pour ce mentore.</p>
-          )}
-        </CardContent>
-      </Card>
+          ) : null
+        }
+      >
+        {detail.sessions.map((session) => (
+          <tr key={session.id} className="align-top">
+            <td className="px-4 py-3">
+              <p className="font-medium text-foreground">Seance {session.session_number}</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {formatDate(session.scheduled_date)} | {normalizeTime(session.start_time) || "Heure non renseignee"}
+                {session.end_time ? ` - ${normalizeTime(session.end_time)}` : ""}
+              </p>
+            </td>
+            <td className="px-4 py-3 text-muted-foreground">
+              <p className="line-clamp-2 max-w-sm">{session.summary || "Non renseigne"}</p>
+            </td>
+            <td className="px-4 py-3 text-muted-foreground">
+              <p className="line-clamp-2 max-w-sm">{session.mentor_comment || "Aucun commentaire"}</p>
+            </td>
+            <td className="px-4 py-3">
+              <Badge variant={session.status === "completed" ? "success" : "outline"}>
+                {sessionStatusLabels[session.status]}
+              </Badge>
+            </td>
+            <td className="px-4 py-3 text-right">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="w-fit"
+                onClick={() => setSelectedFollowUpSession(session)}
+              >
+                <Eye aria-hidden="true" />
+                Voir le suivi
+              </Button>
+            </td>
+          </tr>
+        ))}
+      </ListTable>
     </div>
   );
 }

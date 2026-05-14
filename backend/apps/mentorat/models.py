@@ -215,6 +215,7 @@ class MentorshipPeriod(models.Model):
     end_date = models.DateField()
     required_sessions = models.PositiveSmallIntegerField()
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.DRAFT)
+    auto_completed_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

@@ -7,6 +7,8 @@ import { StatCard } from "@/components/dashboard/StatCard";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
+import { ListTable } from "@/components/ui/list-table";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   AdminMentorshipOverview,
@@ -160,32 +162,38 @@ export function AdminMentorshipReports({
             <StatCard label="Suivis a risque" value={overview.progress.watch + overview.progress.difficulty} icon={ClipboardList} tone="red" />
           </div>
 
-          <div className="grid gap-3">
+          <ListTable
+            title="Liste des rapports"
+            countLabel={`${report.results.length} affectation${report.results.length > 1 ? "s" : ""}`}
+            minWidth={1080}
+            headers={[
+              { label: "Mentore" },
+              { label: "Mentor" },
+              { label: "Session" },
+              { label: "Seances" },
+              { label: "Etat" },
+            ]}
+            emptyState={report.results.length === 0 ? <EmptyState icon={ClipboardList} title="Aucun rapport a afficher." /> : null}
+          >
             {report.results.map((row) => (
-              <Card key={row.assignment.id}>
-                <CardContent className="p-5">
-                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                    <div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h2 className="font-semibold">{displayUser(row.assignment.mentoree_detail)}</h2>
-                        <Badge variant={row.missing_sessions > 0 ? "outline" : "success"}>
-                          {row.missing_sessions > 0 ? `${row.missing_sessions} a programmer` : "Complet"}
-                        </Badge>
-                      </div>
-                      <p className="mt-2 text-sm text-muted-foreground">Mentor: {displayUser(row.assignment.mentor_detail)}</p>
-                      <p className="mt-1 text-sm text-muted-foreground">{row.assignment.period_detail?.title}</p>
-                    </div>
-                    <div className="grid gap-1 text-sm text-muted-foreground sm:grid-cols-4 sm:text-right">
-                      <p>Prevues: {row.required_sessions}</p>
-                      <p>Programmees: {row.scheduled_sessions}</p>
-                      <p>Realisees: {row.completed_sessions}</p>
-                      <p>Restantes: {row.remaining_sessions}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <tr key={row.assignment.id} className="align-top">
+                <td className="px-4 py-3 font-medium text-foreground">{displayUser(row.assignment.mentoree_detail)}</td>
+                <td className="px-4 py-3 text-muted-foreground">{displayUser(row.assignment.mentor_detail)}</td>
+                <td className="px-4 py-3 text-muted-foreground">{row.assignment.period_detail?.title ?? "Non renseignee"}</td>
+                <td className="px-4 py-3 text-muted-foreground">
+                  <p>Prevues: {row.required_sessions}</p>
+                  <p className="mt-1 text-xs">Programmees: {row.scheduled_sessions}</p>
+                  <p className="mt-1 text-xs">Realisees: {row.completed_sessions}</p>
+                  <p className="mt-1 text-xs">Restantes: {row.remaining_sessions}</p>
+                </td>
+                <td className="px-4 py-3">
+                  <Badge variant={row.missing_sessions > 0 ? "outline" : "success"}>
+                    {row.missing_sessions > 0 ? `${row.missing_sessions} a programmer` : "Complet"}
+                  </Badge>
+                </td>
+              </tr>
             ))}
-          </div>
+          </ListTable>
         </>
       ) : null}
     </div>

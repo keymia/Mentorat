@@ -13,7 +13,7 @@ import {
   X,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { ReactNode } from "react";
 import { useState } from "react";
 
@@ -35,8 +35,9 @@ const mentorUtilityLinks = [
 ];
 
 const mentorSettingsLinks = [
-  { href: "/mentor/parametres?section=account", label: "Compte" },
-  { href: "/mentor/parametres?section=session", label: "Session de mentorat" },
+  { href: "/mentor/parametres?section=account", section: "account", label: "Compte" },
+  { href: "/mentor/parametres?section=profile", section: "profile", label: "Profil Equipes" },
+  { href: "/mentor/parametres?section=session", section: "session", label: "Session de mentorat" },
 ];
 
 function isActivePath(pathname: string, href: string) {
@@ -82,6 +83,8 @@ function MentorNav({ onNavigate }: MentorNavProps) {
 
 function MentorUtilityNav({ onNavigate }: MentorNavProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const selectedSection = searchParams.get("section") ?? "account";
   const [isSettingsOpenByUser, setIsSettingsOpenByUser] = useState(false);
   const isSettingsOpen = pathname === "/mentor/parametres" || isSettingsOpenByUser;
 
@@ -111,7 +114,10 @@ function MentorUtilityNav({ onNavigate }: MentorNavProps) {
                     key={settingsLink.href}
                     href={settingsLink.href}
                     onClick={onNavigate}
-                    className="rounded-lg px-3 py-2 text-xs font-medium text-white/60 transition hover:bg-white/10 hover:text-white"
+                    className={cn(
+                      "rounded-lg px-3 py-2 text-xs font-medium text-white/60 transition hover:bg-white/10 hover:text-white",
+                      pathname === "/mentor/parametres" && selectedSection === settingsLink.section && "bg-white/10 text-white",
+                    )}
                   >
                     {settingsLink.label}
                   </Link>

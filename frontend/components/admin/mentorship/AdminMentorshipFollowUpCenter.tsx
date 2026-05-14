@@ -12,6 +12,7 @@ import {
   formatApiError,
   getMentorshipAssignments,
   getUsersByProfil,
+  mentorAcademicLevelOrders,
 } from "@/lib/api";
 import { displayUser } from "@/lib/mentorship";
 
@@ -54,7 +55,7 @@ export function AdminMentorshipFollowUpCenter() {
     getUsersByProfil("MENTOR,MENTOR_ET_MENTORE")
       .then((mentorData) => {
         if (isMounted) {
-          setMentors(mentorData.filter((mentor) => !mentor.niveau_academique_est_premier_niveau));
+          setMentors(mentorData.filter((mentor) => mentorAcademicLevelOrders.includes(mentor.niveau_academique)));
           setError("");
         }
       })

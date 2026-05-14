@@ -1,7 +1,8 @@
 from datetime import date, datetime, time, timedelta
 
 from django.core.exceptions import ValidationError as DjangoValidationError
-from django.db.models import Q
+from django.db import transaction
+from django.db.models import Exists, OuterRef, Q
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework import serializers
@@ -20,6 +21,110 @@ from apps.users.models import NiveauAcademique, Utilisateur
 
 
 MAX_SLOT_RANGE_DAYS = 120
+
+
+def complete_expired_mentorship_periods() -> int:
+    today = timezone.localdate()
+    now = timezone.now()
+    completed_count = 0
+    expired_periods = MentorshipPeriod.objects.filter(
+        status=MentorshipPeriod.Status.ACTIVE,
+        end_date__lt=today,
+    )
+
+    for period in expired_periods:
+        with transaction.atomic():
+            period.status = MentorshipPeriod.Status.COMPLETED
+            period.auto_completed_at = now
+            period.save(update_fields=["status", "auto_completed_at", "updated_at"])
+
+            mentor_ids = list(
+                MentorshipAssignment.objects.filter(
+                    period=period,
+                    status=MentorshipAssignment.Status.ACTIVE,
+                ).values_list("mentor_id", flat=True)
+            )
+            MentorshipAssignment.objects.filter(
+                period=period,
+                status=MentorshipAssignment.Status.ACTIVE,
+            ).update(status=MentorshipAssignment.Status.COMPLETED, updated_at=now)
+            for mentor_id in set(mentor_ids):
+                MentorshipAssignment.actualiser_nombre_mentores(mentor_id)
+
+            from apps.inscriptions.models import Inscription
+
+            Inscription.objects.filter(
+                mentorship_period=period,
+                type_inscription=Inscription.TypeInscription.MENTORE,
+            ).update(
+                registration_status=Inscription.RegistrationStatus.COMPLETED,
+                completed_session_status=Inscription.CompletedSessionStatus.COMPLETED,
+                needs_matching=False,
+            )
+            completed_count += 1
+
+    return completed_count
+
+
+def get_current_or_latest_period() -> MentorshipPeriod | None:
+    complete_expired_mentorship_periods()
+    return (
+        MentorshipPeriod.objects.filter(status=MentorshipPeriod.Status.ACTIVE)
+        .order_by("end_date", "start_date")
+        .first()
+        or MentorshipPeriod.objects.order_by("-start_date", "title").first()
+    )
+
+
+def get_session_ending_alert() -> dict:
+    complete_expired_mentorship_periods()
+    active_period = (
+        MentorshipPeriod.objects.filter(status=MentorshipPeriod.Status.ACTIVE)
+        .order_by("end_date", "start_date")
+        .first()
+    )
+    if not active_period:
+        return {
+            "active_period": None,
+            "session_ending_soon": False,
+            "days_before_session_end": None,
+        }
+
+    days_before_end = (active_period.end_date - timezone.localdate()).days
+    return {
+        "active_period": active_period,
+        "session_ending_soon": 0 <= days_before_end <= 10,
+        "days_before_session_end": days_before_end,
+    }
+
+
+def count_pending_matching_requests() -> int:
+    complete_expired_mentorship_periods()
+    from apps.inscriptions.models import Inscription
+
+    active_assignment = MentorshipAssignment.objects.filter(
+        mentoree_id=OuterRef("utilisateur_id"),
+        period_id=OuterRef("mentorship_period_id"),
+        status=MentorshipAssignment.Status.ACTIVE,
+    )
+    return (
+        Inscription.objects.filter(
+            type_inscription=Inscription.TypeInscription.MENTORE,
+        )
+        .exclude(statut_inscription=Inscription.StatutInscription.REFUSEE)
+        .exclude(registration_status=Inscription.RegistrationStatus.COMPLETED)
+        .annotate(has_active_assignment=Exists(active_assignment))
+        .filter(mentor_choisi__isnull=True)
+        .filter(
+            Q(statut_inscription=Inscription.StatutInscription.VALIDEE, has_active_assignment=False)
+            | Q(needs_matching=True)
+            | Q(registration_status=Inscription.RegistrationStatus.PENDING_MATCHING)
+            | Q(wants_association_assignment=True)
+        )
+        .filter(has_active_assignment=False)
+        .distinct()
+        .count()
+    )
 
 
 def mentor_has_capacity_for_period(

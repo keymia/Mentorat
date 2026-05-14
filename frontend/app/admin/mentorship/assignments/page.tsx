@@ -1,10 +1,5 @@
-import { AdminShell } from "@/components/admin/AdminShell";
-import { AdminMentorshipAssignments } from "@/components/admin/mentorship/AdminMentorshipAssignments";
+import { redirect } from "next/navigation";
 
 export default function AdminMentorshipAssignmentsPage() {
-  return (
-    <AdminShell>
-      <AdminMentorshipAssignments />
-    </AdminShell>
-  );
+  redirect("/admin/jumelages");
 }

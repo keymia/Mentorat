@@ -104,6 +104,10 @@ CSRF_TRUSTED_ORIGINS = config(
     cast=Csv(),
 )
 
+EMAIL_BACKEND = config("EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend")
+DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="noreply@programmex.local")
+LOGIN_2FA_ENABLED = config("LOGIN_2FA_ENABLED", default=False, cast=bool)
+
 LANGUAGE_CODE = "fr-ca"
 TIME_ZONE = "America/Toronto"
 USE_I18N = True

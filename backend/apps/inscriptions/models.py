@@ -12,6 +12,16 @@ class Inscription(models.Model):
         VALIDEE = "VALIDEE", "Validee"
         REFUSEE = "REFUSEE", "Refusee"
 
+    class RegistrationStatus(models.TextChoices):
+        REGISTERED = "registered", "Inscrit"
+        PENDING_MATCHING = "pending_matching", "Jumelage requis"
+        MATCHED = "matched", "Jumele"
+        COMPLETED = "completed", "Termine"
+
+    class CompletedSessionStatus(models.TextChoices):
+        NONE = "none", "Non termine"
+        COMPLETED = "completed", "Session terminee"
+
     utilisateur = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -38,6 +48,18 @@ class Inscription(models.Model):
         related_name="inscriptions",
         null=True,
         blank=True,
+    )
+    wants_association_assignment = models.BooleanField(default=False)
+    needs_matching = models.BooleanField(default=False)
+    registration_status = models.CharField(
+        max_length=30,
+        choices=RegistrationStatus.choices,
+        default=RegistrationStatus.REGISTERED,
+    )
+    completed_session_status = models.CharField(
+        max_length=20,
+        choices=CompletedSessionStatus.choices,
+        default=CompletedSessionStatus.NONE,
     )
 
     class Meta:

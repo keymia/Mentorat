@@ -1,4 +1,5 @@
 from rest_framework import viewsets
+from rest_framework.exceptions import PermissionDenied
 
 from apps.parametres.models import ParametreSysteme
 from apps.parametres.serializers import ParametreSystemeSerializer
@@ -10,3 +11,10 @@ class ParametreSystemeViewSet(viewsets.ModelViewSet):
     serializer_class = ParametreSystemeSerializer
     permission_classes = [IsAdminRole]
     http_method_names = ["get", "put", "patch", "head", "options"]
+
+    def perform_update(self, serializer):
+        if serializer.instance.cle == "MAX_MENTORES_PAR_MENTOR" and not self.request.user.est_admin_principal:
+            raise PermissionDenied(
+                "Seul l'administrateur principal peut modifier le nombre maximal de mentores par mentor."
+            )
+        serializer.save()
