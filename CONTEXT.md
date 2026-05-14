@@ -9,363 +9,474 @@ Le projet utilise :
 - Base de données : PostgreSQL
 - Frontend : Next.js
 - Authentification : déjà existante
-- Rôles : administrateur, mentor, mentoré
 
-Le code existant ne doit pas être cassé. Toute amélioration doit respecter l’architecture actuelle.
+Le code existant ne doit pas être cassé.
+Toute amélioration doit respecter l’architecture actuelle.
 
 ---
 
-## 2. Objectif général du projet
+# 2. Objectif général du projet
 
 Programme X est une plateforme de mentorat permettant de gérer :
 
-- les administrateurs
+- les administrateurs principaux
+- les administrateurs opérationnels
 - les mentors
 - les mentorés
 - les périodes de mentorat
 - les affectations mentor / mentoré
 - les séances de mentorat
-- le suivi de l’avancement des mentorés
-- les commentaires et avis des mentors
-- les partenaires affichés sur le site
+- le suivi des mentorés
+- les équipes publiques
+- les rapports et archives
+- les importations/exportations
 - un chatbot d’assistance
 
 ---
 
-## 3. Règles métier principales
+# 3. Rôles du système
 
-### Rôles
+Le projet possède 4 rôles :
 
-Il existe trois rôles principaux :
-
-- Administrateur
+- Administrateur principal
+- Administrateur opérationnel
 - Mentor
 - Mentoré
 
-### Mentorat par niveau
+---
 
-- Le mentoré choisit un mentor lors de son inscription.
-- La liste des mentors affichés dépend du niveau du mentoré.
-- Un mentor ne peut mentorer que les étudiants du niveau inférieur direct.
-- Un étudiant de niveau supérieur peut être mentor et aussi mentoré.
-- Les étudiants de dernière année sont uniquement mentors.
-- Les étudiants de 12e année sont uniquement mentorés.
-- Un mentor peut choisir de ne pas être mentoré.
+## Administrateur principal
+
+L’administrateur principal possède tous les droits.
+
+Il peut :
+
+- créer des administrateurs opérationnels
+- désactiver un administrateur opérationnel
+- supprimer un administrateur opérationnel
+- créer des sessions / périodes de mentorat
+- définir le nombre maximal de mentorés
+- gérer toute la plateforme
+- voir toutes les données
+- gérer les imports/exports
+- gérer les équipes
+- gérer les rapports
 
 ---
 
-## 4. Nouvelle décision importante
+## Administrateur opérationnel
 
-La gestion des disponibilités libres des mentors doit être retirée.
+L’administrateur opérationnel possède presque tous les droits administratifs.
 
-Il ne faut plus demander au mentor de remplir ses disponibilités pendant l’année.
+Il peut :
 
-Le propriétaire ou l’administrateur doit plutôt définir :
+- gérer les mentors
+- gérer les mentorés
+- gérer les affectations
+- gérer les séances
+- gérer les suivis
+- gérer les équipes
+- valider les mentors publics
+- importer/exporter les données
+- consulter les rapports
 
-- le début d’une période de mentorat
-- la fin d’une période de mentorat
-- le nombre de séances à programmer entre chaque mentor et mentoré pendant cette période
+Il ne peut PAS :
 
-Les mentors programmeront ensuite les dates de rencontre avec leurs mentorés dans leur propre espace.
+- créer un administrateur opérationnel
+- supprimer un administrateur opérationnel
+- désactiver un administrateur opérationnel
+- créer une session / période de mentorat
+- modifier le nombre maximal de mentorés
 
 ---
 
-## 5. Période de mentorat
+## Mentor
 
-L’administrateur doit pouvoir créer une période de mentorat.
+Le mentor possède un dashboard personnel.
+
+Il peut :
+
+- voir ses mentorés
+- programmer des séances
+- modifier des séances
+- compléter les suivis
+- ajouter des recommandations
+- ajouter des observations
+- compléter son profil public
+- demander à apparaître sur la page Équipes
+
+Important :
+Un mentor peut également être mentoré en même temps selon son niveau académique.
+
+---
+
+## Mentoré
+
+Le mentoré reçoit un accompagnement.
+
+Important :
+
+- les mentorés n’ont PAS de dashboard
+- les mentorés ne passent PAS par la double authentification
+
+---
+
+# 4. Mentorat par niveau
+
+## Niveaux mentors
+
+Choix possibles :
+
+1. Je suis étudiant(e) au collège ou en 1ère / 2e année de baccalauréat
+2. Je suis étudiant(e) en 3e / 4e année de baccalauréat ou à la maîtrise
+3. Je suis étudiant(e) en médecine
+
+---
+
+## Niveaux mentorés
+
+Choix possibles :
+
+1. Je suis au secondaire
+2. Je suis étudiant(e) au collège ou en 1ère / 2e année de baccalauréat
+3. Je suis étudiant(e) en 3e / 4e année de baccalauréat ou à la maîtrise
+
+---
+
+## Règles métier importantes
+
+- Un mentor peut également être mentoré en même temps.
+- Les étudiants du secondaire sont uniquement mentorés.
+- Les étudiants en médecine sont uniquement mentors.
+- Un mentor ne peut accompagner que le niveau inférieur direct.
+- La liste des mentors dépend du niveau du mentoré.
+
+### Exemples
+
+- un étudiant en médecine = mentor uniquement
+- un étudiant du secondaire = mentoré uniquement
+- un étudiant à la maîtrise = mentor et mentoré possibles
+
+---
+
+# 5. Périodes de mentorat
+
+Le système fonctionne par sessions / périodes de mentorat.
 
 Une période contient :
 
 - titre
-- description optionnelle
+- description
 - date de début
 - date de fin
 - nombre de séances obligatoires
-- statut : brouillon, active, terminée, archivée
-- date de création
-- date de modification
+- statut :
+  - brouillon
+  - active
+  - terminée
+  - archivée
 
 Exemple :
 
-Session hiver 2026  
-Début : 15 janvier 2026  
-Fin : 30 avril 2026  
-Nombre de séances : 8
+Session Hiver 2026
+
+- début : 15 janvier 2026
+- fin : 30 avril 2026
+- séances obligatoires : 8
 
 ---
 
-## 6. Affectation mentor / mentoré
-
-Une affectation représente la relation entre un mentor et un mentoré pendant une période donnée.
+# 6. Affectations mentor / mentoré
 
 Une affectation contient :
 
 - mentor
 - mentoré
-- période de mentorat
-- statut : active, terminée, suspendue
+- période
+- statut
 - date d’affectation
-- notes administratives optionnelles
+- notes administratives
 
 Règles :
 
-- Une affectation appartient toujours à une période.
-- Un mentor peut avoir plusieurs mentorés.
-- Un mentoré ne doit pas avoir plusieurs mentors actifs pour la même période.
-- Le nombre de mentorés d’un mentor doit respecter la limite définie.
-- Les règles de niveau doivent être respectées.
+- une affectation appartient à une période
+- un mentor peut avoir plusieurs mentorés
+- un mentoré ne peut pas avoir plusieurs mentors actifs dans la même période
+- le nombre maximal de mentorés doit être respecté
 
 ---
 
-## 7. Séances de mentorat
+# 7. Gestion des séances
 
-Les séances sont programmées par le mentor dans son espace.
+Les mentors programment les séances dans leur dashboard.
 
 Une séance contient :
 
-- affectation mentor / mentoré
+- affectation
 - numéro de séance
-- date prévue
-- heure de début optionnelle
-- heure de fin optionnelle
-- statut : programmée, réalisée, annulée, reportée, absente
-- résumé de la séance
-- commentaire du mentor
-- date de création
-- date de modification
+- date
+- heure de début
+- heure de fin
+- objet
+- statut
+- résumé
+- commentaires
 
-Règles :
+Statuts possibles :
 
-- Le nombre total de séances attendues vient de la période de mentorat.
-- Le mentor peut programmer les dates de rencontre.
-- Une séance doit être dans les dates de la période.
-- L’administrateur doit voir les séances programmées et réalisées.
-- Le système doit pouvoir afficher les séances restantes.
+- programmée
+- réalisée
+- annulée
+- reportée
+- absente
 
 ---
 
-## 8. Suivi de l’avancement du mentoré
+# 8. Suivi des mentorés
 
-Chaque mentor doit pouvoir suivre l’évolution de chaque mentoré.
+Le mentor doit pouvoir :
 
-Le suivi contient :
+- changer le statut d’une séance
+- ajouter une appréciation
+- ajouter des observations
+- ajouter des recommandations
 
-- affectation mentor / mentoré
-- statut d’avancement : excellent, bon, moyen, à surveiller, en difficulté
-- progression en pourcentage optionnelle
-- difficultés rencontrées
-- progrès observés
+Appréciations possibles :
+
+- Excellent
+- Très bon
+- Bon
+- Moyen
+- En difficulté
+
+Le pourcentage d’avancement doit être calculé automatiquement :
+
+(nombre de séance réalisée / nombre total de séances prévues) × 100
+
+---
+
+# 9. Dashboard mentor
+
+Le dashboard mentor possède un sidebar contenant :
+
+- Dashboard
+- Mentorés
+- Séances
+- Suivis
+
+---
+
+## Dashboard
+
+Affiche :
+
+- nombre de mentorés
+- séances programmées
+- séances réalisées
+- progression globale
+- dernières activités
+
+---
+
+## Mentorés
+
+Affiche :
+
+- liste des mentorés
+- progression
+- séances
+- bouton Voir dossier
+
+Le dossier mentoré affiche :
+
+- informations générales
+- historique des séances
+- suivis
 - recommandations
-- avis général du mentor
-- date de dernière mise à jour
-
-L’administrateur doit pouvoir consulter ces informations.
+- commentaires
 
 ---
 
-## 9. Espace mentor
+## Séances
 
-Le mentor doit avoir son propre tableau de bord.
+Permet :
 
-Il doit pouvoir :
-
-- voir ses mentorés
-- voir la période de mentorat active
-- voir le nombre de séances obligatoires
-- voir les séances déjà programmées
-- voir les séances réalisées
-- programmer une date de rencontre
+- voir les séances
+- créer une séance
 - modifier une séance
-- annuler ou reporter une séance
-- marquer une séance comme réalisée
-- ajouter un résumé de séance
-- ajouter un commentaire sur le mentoré
-- suivre l’avancement du mentoré
-- écrire un avis général sur chaque mentoré
+- consulter les détails
 
 ---
 
-## 10. Espace administrateur
+## Suivis
+
+Permet :
+
+- modifier le statut des séances
+- ajouter appréciations
+- ajouter observations
+- ajouter recommandations
+
+---
+
+# 10. Authentification sécurisée
+
+## Mentors et administrateurs
+
+Connexion en 2 étapes :
+
+1. email + mot de passe
+2. code temporaire envoyé par email
+
+Le code :
+
+- expire après 15 minutes
+- est à usage unique
+
+L’utilisateur est connecté uniquement après validation du code.
+
+Note temporaire :
+
+- La double authentification par code temporaire est désactivée en développement avec `LOGIN_2FA_ENABLED=False`.
+- Le backend utilise encore l’email console si aucun SMTP réel n’est configuré.
+- Avant la mise en production, configurer un vrai SMTP (`EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, `DEFAULT_FROM_EMAIL`) puis remettre `LOGIN_2FA_ENABLED=True`.
+- L’adresse d’envoi des codes temporaires sera définie au moment de la configuration SMTP finale.
+- Ne pas considérer une adresse locale ou temporaire comme adresse officielle d’envoi des codes.
+
+---
+
+## Inscription mentor
+
+Étapes :
+
+1. formulaire d’inscription
+2. validation email par code
+3. définition du mot de passe
+4. activation du compte
+
+---
+
+## Mentorés
+
+Les mentorés ne passent pas par cette double authentification.
+
+---
+
+# 11. Gestion des équipes publiques
+
+La page publique Programme devient :
+
+Équipes
+
+---
+
+## Affichage des mentors
+
+Un mentor apparaît publiquement uniquement si :
+
+- il a complété son profil
+- il a accepté d’apparaître
+- il a été validé par un administrateur
+- un ordre d’affichage lui a été attribué
+
+---
+
+## Informations affichées
+
+- photo
+- nom
+- mini bio
+- niveau académique
+- domaine
+
+---
+
+# 12. Mini bio mentor
+
+Le champ Objectif est remplacé par :
+
+Mini bio
+
+Exemple affiché :
+
+“Neter Elysabeth, étudiante en 3ᵉ année du baccalauréat en sciences de la santé à l’Université d’Ottawa et présidente de l’Association des jeunes scientifiques d’Ottawa, se distingue par son engagement à faire rayonner la relève scientifique francophone.”
+
+---
+
+# 13. Archivage et importation des données
 
 L’administrateur doit pouvoir :
 
-- créer une période de mentorat
-- modifier une période
-- activer ou terminer une période
-- affecter des mentors aux mentorés
-- consulter toutes les affectations
-- consulter toutes les séances
-- voir les séances programmées
-- voir les séances réalisées
-- voir les séances manquantes
-- consulter les commentaires des mentors
-- consulter les avis sur les mentorés
-- consulter l’avancement des mentorés
-- filtrer par mentor, mentoré, période, statut
+- exporter une session complète en Excel
+- exporter une session complète en CSV
+- importer des données Excel ou CSV
+
+Les exports/imports peuvent concerner :
+
+- mentors
+- mentorés
+- affectations
+- séances
+- suivis
 
 ---
 
-## 11. Ce qu’il faut supprimer ou ne pas développer
+# 14. Mise à jour des niveaux académiques
 
-Ne pas développer :
+À la fin d’une session :
 
-- formulaire de disponibilités annuelles du mentor
-- calendrier de disponibilités libres
-- exceptions de disponibilité
-- réservation automatique par créneaux
-- sélection automatique selon disponibilités
+les mentors peuvent :
 
-Remplacer cette logique par :
+- garder leur niveau actuel
+- passer au niveau supérieur
 
-- période de mentorat définie par l’administrateur
-- nombre de séances défini par l’administrateur
-- programmation manuelle des rencontres par le mentor
-- suivi visible par l’administration
+Ils ne peuvent jamais :
+
+- diminuer leur niveau académique
 
 ---
 
-## 12. Modèles recommandés
+# 15. API REST recommandées
 
-### MentorshipPeriod
+## Authentification
 
-Champs recommandés :
-
-- title
-- description
-- start_date
-- end_date
-- required_sessions
-- status
-- created_at
-- updated_at
-
-### MentorshipAssignment
-
-Champs recommandés :
-
-- mentor
-- mentoree
-- period
-- status
-- admin_notes
-- assigned_at
-- created_at
-- updated_at
-
-### MentorshipSession
-
-Champs recommandés :
-
-- assignment
-- session_number
-- scheduled_date
-- start_time
-- end_time
-- status
-- summary
-- mentor_comment
-- created_at
-- updated_at
-
-### MentoreeProgress
-
-Champs recommandés :
-
-- assignment
-- progress_status
-- progress_percentage
-- difficulties
-- achievements
-- recommendations
-- mentor_opinion
-- updated_at
+- POST /api/auth/login/request-code/
+- POST /api/auth/login/verify-code/
+- POST /api/auth/register/start/
+- POST /api/auth/register/verify-email-code/
+- POST /api/auth/register/set-password/
 
 ---
 
-## 13. API REST recommandée
-
-### Périodes de mentorat
-
-- GET /api/mentorship-periods/
-- POST /api/mentorship-periods/
-- GET /api/mentorship-periods/{id}/
-- PUT /api/mentorship-periods/{id}/
-- PATCH /api/mentorship-periods/{id}/
-- DELETE /api/mentorship-periods/{id}/
-
-### Affectations
-
-- GET /api/mentorship-assignments/
-- POST /api/mentorship-assignments/
-- GET /api/mentorship-assignments/{id}/
-- PATCH /api/mentorship-assignments/{id}/
-
-### Espace mentor
+## Mentor
 
 - GET /api/mentor/dashboard/
 - GET /api/mentor/mentees/
-- GET /api/mentor/mentees/{id}/
-- GET /api/mentor/assignments/
-- GET /api/mentor/assignments/{id}/sessions/
-- POST /api/mentor/assignments/{id}/sessions/
+- GET /api/mentor/sessions/
+- POST /api/mentor/sessions/
 - PATCH /api/mentor/sessions/{id}/
-- PATCH /api/mentor/sessions/{id}/complete/
-- GET /api/mentor/assignments/{id}/progress/
-- PATCH /api/mentor/assignments/{id}/progress/
+- GET /api/mentor/follow-ups/
 
-### Espace administrateur
+---
 
+## Admin
+
+- GET /api/admin/team-members/
+- PATCH /api/admin/team-members/{id}/
 - GET /api/admin/mentorship-overview/
-- GET /api/admin/mentorship-sessions/
-- GET /api/admin/mentorship-progress/
-- GET /api/admin/mentorship-reports/
+- GET /api/admin/sessions/{id}/export/excel/
+- GET /api/admin/sessions/{id}/export/csv/
+- POST /api/admin/sessions/import/
 
 ---
 
-## 14. Frontend recommandé
+# 16. Contraintes importantes
 
-### Pages administrateur
-
-- /admin/mentorship/periods
-- /admin/mentorship/assignments
-- /admin/mentorship/sessions
-- /admin/mentorship/progress
-- /admin/mentorship/reports
-
-### Pages mentor
-
-- /mentor/dashboard
-- /mentor/mentees
-- /mentor/mentees/[id]
-- /mentor/sessions
-- /mentor/progress
-
-### Fonctionnalités mentor
-
-Sur la page d’un mentoré, le mentor doit voir :
-
-- informations du mentoré
-- période active
-- nombre de séances prévues
-- séances programmées
-- séances réalisées
-- séances restantes
-- formulaire de programmation de séance
-- formulaire de résumé de séance
-- formulaire de suivi d’avancement
-- champ pour avis général
-
----
-
-## 15. Contraintes importantes
-
-- Ne pas casser l’existant.
-- Lire l’architecture actuelle avant de modifier.
-- Réutiliser les modèles existants si possible.
-- Ne pas dupliquer inutilement les utilisateurs.
-- Respecter les permissions par rôle.
-- Les mentors ne doivent voir que leurs propres mentorés.
-- Les administrateurs peuvent tout voir.
-- Les mentorés ne doivent pas modifier les suivis écrits par les mentors.
-- Toutes les dates doivent être validées côté backend.
-- PostgreSQL est la base de données utilisée.
+- Ne pas casser l’existant
+- Réutiliser les modèles existants
+- Réutiliser les composants existants
+- Respecter les permissions par rôle
+- Les mentors voient uniquement leurs données
+- Les mentorés n’ont pas de dashboard
+- Toutes les validations importantes doivent être faites côté backend
+- PostgreSQL est la base de données utilisée

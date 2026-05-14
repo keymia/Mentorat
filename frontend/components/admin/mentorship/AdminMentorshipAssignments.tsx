@@ -1,75 +1,94 @@
 "use client";
 
-import { Handshake, RefreshCcw, Save } from "lucide-react";
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { Eye, Handshake, RefreshCcw, Search, UserCheck } from "lucide-react";
 
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Modal } from "@/components/ui/modal";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  MentorshipAssignment,
-  MentorshipAssignmentStatus,
-  MentorshipPeriod,
-  UtilisateurDetail,
-  createMentorshipAssignment,
+  AdminMatchingResponse,
+  AdminMatchingRow,
+  AdminMatchingStatus,
   formatApiError,
-  getMentorshipAssignments,
-  getMentorshipPeriods,
-  getUsersByProfil,
-  updateMentorshipAssignment,
+  getAdminMatching,
+  getAdminMatchingDetails,
+  reassignAdminMatching,
 } from "@/lib/api";
-import { assignmentStatusLabels, displayUser, formatDate, periodStatusLabels } from "@/lib/mentorship";
+import { assignmentStatusLabels, displayUser, formatDate, formatDateTime } from "@/lib/mentorship";
 
-type AssignmentDraft = {
-  mentor: string;
-  mentoree: string;
-  period: string;
-  status: MentorshipAssignmentStatus;
-  admin_notes: string;
+const pageSize = 10;
+
+const matchingStatusLabels: Record<AdminMatchingStatus, string> = {
+  assigned: "Assigne",
+  pending_matching: "En attente de jumelage",
+  association_choice: "Association doit choisir",
+  unassigned: "Non assigne",
+  completed: "Termine",
 };
 
-const emptyDraft: AssignmentDraft = {
-  mentor: "",
-  mentoree: "",
-  period: "",
-  status: "active",
-  admin_notes: "",
+const matchingStatusVariants: Record<AdminMatchingStatus, "success" | "outline" | "bronze" | "secondary"> = {
+  assigned: "success",
+  pending_matching: "outline",
+  association_choice: "bronze",
+  unassigned: "outline",
+  completed: "secondary",
 };
+
+function assignedMentor(row: AdminMatchingRow) {
+  return row.current_mentor ?? row.inscription.mentor_choisi_detail ?? null;
+}
+
+function periodTitle(row: AdminMatchingRow) {
+  return row.period?.title ?? row.inscription.mentorship_period_title ?? "Non renseignee";
+}
+
+function periodId(row: AdminMatchingRow) {
+  return row.period?.id ?? row.inscription.mentorship_period ?? null;
+}
+
+function rowMatchesSearch(row: AdminMatchingRow, search: string) {
+  const query = search.trim().toLowerCase();
+  if (!query) {
+    return true;
+  }
+  const mentor = assignedMentor(row);
+  return [
+    displayUser(row.mentee),
+    row.mentee.email,
+    row.mentee.niveau_academique_nom,
+    periodTitle(row),
+    displayUser(mentor),
+    matchingStatusLabels[row.matching_status],
+  ]
+    .filter(Boolean)
+    .some((value) => String(value).toLowerCase().includes(query));
+}
 
 export function AdminMentorshipAssignments() {
-  const [periods, setPeriods] = useState<MentorshipPeriod[]>([]);
-  const [mentors, setMentors] = useState<UtilisateurDetail[]>([]);
-  const [mentees, setMentees] = useState<UtilisateurDetail[]>([]);
-  const [assignments, setAssignments] = useState<MentorshipAssignment[]>([]);
-  const [draft, setDraft] = useState<AssignmentDraft>(emptyDraft);
-  const [filters, setFilters] = useState({ period: "", status: "" });
+  const [data, setData] = useState<AdminMatchingResponse | null>(null);
+  const [selectedPeriod, setSelectedPeriod] = useState("");
+  const [search, setSearch] = useState("");
+  const [selectedRow, setSelectedRow] = useState<AdminMatchingRow | null>(null);
+  const [detailsRow, setDetailsRow] = useState<AdminMatchingRow | null>(null);
+  const [selectedMentor, setSelectedMentor] = useState("");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [reassigningAssignment, setReassigningAssignment] = useState<MentorshipAssignment | null>(null);
-  const [reassignMentorId, setReassignMentorId] = useState("");
-  const [isReassigning, setIsReassigning] = useState(false);
+  const [page, setPage] = useState(1);
 
-  const activePeriods = useMemo(() => periods.filter((period) => period.status === "active"), [periods]);
-
-  async function loadData() {
+  async function loadData(period = selectedPeriod) {
+    setIsLoading(true);
     try {
-      const [periodData, mentorData, menteeData, assignmentData] = await Promise.all([
-        getMentorshipPeriods(),
-        getUsersByProfil("MENTOR,MENTOR_ET_MENTORE"),
-        getUsersByProfil("MENTORE,MENTOR_ET_MENTORE"),
-        getMentorshipAssignments(filters),
-      ]);
-      setPeriods(periodData);
-      setMentors(mentorData.filter((mentor) => !mentor.niveau_academique_est_premier_niveau));
-      setMentees(menteeData);
-      setAssignments(assignmentData);
+      const matchingData = await getAdminMatching(period || undefined);
+      setData(matchingData);
       setError("");
+      setPage(1);
     } catch (apiError) {
       setError(formatApiError(apiError));
     } finally {
@@ -79,23 +98,12 @@ export function AdminMentorshipAssignments() {
 
   useEffect(() => {
     let isMounted = true;
-    const currentFilters = {
-      period: filters.period,
-      status: filters.status,
-    };
-    Promise.all([
-      getMentorshipPeriods(),
-      getUsersByProfil("MENTOR,MENTOR_ET_MENTORE"),
-      getUsersByProfil("MENTORE,MENTOR_ET_MENTORE"),
-      getMentorshipAssignments(currentFilters),
-    ])
-      .then(([periodData, mentorData, menteeData, assignmentData]) => {
+    getAdminMatching(selectedPeriod || undefined)
+      .then((matchingData) => {
         if (isMounted) {
-          setPeriods(periodData);
-          setMentors(mentorData.filter((mentor) => !mentor.niveau_academique_est_premier_niveau));
-          setMentees(menteeData);
-          setAssignments(assignmentData);
+          setData(matchingData);
           setError("");
+          setPage(1);
         }
       })
       .catch((apiError) => {
@@ -111,24 +119,57 @@ export function AdminMentorshipAssignments() {
     return () => {
       isMounted = false;
     };
-  }, [filters.period, filters.status]);
+  }, [selectedPeriod]);
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  const filteredRows = useMemo(
+    () => (data?.results ?? []).filter((row) => rowMatchesSearch(row, search)),
+    [data?.results, search],
+  );
+  const pageCount = Math.max(Math.ceil(filteredRows.length / pageSize), 1);
+  const visibleRows = useMemo(
+    () => filteredRows.slice((page - 1) * pageSize, page * pageSize),
+    [filteredRows, page],
+  );
+
+  function openReassignModal(row: AdminMatchingRow) {
+    setSelectedRow(row);
+    setSelectedMentor(row.compatible_mentors[0] ? String(row.compatible_mentors[0].id) : "");
+    setError("");
+    setMessage("");
+  }
+
+  function closeReassignModal() {
+    setSelectedRow(null);
+    setSelectedMentor("");
+  }
+
+  async function openDetailsModal(row: AdminMatchingRow) {
+    setDetailsRow(row);
+    setError("");
+    try {
+      const details = await getAdminMatchingDetails(row.mentee.id, periodId(row) ?? undefined);
+      setDetailsRow(details);
+    } catch (apiError) {
+      setError(formatApiError(apiError));
+    }
+  }
+
+  async function handleReassign(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const sessionId = selectedRow ? periodId(selectedRow) : null;
+    if (!selectedRow || !selectedMentor || !sessionId) {
+      return;
+    }
     setIsSaving(true);
     setError("");
     setMessage("");
     try {
-      await createMentorshipAssignment({
-        mentor: Number(draft.mentor),
-        mentoree: Number(draft.mentoree),
-        period: Number(draft.period),
-        status: draft.status,
-        admin_notes: draft.admin_notes,
+      await reassignAdminMatching(selectedRow.mentee.id, {
+        new_mentor_id: Number(selectedMentor),
+        session_id: Number(sessionId),
       });
-      setDraft(emptyDraft);
-      setIsCreateOpen(false);
-      setMessage("Affectation creee.");
+      setMessage("Jumelage mis a jour.");
+      closeReassignModal();
       await loadData();
     } catch (apiError) {
       setError(formatApiError(apiError));
@@ -137,211 +178,167 @@ export function AdminMentorshipAssignments() {
     }
   }
 
-  async function changeStatus(assignment: MentorshipAssignment, status: MentorshipAssignmentStatus) {
-    setError("");
-    setMessage("");
-    try {
-      await updateMentorshipAssignment(assignment.id, { status });
-      setMessage("Affectation mise a jour.");
-      await loadData();
-    } catch (apiError) {
-      setError(formatApiError(apiError));
-    }
-  }
-
-  function openCreateModal() {
-    setDraft(emptyDraft);
-    setMessage("");
-    setIsCreateOpen(true);
-  }
-
-  function closeCreateModal() {
-    setDraft(emptyDraft);
-    setIsCreateOpen(false);
-  }
-
-  function openReassignModal(assignment: MentorshipAssignment) {
-    setReassigningAssignment(assignment);
-    setReassignMentorId(String(assignment.mentor));
-    setMessage("");
-    setError("");
-  }
-
-  function closeReassignModal() {
-    setReassigningAssignment(null);
-    setReassignMentorId("");
-  }
-
-  async function handleReassignSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!reassigningAssignment || !reassignMentorId) {
-      return;
-    }
-    setIsReassigning(true);
-    setError("");
-    setMessage("");
-    try {
-      await updateMentorshipAssignment(reassigningAssignment.id, { mentor: Number(reassignMentorId) });
-      setMessage("Mentore reassigne au nouveau mentor.");
-      closeReassignModal();
-      await loadData();
-    } catch (apiError) {
-      setError(formatApiError(apiError));
-    } finally {
-      setIsReassigning(false);
-    }
-  }
-
-  function renderAssignmentForm() {
-    return (
-      <form onSubmit={handleSubmit} className="grid gap-4 lg:grid-cols-2">
-        <label>
-          Periode
-          <select
-            className="field"
-            required
-            value={draft.period}
-            onChange={(event) => setDraft({ ...draft, period: event.target.value })}
-          >
-            <option value="">Choisir une periode</option>
-            {(activePeriods.length > 0 ? activePeriods : periods).map((period) => (
-              <option key={period.id} value={period.id}>
-                {period.title} - {periodStatusLabels[period.status]}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Statut
-          <select
-            className="field"
-            value={draft.status}
-            onChange={(event) => setDraft({ ...draft, status: event.target.value as MentorshipAssignmentStatus })}
-          >
-            {Object.entries(assignmentStatusLabels).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Mentor
-          <select
-            className="field"
-            required
-            value={draft.mentor}
-            onChange={(event) => setDraft({ ...draft, mentor: event.target.value })}
-          >
-            <option value="">Choisir un mentor</option>
-            {mentors.map((mentor) => (
-              <option key={mentor.id} value={mentor.id}>
-                {displayUser(mentor)} - {mentor.niveau_academique_nom}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Mentore
-          <select
-            className="field"
-            required
-            value={draft.mentoree}
-            onChange={(event) => setDraft({ ...draft, mentoree: event.target.value })}
-          >
-            <option value="">Choisir un mentore</option>
-            {mentees.map((mentee) => (
-              <option key={mentee.id} value={mentee.id}>
-                {displayUser(mentee)} - {mentee.niveau_academique_nom}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="lg:col-span-2">
-          Notes administratives
-          <textarea
-            className="field"
-            rows={3}
-            value={draft.admin_notes}
-            onChange={(event) => setDraft({ ...draft, admin_notes: event.target.value })}
-          />
-        </label>
-        <Button type="submit" disabled={isSaving} className="w-fit">
-          <Handshake aria-hidden="true" />
-          {isSaving ? "Creation..." : "Creer l'affectation"}
-        </Button>
-      </form>
-    );
-  }
-
   return (
     <div className="grid gap-5">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <h1 className="font-display text-3xl font-bold">Affectations mentorales</h1>
+          <h1 className="font-display text-3xl font-bold">Jumelage</h1>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            Reliez un mentor et un mentore a une periode de mentorat.
+            Consultez tous les mentores et ajustez les affectations de mentorat par session.
           </p>
         </div>
-        <Button type="button" className="w-fit" onClick={openCreateModal}>
-          <Handshake aria-hidden="true" />
-          Creer une affectation
+        <Button type="button" variant="outline" className="w-fit" onClick={() => void loadData()}>
+          <RefreshCcw aria-hidden="true" />
+          Actualiser
         </Button>
       </div>
 
-      {error ? <Alert variant="error">{error}</Alert> : null}
-      {message ? <Alert variant="success">{message}</Alert> : null}
-
-      <Modal
-        open={isCreateOpen}
-        title="Creer une affectation"
-        description="Associez un mentor, un mentore et une periode de mentorat."
-        onClose={closeCreateModal}
-      >
-        {renderAssignmentForm()}
-      </Modal>
-
-      <Modal
-        open={Boolean(reassigningAssignment)}
-        title="Reassigner le mentore"
-        description="Choisissez le nouveau mentor pour cette affectation."
-        onClose={closeReassignModal}
-      >
-        <form onSubmit={handleReassignSubmit} className="grid gap-4">
-          <div className="rounded-lg border border-border bg-muted/40 p-3 text-sm text-muted-foreground">
-            <p>
-              Mentore:{" "}
-              <span className="font-medium text-foreground">
-                {displayUser(reassigningAssignment?.mentoree_detail)}
-              </span>
-            </p>
-            <p className="mt-1">
-              Periode:{" "}
-              <span className="font-medium text-foreground">
-                {reassigningAssignment?.period_detail?.title ?? "Non renseignee"}
-              </span>
-            </p>
-          </div>
+      <Card className={data?.show_session_filter ? "grid gap-3 p-4 lg:grid-cols-[1.4fr_220px]" : "grid gap-3 p-4"}>
+        <label>
+          Recherche
+          <span className="relative block">
+            <Search
+              className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+              aria-hidden="true"
+            />
+            <input
+              className="field pl-10"
+              value={search}
+              onChange={(event) => {
+                setSearch(event.target.value);
+                setPage(1);
+              }}
+              placeholder="Nom, email, niveau ou mentor"
+            />
+          </span>
+        </label>
+        {data?.show_session_filter ? (
           <label>
-            Nouveau mentor
-            <select
-              className="field"
-              required
-              value={reassignMentorId}
-              onChange={(event) => setReassignMentorId(event.target.value)}
-            >
-              <option value="">Choisir un mentor</option>
-              {mentors.map((mentor) => (
-                <option key={mentor.id} value={mentor.id}>
-                  {displayUser(mentor)} - {mentor.niveau_academique_nom}
+            Session
+            <select className="field" value={selectedPeriod} onChange={(event) => setSelectedPeriod(event.target.value)}>
+              <option value="">Session active ou la plus recente</option>
+              {data.periods.map((period) => (
+                <option key={period.id} value={period.id}>
+                  {period.title}
                 </option>
               ))}
             </select>
           </label>
+        ) : null}
+      </Card>
+
+      {message ? <Alert variant="success">{message}</Alert> : null}
+      {error ? <Alert variant="error">{error}</Alert> : null}
+      {isLoading ? <Skeleton className="h-56" /> : null}
+
+      {!isLoading && filteredRows.length === 0 ? (
+        <EmptyState icon={UserCheck} title="Aucun mentore a afficher." />
+      ) : null}
+
+      {!isLoading && filteredRows.length > 0 ? (
+        <Card className="overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[860px] text-left text-sm">
+              <thead className="border-b border-border bg-muted text-xs uppercase text-muted-foreground">
+                <tr>
+                  <th className="px-4 py-3">Mentore</th>
+                  <th className="px-4 py-3">Niveau academique</th>
+                  <th className="px-4 py-3">Session</th>
+                  <th className="px-4 py-3">Statut</th>
+                  <th className="px-4 py-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {visibleRows.map((row) => {
+                  return (
+                    <tr key={`${row.inscription.id}-${row.period?.id ?? "none"}`} className="align-top">
+                      <td className="px-4 py-3 font-medium">{displayUser(row.mentee)}</td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        {row.mentee.niveau_academique_nom ?? "Non renseigne"}
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">{periodTitle(row)}</td>
+                      <td className="px-4 py-3">
+                        <Badge variant={matchingStatusVariants[row.matching_status]}>
+                          {matchingStatusLabels[row.matching_status]}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="flex flex-wrap justify-end gap-2">
+                          <Button type="button" variant="outline" size="sm" onClick={() => void openDetailsModal(row)}>
+                            <Eye aria-hidden="true" />
+                            Details
+                          </Button>
+                          <Button type="button" size="sm" onClick={() => openReassignModal(row)}>
+                            <Handshake aria-hidden="true" />
+                            Reassignation
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          <div className="flex items-center justify-between border-t border-border px-4 py-3 text-sm text-muted-foreground">
+            <span>
+              Page {page} sur {pageCount}
+            </span>
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((current) => current - 1)}>
+                Precedent
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={page >= pageCount}
+                onClick={() => setPage((current) => current + 1)}
+              >
+                Suivant
+              </Button>
+            </div>
+          </div>
+        </Card>
+      ) : null}
+
+      <Modal
+        open={Boolean(selectedRow)}
+        title="Reassignation"
+        description="Choisissez un nouveau mentor compatible avec le niveau du mentore."
+        onClose={closeReassignModal}
+      >
+        <form onSubmit={handleReassign} className="grid gap-4">
+          <div className="grid gap-3 rounded-lg border border-border bg-muted/30 p-4 md:grid-cols-2">
+            <DetailItem label="Mentore concerne" value={displayUser(selectedRow?.mentee)} />
+            <DetailItem label="Session" value={selectedRow ? periodTitle(selectedRow) : "Non renseignee"} />
+            <DetailItem label="Mentor actuel" value={displayUser(selectedRow ? assignedMentor(selectedRow) : null)} />
+            <DetailItem
+              label="Niveau academique"
+              value={selectedRow?.mentee.niveau_academique_nom ?? "Non renseigne"}
+            />
+          </div>
+
+          {selectedRow?.compatible_mentors.length ? (
+            <label>
+              Nouveau mentor
+              <select className="field" required value={selectedMentor} onChange={(event) => setSelectedMentor(event.target.value)}>
+                {selectedRow.compatible_mentors.map((mentor) => (
+                  <option key={mentor.id} value={mentor.id}>
+                    {displayUser(mentor)} - {mentor.niveau_academique_nom} ({mentor.capacite_restante} place
+                    {mentor.capacite_restante > 1 ? "s" : ""})
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : (
+            <Alert variant="error">Aucun mentor compatible avec une capacite disponible pour cette session.</Alert>
+          )}
+
           <div className="flex flex-wrap gap-2">
-            <Button type="submit" disabled={isReassigning}>
-              <RefreshCcw aria-hidden="true" />
-              {isReassigning ? "Reassignation..." : "Reassigner"}
+            <Button type="submit" disabled={isSaving || !selectedMentor || !selectedRow?.compatible_mentors.length}>
+              <Handshake aria-hidden="true" />
+              {isSaving ? "Mise a jour..." : "Confirmer"}
             </Button>
             <Button type="button" variant="outline" onClick={closeReassignModal}>
               Annuler
@@ -350,86 +347,81 @@ export function AdminMentorshipAssignments() {
         </form>
       </Modal>
 
-      <Card>
-        <CardContent className="grid gap-4 p-5 md:grid-cols-2">
-          <label>
-            Filtrer par periode
-            <select
-              className="field"
-              value={filters.period}
-              onChange={(event) => setFilters((current) => ({ ...current, period: event.target.value }))}
-            >
-              <option value="">Toutes les periodes</option>
-              {periods.map((period) => (
-                <option key={period.id} value={period.id}>
-                  {period.title}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Filtrer par statut
-            <select
-              className="field"
-              value={filters.status}
-              onChange={(event) => setFilters((current) => ({ ...current, status: event.target.value }))}
-            >
-              <option value="">Tous les statuts</option>
-              {Object.entries(assignmentStatusLabels).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </label>
-        </CardContent>
-      </Card>
+      <Modal
+        open={Boolean(detailsRow)}
+        title="Details du jumelage"
+        description="Informations du mentore, de la session et des affectations."
+        className="max-w-4xl"
+        onClose={() => setDetailsRow(null)}
+      >
+        {detailsRow ? (
+          <div className="grid gap-5">
+            <div className="grid gap-3 rounded-lg border border-border bg-muted/30 p-4 md:grid-cols-2">
+              <DetailItem label="Mentore" value={displayUser(detailsRow.mentee)} />
+              <DetailItem label="Email" value={detailsRow.mentee.email || "Non renseigne"} />
+              <DetailItem label="Niveau academique" value={detailsRow.mentee.niveau_academique_nom ?? "Non renseigne"} />
+              <DetailItem label="Session active" value={periodTitle(detailsRow)} />
+              <DetailItem label="Mentor actuel" value={displayUser(assignedMentor(detailsRow))} />
+              <DetailItem label="Statut du jumelage" value={matchingStatusLabels[detailsRow.matching_status]} />
+              <DetailItem label="Date inscription" value={formatDateTime(detailsRow.inscription.date_inscription)} />
+              <DetailItem
+                label="Dates session"
+                value={`${formatDate(detailsRow.period?.start_date)} - ${formatDate(detailsRow.period?.end_date)}`}
+              />
+              <DetailItem
+                label="Association choisit"
+                value={detailsRow.inscription.wants_association_assignment ? "Oui" : "Non"}
+              />
+              <DetailItem label="Besoin de jumelage" value={detailsRow.inscription.needs_matching ? "Oui" : "Non"} />
+            </div>
 
-      {isLoading ? <Skeleton className="h-64" /> : null}
-
-      <div className="grid gap-3">
-        {assignments.map((assignment) => (
-          <Card key={assignment.id}>
-            <CardContent className="p-5">
-              <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="text-lg font-semibold">{displayUser(assignment.mentoree_detail)}</h2>
-                    <Badge variant={assignment.status === "active" ? "success" : "outline"}>
-                      {assignmentStatusLabels[assignment.status]}
-                    </Badge>
-                  </div>
-                  <p className="mt-2 text-sm text-muted-foreground">Mentor: {displayUser(assignment.mentor_detail)}</p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {assignment.period_detail?.title ?? "Periode"} | {formatDate(assignment.period_detail?.start_date)} -{" "}
-                    {formatDate(assignment.period_detail?.end_date)}
-                  </p>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    {assignment.completed_sessions_count}/{assignment.required_sessions ?? 0} seances realisees,{" "}
-                    {assignment.missing_sessions_count} a programmer
-                  </p>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <Button type="button" variant="outline" size="sm" onClick={() => void changeStatus(assignment, "active")}>
-                    <Save aria-hidden="true" />
-                    Active
-                  </Button>
-                  <Button type="button" variant="outline" size="sm" onClick={() => openReassignModal(assignment)}>
-                    <RefreshCcw aria-hidden="true" />
-                    Reassigner
-                  </Button>
-                  <Button type="button" variant="outline" size="sm" onClick={() => void changeStatus(assignment, "completed")}>
-                    Terminer
-                  </Button>
-                  <Button type="button" variant="outline" size="sm" onClick={() => void changeStatus(assignment, "suspended")}>
-                    Suspendre
-                  </Button>
-                </div>
+            <Card className="overflow-hidden">
+              <div className="border-b border-border bg-muted/50 px-4 py-3">
+                <p className="text-sm font-semibold text-foreground">Historique des affectations</p>
               </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+              {detailsRow.assignment_history?.length ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[680px] text-left text-sm">
+                    <thead className="border-b border-border bg-muted text-xs uppercase text-muted-foreground">
+                      <tr>
+                        <th className="px-4 py-3">Mentor</th>
+                        <th className="px-4 py-3">Statut</th>
+                        <th className="px-4 py-3">Date affectation</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {detailsRow.assignment_history.map((assignment) => (
+                        <tr key={assignment.id}>
+                          <td className="px-4 py-3 font-medium">{displayUser(assignment.mentor_detail)}</td>
+                          <td className="px-4 py-3">
+                            <Badge variant={assignment.status === "active" ? "success" : "outline"}>
+                              {assignmentStatusLabels[assignment.status]}
+                            </Badge>
+                          </td>
+                          <td className="px-4 py-3 text-muted-foreground">{formatDateTime(assignment.assigned_at)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="p-4">
+                  <EmptyState icon={Handshake} title="Aucune affectation enregistree." />
+                </div>
+              )}
+            </Card>
+          </div>
+        ) : null}
+      </Modal>
+    </div>
+  );
+}
+
+function DetailItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{label}</p>
+      <p className="mt-1 text-sm font-medium text-foreground">{value}</p>
     </div>
   );
 }

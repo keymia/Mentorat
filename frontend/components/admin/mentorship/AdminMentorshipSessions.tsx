@@ -1,11 +1,15 @@
 "use client";
 
-import { CalendarClock } from "lucide-react";
+import { CalendarClock, Eye } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
+import { ListTable } from "@/components/ui/list-table";
+import { Modal } from "@/components/ui/modal";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   MentorshipFilters,
@@ -39,6 +43,7 @@ export function AdminMentorshipSessions({
   const [mentees, setMentees] = useState<UtilisateurDetail[]>([]);
   const [sessions, setSessions] = useState<MentorshipSession[]>([]);
   const [localFilters, setLocalFilters] = useState(emptyFilters);
+  const [detailsSession, setDetailsSession] = useState<MentorshipSession | null>(null);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const activeFilters = filters ?? localFilters;
@@ -147,35 +152,89 @@ export function AdminMentorshipSessions({
 
       {isLoading ? <Skeleton className="h-64" /> : null}
 
-      <div className="grid gap-3">
-        {sessions.map((session) => (
-          <Card key={session.id}>
-            <CardContent className="p-5">
-              <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                <div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <CalendarClock className="size-4 text-muted-foreground" aria-hidden="true" />
-                    <h2 className="font-semibold">Seance {session.session_number}</h2>
-                    <Badge variant={session.status === "completed" ? "success" : "outline"}>
-                      {sessionStatusLabels[session.status]}
-                    </Badge>
-                  </div>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    {formatDate(session.scheduled_date)} {normalizeTime(session.start_time)}
-                    {session.end_time ? ` - ${normalizeTime(session.end_time)}` : ""}
-                  </p>
-                  <p className="mt-1 text-sm text-muted-foreground">Mentor: {displayUser(session.mentor_detail)}</p>
-                  <p className="mt-1 text-sm text-muted-foreground">Mentore: {displayUser(session.mentoree_detail)}</p>
+      {!isLoading ? (
+        <ListTable
+          title="Liste des seances"
+          countLabel={`${sessions.length} seance${sessions.length > 1 ? "s" : ""}`}
+          minWidth={1080}
+          headers={[
+            { label: "Numero" },
+            { label: "Date" },
+            { label: "Heure" },
+            { label: "Mentor" },
+            { label: "Mentore" },
+            { label: "Objet" },
+            { label: "Statut" },
+            { label: "Actions", className: "text-right" },
+          ]}
+          emptyState={sessions.length === 0 ? <EmptyState icon={CalendarClock} title="Aucune seance a afficher." /> : null}
+        >
+          {sessions.map((session) => (
+            <tr key={session.id} className="align-top">
+              <td className="px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <CalendarClock className="size-4 text-muted-foreground" aria-hidden="true" />
+                  <p className="font-medium text-foreground">Seance {session.session_number}</p>
                 </div>
-                <div className="max-w-xl text-sm leading-6 text-muted-foreground">
-                  {session.summary ? <p>Resume: {session.summary}</p> : null}
-                  {session.mentor_comment ? <p>Commentaire: {session.mentor_comment}</p> : null}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+              </td>
+              <td className="px-4 py-3 text-muted-foreground">{formatDate(session.scheduled_date)}</td>
+              <td className="px-4 py-3 text-muted-foreground">
+                {normalizeTime(session.start_time)}
+                {session.end_time ? ` - ${normalizeTime(session.end_time)}` : ""}
+              </td>
+              <td className="px-4 py-3 text-muted-foreground">{displayUser(session.mentor_detail)}</td>
+              <td className="px-4 py-3 text-muted-foreground">{displayUser(session.mentoree_detail)}</td>
+              <td className="px-4 py-3 text-muted-foreground">
+                <p className="line-clamp-1 max-w-xs">{session.summary || "Non renseigne"}</p>
+              </td>
+              <td className="px-4 py-3">
+                <Badge variant={session.status === "completed" ? "success" : "outline"}>
+                  {sessionStatusLabels[session.status]}
+                </Badge>
+              </td>
+              <td className="px-4 py-3 text-right">
+                <Button type="button" variant="ghost" size="sm" onClick={() => setDetailsSession(session)}>
+                  <Eye aria-hidden="true" />
+                  Details
+                </Button>
+              </td>
+            </tr>
+          ))}
+        </ListTable>
+      ) : null}
+
+      <Modal
+        open={Boolean(detailsSession)}
+        title="Details de la seance"
+        description="Informations completes de la seance selectionnee."
+        className="max-w-3xl"
+        onClose={() => setDetailsSession(null)}
+      >
+        {detailsSession ? (
+          <div className="grid gap-3 rounded-lg border border-border bg-muted/30 p-4 md:grid-cols-2">
+            <DetailItem label="Numero" value={`Seance ${detailsSession.session_number}`} />
+            <DetailItem label="Statut" value={sessionStatusLabels[detailsSession.status]} />
+            <DetailItem label="Date" value={formatDate(detailsSession.scheduled_date)} />
+            <DetailItem
+              label="Heure"
+              value={`${normalizeTime(detailsSession.start_time)}${detailsSession.end_time ? ` - ${normalizeTime(detailsSession.end_time)}` : ""}`}
+            />
+            <DetailItem label="Mentor" value={displayUser(detailsSession.mentor_detail)} />
+            <DetailItem label="Mentore" value={displayUser(detailsSession.mentoree_detail)} />
+            <DetailItem label="Objet" value={detailsSession.summary || "Non renseigne"} className="md:col-span-2" />
+            <DetailItem label="Commentaire mentor" value={detailsSession.mentor_comment || "Non renseigne"} className="md:col-span-2" />
+          </div>
+        ) : null}
+      </Modal>
+    </div>
+  );
+}
+
+function DetailItem({ label, value, className = "" }: { label: string; value: string; className?: string }) {
+  return (
+    <div className={className}>
+      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{label}</p>
+      <p className="mt-1 text-sm font-medium text-foreground">{value}</p>
     </div>
   );
 }

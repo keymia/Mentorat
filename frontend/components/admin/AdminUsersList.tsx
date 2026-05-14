@@ -1,13 +1,13 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { Pencil, Plus, UsersRound } from "lucide-react";
+import { Eye, Pencil, Plus, UsersRound } from "lucide-react";
 
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ListTable } from "@/components/ui/list-table";
 import { Modal } from "@/components/ui/modal";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -19,6 +19,8 @@ import {
   getAdminCollection,
   getNiveaux,
   getRoles,
+  mentorAcademicLevelOrders,
+  mentoreeAcademicLevelOrders,
   updateUtilisateur,
 } from "@/lib/api";
 
@@ -34,9 +36,7 @@ type UserRow = {
   region?: string;
   objectifs?: string;
   profil_mentorat?: "MENTOR" | "MENTORE" | "MENTOR_ET_MENTORE";
-  capacite_mentorat?: number;
   nombre_mentores_actuels?: number;
-  capacite_restante?: number;
   statut_compte?: string;
   role?: number;
   role_nom?: string;
@@ -54,11 +54,9 @@ type UserDraft = {
   region: string;
   objectifs: string;
   profil_mentorat: "MENTOR" | "MENTORE" | "MENTOR_ET_MENTORE";
-  capacite_mentorat: string;
   statut_compte: string;
   role: string;
   niveau_academique: string;
-  is_active: boolean;
 };
 
 type AdminUsersListProps = {
@@ -66,7 +64,6 @@ type AdminUsersListProps = {
   description: string;
   endpoint: string;
   emptyMessage: string;
-  showCapacity?: boolean;
   defaultRoleName: "MENTOR" | "MENTORE";
   defaultProfile: "MENTOR" | "MENTORE" | "MENTOR_ET_MENTORE";
   profileOptions: Array<"MENTOR" | "MENTORE" | "MENTOR_ET_MENTORE">;
@@ -77,9 +74,12 @@ const accountStatusLabels: Record<string, string> = {
   EN_ATTENTE: "En attente",
   ACTIF: "Actif",
   INACTIF: "Inactif",
-  REFUSE: "Refuse",
   SUSPENDU: "Suspendu",
 };
+
+function normalizeAccountStatus(status?: string) {
+  return status === "REFUSE" ? "INACTIF" : status;
+}
 
 const profileLabels: Record<UserDraft["profil_mentorat"], string> = {
   MENTOR: "Mentor",
@@ -96,21 +96,14 @@ function fullName(row: UserRow) {
   return `${row.prenom ?? ""} ${row.nom ?? ""}`.trim() || "Utilisateur sans nom";
 }
 
-function capacityLabel(row: UserRow) {
-  const current = row.nombre_mentores_actuels ?? 0;
-  const total = row.capacite_mentorat ?? 0;
-  const remaining = row.capacite_restante ?? Math.max(total - current, 0);
-  return `${current}/${total} occupes, ${remaining} disponible${remaining > 1 ? "s" : ""}`;
-}
-
 function levelAllowedForProfile(level: NiveauAcademique, profile: UserDraft["profil_mentorat"]) {
   if (profile === "MENTOR") {
-    return !level.est_premier_niveau;
+    return mentorAcademicLevelOrders.includes(level.ordre_niveau);
   }
   if (profile === "MENTOR_ET_MENTORE") {
-    return !level.est_premier_niveau && !level.est_dernier_niveau;
+    return mentorAcademicLevelOrders.includes(level.ordre_niveau) && mentoreeAcademicLevelOrders.includes(level.ordre_niveau);
   }
-  return !level.est_dernier_niveau;
+  return mentoreeAcademicLevelOrders.includes(level.ordre_niveau);
 }
 
 export function AdminUsersList({
@@ -118,7 +111,6 @@ export function AdminUsersList({
   description,
   endpoint,
   emptyMessage,
-  showCapacity = false,
   defaultRoleName,
   defaultProfile,
   profileOptions,
@@ -135,6 +127,7 @@ export function AdminUsersList({
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
+  const [selectedRow, setSelectedRow] = useState<UserRow | null>(null);
 
   const defaultRoleId = useMemo(
     () => roles.find((role) => role.nom === defaultRoleName)?.id,
@@ -156,11 +149,9 @@ export function AdminUsersList({
       region: "",
       objectifs: "",
       profil_mentorat: profile,
-      capacite_mentorat: profile === "MENTORE" ? "0" : "1",
       statut_compte: "ACTIF",
       role: "",
       niveau_academique: "",
-      is_active: true,
     };
   }
 
@@ -223,11 +214,9 @@ export function AdminUsersList({
       region: row.region ?? "",
       objectifs: row.objectifs ?? "",
       profil_mentorat: row.profil_mentorat ?? defaultProfile,
-      capacite_mentorat: String(row.capacite_mentorat ?? 0),
-      statut_compte: row.statut_compte ?? "ACTIF",
+      statut_compte: normalizeAccountStatus(row.statut_compte) ?? "ACTIF",
       role: row.role ? String(row.role) : defaultRoleId ? String(defaultRoleId) : "",
       niveau_academique: row.niveau_academique ? String(row.niveau_academique) : "",
-      is_active: true,
     });
     setEditingId(row.id);
     setMessage("");
@@ -287,11 +276,9 @@ export function AdminUsersList({
       region: draft.region,
       objectifs: draft.objectifs,
       profil_mentorat: draft.profil_mentorat,
-      capacite_mentorat: Number(draft.capacite_mentorat || 0),
       statut_compte: draft.statut_compte,
       role: roleId,
       niveau_academique: draft.niveau_academique ? Number(draft.niveau_academique) : null,
-      is_active: draft.is_active,
     };
     if (draft.mot_de_passe && draft.profil_mentorat !== "MENTORE") {
       payload.mot_de_passe = draft.mot_de_passe;
@@ -321,7 +308,6 @@ export function AdminUsersList({
     setDraft((currentDraft) => {
       const nextDraft = { ...currentDraft, [field]: value };
       if (field === "profil_mentorat") {
-        nextDraft.capacite_mentorat = value === "MENTORE" ? "0" : currentDraft.capacite_mentorat || "1";
         nextDraft.mot_de_passe = currentDraft.mot_de_passe || DEFAULT_MENTORAT_PASSWORD;
         const selectedLevel = levels.find((level) => String(level.id) === currentDraft.niveau_academique);
         if (selectedLevel && !levelAllowedForProfile(selectedLevel, value as UserDraft["profil_mentorat"])) {
@@ -448,25 +434,6 @@ export function AdminUsersList({
             ))}
           </select>
         </label>
-        <label>
-          Capacite mentorat
-          <input
-            className="field"
-            type="number"
-            min={0}
-            disabled={draft.profil_mentorat === "MENTORE"}
-            value={draft.capacite_mentorat}
-            onChange={(event) => updateDraft("capacite_mentorat", event.target.value)}
-          />
-        </label>
-        <label className="flex items-center gap-3 pt-7 text-sm text-muted-foreground">
-          <input
-            type="checkbox"
-            checked={draft.is_active}
-            onChange={(event) => updateDraft("is_active", event.target.checked)}
-          />
-          <span>Compte techniquement actif</span>
-        </label>
         <label className="md:col-span-2">
           Objectifs
           <textarea
@@ -517,80 +484,101 @@ export function AdminUsersList({
       </Modal>
 
       {!isLoading && !error ? (
-        <Card className="overflow-hidden">
-          <div className="border-b border-border bg-muted px-4 py-3 text-sm font-medium">
-            {rows.length} profil{rows.length > 1 ? "s" : ""}
-          </div>
-
-          {rows.length === 0 ? (
-            <div className="p-4">
-              <EmptyState icon={UsersRound} title={emptyMessage} />
-            </div>
-          ) : (
-            <div className="divide-y divide-border">
-              {rows.map((row) => (
-                <CardContent key={row.id} className="grid gap-3 p-4 xl:grid-cols-[1.2fr_1fr_1fr_220px_120px]">
-                  <div>
-                    <h2 className="font-semibold text-foreground">{fullName(row)}</h2>
-                    <p className="mt-1 text-sm text-muted-foreground">{row.email ?? "Email non renseigne"}</p>
-                    <p className="mt-1 text-sm text-muted-foreground">{row.telephone ?? "Telephone non renseigne"}</p>
-                  </div>
-
-                  <div className="text-sm text-muted-foreground">
-                    <p>
-                      <span className="font-medium text-foreground">Niveau:</span>{" "}
-                      {row.niveau_academique_nom ?? "Non renseigne"}
-                    </p>
-                    <p className="mt-1">
-                      <span className="font-medium text-foreground">Region:</span> {row.region || "Non renseignee"}
-                    </p>
-                    <p className="mt-1">
-                      <span className="font-medium text-foreground">Langue:</span> {row.langue_preferee || "Non renseignee"}
-                    </p>
-                  </div>
-
-                  <div className="grid gap-2 text-sm text-muted-foreground">
-                    <div className="flex flex-wrap gap-2">
-                      <Badge variant={row.statut_compte === "ACTIF" ? "success" : "outline"}>
-                        {row.statut_compte ? accountStatusLabels[row.statut_compte] ?? row.statut_compte : "Non renseigne"}
-                      </Badge>
-                      <Badge variant="bronze">{row.profil_mentorat ? profileLabels[row.profil_mentorat] : "Non renseigne"}</Badge>
-                    </div>
-                    {showCapacity ? (
-                      <p className="mt-1">
-                        <span className="font-medium text-foreground">Capacite:</span> {capacityLabel(row)}
-                      </p>
-                    ) : null}
-                  </div>
-
-                  <label className="text-sm">
-                    Statut du compte
-                    <select
-                      className="field"
-                      value={row.statut_compte ?? ""}
-                      disabled={updatingId === row.id}
-                      onChange={(event) => void handleStatusChange(row, event.target.value)}
-                    >
-                      {Object.entries(accountStatusLabels).map(([value, label]) => (
-                        <option key={value} value={value}>
-                          {label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-
-                  <div className="flex items-start xl:justify-end">
-                    <Button type="button" variant="outline" size="sm" onClick={() => openEditModal(row)}>
-                      <Pencil aria-hidden="true" />
-                      Modifier
-                    </Button>
-                  </div>
-                </CardContent>
-              ))}
-            </div>
-          )}
-        </Card>
+        <ListTable
+          title="Liste des profils"
+          countLabel={`${rows.length} profil${rows.length > 1 ? "s" : ""}`}
+          minWidth={1100}
+          headers={[
+            { label: "Nom" },
+            { label: "Email" },
+            { label: "Telephone" },
+            { label: "Niveau" },
+            { label: "Statut" },
+            { label: "Profil" },
+            { label: "Actions", className: "text-right" },
+          ]}
+          emptyState={rows.length === 0 ? <EmptyState icon={UsersRound} title={emptyMessage} /> : null}
+        >
+          {rows.map((row) => (
+            <tr key={row.id} className="align-top">
+              <td className="px-4 py-3">
+                <p className="font-medium text-foreground">{fullName(row)}</p>
+              </td>
+              <td className="px-4 py-3 text-muted-foreground">{row.email ?? "Non renseigne"}</td>
+              <td className="px-4 py-3 text-muted-foreground">{row.telephone || "Non renseigne"}</td>
+              <td className="px-4 py-3 text-muted-foreground">{row.niveau_academique_nom ?? "Non renseigne"}</td>
+              <td className="px-4 py-3">
+                <select
+                  className="field min-h-9 w-36 py-1 text-xs"
+                  aria-label={`Statut de ${fullName(row)}`}
+                  value={normalizeAccountStatus(row.statut_compte) ?? ""}
+                  disabled={updatingId === row.id}
+                  onChange={(event) => void handleStatusChange(row, event.target.value)}
+                >
+                  {Object.entries(accountStatusLabels).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </td>
+              <td className="px-4 py-3 text-muted-foreground">
+                <Badge variant="bronze">{row.profil_mentorat ? profileLabels[row.profil_mentorat] : "Non renseigne"}</Badge>
+              </td>
+              <td className="px-4 py-3">
+                <div className="flex flex-wrap justify-end gap-2">
+                  <Button type="button" variant="ghost" size="sm" onClick={() => setSelectedRow(row)}>
+                    <Eye aria-hidden="true" />
+                    Details
+                  </Button>
+                  <Button type="button" variant="outline" size="sm" onClick={() => openEditModal(row)}>
+                    <Pencil aria-hidden="true" />
+                    Modifier
+                  </Button>
+                </div>
+              </td>
+            </tr>
+          ))}
+        </ListTable>
       ) : null}
+
+      <Modal
+        open={Boolean(selectedRow)}
+        title="Details du profil"
+        description="Informations completes du compte selectionne."
+        className="max-w-3xl"
+        onClose={() => setSelectedRow(null)}
+      >
+        {selectedRow ? (
+          <div className="grid gap-3 rounded-lg border border-border bg-muted/30 p-4 md:grid-cols-2">
+            <DetailItem label="Nom complet" value={fullName(selectedRow)} />
+            <DetailItem label="Email" value={selectedRow.email ?? "Non renseigne"} />
+            <DetailItem label="Telephone" value={selectedRow.telephone || "Non renseigne"} />
+            <DetailItem label="Region" value={selectedRow.region || "Non renseignee"} />
+            <DetailItem label="Langue" value={selectedRow.langue_preferee || "Non renseignee"} />
+            <DetailItem label="Niveau academique" value={selectedRow.niveau_academique_nom ?? "Non renseigne"} />
+            <DetailItem
+              label="Statut"
+              value={
+                selectedRow.statut_compte
+                  ? accountStatusLabels[normalizeAccountStatus(selectedRow.statut_compte) ?? ""] ?? selectedRow.statut_compte
+                  : "Non renseigne"
+              }
+            />
+            <DetailItem label="Profil" value={selectedRow.profil_mentorat ? profileLabels[selectedRow.profil_mentorat] : "Non renseigne"} />
+            <DetailItem label="Objectifs" value={selectedRow.objectifs || "Non renseignes"} className="md:col-span-2" />
+          </div>
+        ) : null}
+      </Modal>
+    </div>
+  );
+}
+
+function DetailItem({ label, value, className = "" }: { label: string; value: string; className?: string }) {
+  return (
+    <div className={className}>
+      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{label}</p>
+      <p className="mt-1 text-sm font-medium text-foreground">{value}</p>
     </div>
   );
 }

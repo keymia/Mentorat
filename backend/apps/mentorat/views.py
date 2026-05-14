@@ -1,11 +1,15 @@
-from django.db.models import Count, Q
+from django.db import transaction
+from django.db.models import Count, Exists, OuterRef, Q
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.inscriptions.models import Inscription
+from apps.inscriptions.serializers import InscriptionSerializer
 from apps.mentorat.models import (
     MentoreeProgress,
     Mentorat,
@@ -21,7 +25,14 @@ from apps.mentorat.serializers import (
     MentorshipPeriodSerializer,
     MentorshipSessionSerializer,
 )
-from apps.users.permissions import IsAdminRole
+from apps.mentorat.services import (
+    complete_expired_mentorship_periods,
+    get_current_or_latest_period,
+    get_mentors_disponibles_for_niveau,
+    validate_mentor_for_mentore_level,
+)
+from apps.users.models import Utilisateur
+from apps.users.permissions import IsAdminPrincipal, IsAdminRole
 from apps.users.serializers import UtilisateurLiteSerializer
 
 
@@ -115,6 +126,100 @@ def select_progress_queryset():
     )
 
 
+def mark_inscription_matched(assignment: MentorshipAssignment):
+    Inscription.objects.filter(
+        utilisateur=assignment.mentoree,
+        mentorship_period=assignment.period,
+        type_inscription=Inscription.TypeInscription.MENTORE,
+    ).update(
+        mentor_choisi=assignment.mentor,
+        statut_inscription=Inscription.StatutInscription.VALIDEE,
+        needs_matching=False,
+        wants_association_assignment=False,
+        registration_status=Inscription.RegistrationStatus.MATCHED,
+    )
+
+
+def matching_inscriptions_queryset(period: MentorshipPeriod | None = None):
+    complete_expired_mentorship_periods()
+    queryset = Inscription.objects.select_related(
+        "utilisateur",
+        "utilisateur__role",
+        "utilisateur__niveau_academique",
+        "mentor_choisi",
+        "mentor_choisi__role",
+        "mentor_choisi__niveau_academique",
+        "mentorship_period",
+    ).filter(
+        type_inscription=Inscription.TypeInscription.MENTORE,
+    ).exclude(
+        statut_inscription=Inscription.StatutInscription.REFUSEE
+    )
+    if period:
+        queryset = queryset.filter(mentorship_period=period)
+    return queryset.distinct()
+
+
+def matching_status_for(inscription: Inscription, assignment: MentorshipAssignment | None) -> str:
+    period = inscription.mentorship_period
+    if (
+        inscription.registration_status == Inscription.RegistrationStatus.COMPLETED
+        or (period and period.status == MentorshipPeriod.Status.COMPLETED)
+        or (assignment and assignment.status == MentorshipAssignment.Status.COMPLETED)
+    ):
+        return "completed"
+    if assignment and assignment.status == MentorshipAssignment.Status.ACTIVE:
+        return "assigned"
+    if inscription.mentor_choisi_id:
+        return "assigned"
+    if inscription.wants_association_assignment:
+        return "association_choice"
+    if inscription.needs_matching or inscription.registration_status == Inscription.RegistrationStatus.PENDING_MATCHING:
+        return "pending_matching"
+    return "unassigned"
+
+
+def serialize_matching_row(inscription: Inscription, request=None) -> dict:
+    serializer_context = {"request": request} if request else {}
+    period = inscription.mentorship_period
+    assignment_queryset = select_assignment_queryset().filter(mentoree=inscription.utilisateur)
+    if period:
+        assignment_queryset = assignment_queryset.filter(period=period)
+    current_assignment = (
+        assignment_queryset.filter(status=MentorshipAssignment.Status.ACTIVE).first()
+        or assignment_queryset.first()
+    )
+    current_mentor = current_assignment.mentor if current_assignment else inscription.mentor_choisi
+
+    compatible_mentors = []
+    niveau = inscription.utilisateur.niveau_academique
+    if niveau and period and period.status in [MentorshipPeriod.Status.DRAFT, MentorshipPeriod.Status.ACTIVE]:
+        compatible_mentors = get_mentors_disponibles_for_niveau(niveau.id, period.id)
+        if current_mentor:
+            compatible_mentors = [mentor for mentor in compatible_mentors if mentor.id != current_mentor.id]
+
+    return {
+        "inscription": InscriptionSerializer(inscription, context=serializer_context).data,
+        "mentee": UtilisateurLiteSerializer(inscription.utilisateur, context=serializer_context).data,
+        "period": MentorshipPeriodSerializer(period).data if period else None,
+        "current_mentor": UtilisateurLiteSerializer(current_mentor, context=serializer_context).data
+        if current_mentor
+        else None,
+        "current_assignment": MentorshipAssignmentSerializer(current_assignment).data
+        if current_assignment
+        else None,
+        "assignment_history": MentorshipAssignmentSerializer(assignment_queryset, many=True).data,
+        "compatible_mentors": UtilisateurLiteSerializer(
+            compatible_mentors,
+            many=True,
+            context=serializer_context,
+        ).data,
+        "matching_status": matching_status_for(inscription, current_assignment),
+        "needs_matching": inscription.needs_matching,
+        "wants_association_assignment": inscription.wants_association_assignment,
+    }
+
+
 class DisabledLegacyMentorshipFeatureView(APIView):
     permission_classes = [AllowAny]
 
@@ -160,9 +265,14 @@ class MentoratViewSet(viewsets.ModelViewSet):
 
 class MentorshipPeriodViewSet(viewsets.ModelViewSet):
     serializer_class = MentorshipPeriodSerializer
-    permission_classes = [IsAdminRole]
+
+    def get_permissions(self):
+        if self.action in ["list", "retrieve"]:
+            return [IsAdminRole()]
+        return [IsAdminPrincipal()]
 
     def get_queryset(self):
+        complete_expired_mentorship_periods()
         return MentorshipPeriod.objects.annotate(
             assignments_count=Count("assignments", distinct=True),
             sessions_count=Count("assignments__sessions", distinct=True),
@@ -182,11 +292,16 @@ class MentorshipAssignmentViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return filter_assignments(select_assignment_queryset(), self.request.query_params)
 
+    def perform_create(self, serializer):
+        assignment = serializer.save()
+        mark_inscription_matched(assignment)
+
 
 class AvailableMentorshipPeriodsView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
+        complete_expired_mentorship_periods()
         periods = MentorshipPeriod.objects.filter(
             status__in=[MentorshipPeriod.Status.DRAFT, MentorshipPeriod.Status.ACTIVE]
         ).order_by("-start_date", "title")
@@ -197,6 +312,7 @@ class AdminMentorshipOverviewView(APIView):
     permission_classes = [IsAdminRole]
 
     def get(self, request):
+        complete_expired_mentorship_periods()
         assignments = filter_assignments(select_assignment_queryset(), request.query_params)
         sessions = filter_sessions(select_session_queryset(), request.query_params)
         progress = filter_progress(select_progress_queryset(), request.query_params)
@@ -281,6 +397,208 @@ class AdminMentorshipReportsView(APIView):
                 "results": rows,
             }
         )
+
+
+class AdminMatchingView(APIView):
+    permission_classes = [IsAdminRole]
+
+    def get(self, request):
+        periods = list(MentorshipPeriod.objects.order_by("-start_date", "title"))
+        selected_period = None
+        period_id = request.query_params.get("period")
+        if period_id:
+            selected_period = get_object_or_404(MentorshipPeriod, pk=period_id)
+        else:
+            selected_period = get_current_or_latest_period()
+
+        inscriptions = matching_inscriptions_queryset(selected_period)
+        rows = [serialize_matching_row(inscription, request) for inscription in inscriptions]
+
+        return Response(
+            {
+                "periods": MentorshipPeriodSerializer(periods, many=True).data,
+                "selected_period": MentorshipPeriodSerializer(selected_period).data if selected_period else None,
+                "show_session_filter": len(periods) > 1,
+                "results": rows,
+            }
+        )
+
+
+class AdminMatchingDetailsView(APIView):
+    permission_classes = [IsAdminRole]
+
+    def get(self, request, mentee_id: int):
+        period_id = request.query_params.get("period")
+        period = get_object_or_404(MentorshipPeriod, pk=period_id) if period_id else None
+        inscription = get_object_or_404(
+            matching_inscriptions_queryset(period).filter(utilisateur_id=mentee_id).order_by("-date_inscription")
+        )
+        return Response(serialize_matching_row(inscription, request))
+
+
+def reassign_matching_mentee(mentee_id: int, mentor_id: int, period: MentorshipPeriod):
+    if period.status not in [MentorshipPeriod.Status.DRAFT, MentorshipPeriod.Status.ACTIVE]:
+        raise ValueError("Impossible de modifier un jumelage pour une session terminee ou archivee.")
+
+    inscription_queryset = (
+        Inscription.objects.select_for_update(of=("self",))
+        .select_related("utilisateur", "utilisateur__niveau_academique", "mentorship_period")
+        .filter(
+            utilisateur_id=mentee_id,
+            mentorship_period=period,
+            type_inscription=Inscription.TypeInscription.MENTORE,
+        )
+        .exclude(statut_inscription=Inscription.StatutInscription.REFUSEE)
+    )
+    inscription = get_object_or_404(inscription_queryset)
+    mentoree = inscription.utilisateur
+    mentor = get_object_or_404(Utilisateur.objects.select_related("niveau_academique"), pk=mentor_id)
+
+    if not mentoree.niveau_academique_id:
+        raise ValueError("Le mentore doit avoir un niveau academique.")
+
+    if mentoree.statut_compte != Utilisateur.StatutCompte.ACTIF or not mentoree.is_active:
+        mentoree.statut_compte = Utilisateur.StatutCompte.ACTIF
+        mentoree.is_active = True
+        mentoree.save(update_fields=["statut_compte", "is_active"])
+
+    if inscription.statut_inscription != Inscription.StatutInscription.VALIDEE:
+        inscription.statut_inscription = Inscription.StatutInscription.VALIDEE
+        inscription.save(update_fields=["statut_inscription"])
+
+    active_assignments = MentorshipAssignment.objects.select_for_update().filter(
+        mentoree=mentoree,
+        period=period,
+        status=MentorshipAssignment.Status.ACTIVE,
+    )
+    current_assignment = active_assignments.first()
+    if current_assignment and current_assignment.mentor_id == mentor.id:
+        mark_inscription_matched(current_assignment)
+        return current_assignment, False
+
+    validate_mentor_for_mentore_level(mentor, mentoree.niveau_academique, period)
+
+    old_mentor_ids = list(active_assignments.values_list("mentor_id", flat=True))
+    if old_mentor_ids:
+        active_assignments.update(
+            status=MentorshipAssignment.Status.SUSPENDED,
+            admin_notes="Affectation remplacee depuis la page Jumelage.",
+            updated_at=timezone.now(),
+        )
+        for old_mentor_id in set(old_mentor_ids):
+            MentorshipAssignment.actualiser_nombre_mentores(old_mentor_id)
+
+    serializer = MentorshipAssignmentSerializer(
+        data={
+            "mentor": mentor.id,
+            "mentoree": mentoree.id,
+            "period": period.id,
+            "status": MentorshipAssignment.Status.ACTIVE,
+            "admin_notes": "Affectation creee depuis la page Jumelage.",
+        }
+    )
+    serializer.is_valid(raise_exception=True)
+    assignment = serializer.save()
+    mark_inscription_matched(assignment)
+    return assignment, True
+
+
+class AdminMatchingAssignView(APIView):
+    permission_classes = [IsAdminRole]
+
+    def post(self, request, mentee_id: int):
+        period_id = request.data.get("period")
+        mentor_id = request.data.get("mentor")
+        if not mentor_id:
+            return Response({"mentor": "Selectionnez un mentor."}, status=status.HTTP_400_BAD_REQUEST)
+
+        period = get_object_or_404(MentorshipPeriod, pk=period_id) if period_id else get_current_or_latest_period()
+        if not period:
+            return Response({"period": "Aucune session de mentorat disponible."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            with transaction.atomic():
+                assignment, created = reassign_matching_mentee(mentee_id, mentor_id, period)
+        except ValueError as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        response_status = status.HTTP_201_CREATED if created else status.HTTP_200_OK
+        return Response(MentorshipAssignmentSerializer(assignment).data, status=response_status)
+
+
+class AdminMatchingReassignView(APIView):
+    permission_classes = [IsAdminRole]
+
+    def post(self, request, mentee_id: int):
+        mentor_id = request.data.get("new_mentor_id") or request.data.get("mentor")
+        period_id = request.data.get("session_id") or request.data.get("period")
+        if not mentor_id:
+            return Response({"new_mentor_id": "Selectionnez un nouveau mentor."}, status=status.HTTP_400_BAD_REQUEST)
+
+        period = get_object_or_404(MentorshipPeriod, pk=period_id) if period_id else get_current_or_latest_period()
+        if not period:
+            return Response({"session_id": "Aucune session de mentorat disponible."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            with transaction.atomic():
+                assignment, _created = reassign_matching_mentee(mentee_id, mentor_id, period)
+                inscription = get_object_or_404(
+                    matching_inscriptions_queryset(period),
+                    utilisateur_id=assignment.mentoree_id,
+                )
+        except ValueError as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serialize_matching_row(inscription, request))
+
+    def patch(self, request, mentee_id: int):
+        return self.post(request, mentee_id)
+
+
+class AdminSessionsView(APIView):
+    permission_classes = [IsAdminRole]
+
+    def get(self, request):
+        complete_expired_mentorship_periods()
+        periods = MentorshipPeriod.objects.annotate(
+            assignments_count=Count("assignments", distinct=True),
+            sessions_count=Count("assignments__sessions", distinct=True),
+            completed_sessions_count=Count(
+                "assignments__sessions",
+                filter=Q(assignments__sessions__status=MentorshipSession.Status.COMPLETED),
+                distinct=True,
+            ),
+        )
+        return Response(MentorshipPeriodSerializer(periods, many=True).data)
+
+
+class AdminSessionCompleteView(APIView):
+    permission_classes = [IsAdminPrincipal]
+
+    def patch(self, request, pk: int):
+        period = get_object_or_404(MentorshipPeriod, pk=pk)
+        period.status = MentorshipPeriod.Status.COMPLETED
+        period.auto_completed_at = timezone.now()
+        period.save(update_fields=["status", "auto_completed_at", "updated_at"])
+        mentor_ids = list(
+            MentorshipAssignment.objects.filter(
+                period=period,
+                status=MentorshipAssignment.Status.ACTIVE,
+            ).values_list("mentor_id", flat=True)
+        )
+        MentorshipAssignment.objects.filter(
+            period=period,
+            status=MentorshipAssignment.Status.ACTIVE,
+        ).update(status=MentorshipAssignment.Status.COMPLETED, updated_at=timezone.now())
+        for mentor_id in set(mentor_ids):
+            MentorshipAssignment.actualiser_nombre_mentores(mentor_id)
+        Inscription.objects.filter(
+            mentorship_period=period,
+            type_inscription=Inscription.TypeInscription.MENTORE,
+        ).update(
+            registration_status=Inscription.RegistrationStatus.COMPLETED,
+            completed_session_status=Inscription.CompletedSessionStatus.COMPLETED,
+            needs_matching=False,
+        )
+        return Response(MentorshipPeriodSerializer(period).data)
 
 
 class MentorDashboardView(APIView):

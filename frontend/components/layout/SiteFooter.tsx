@@ -3,7 +3,7 @@ import Link from "next/link";
 import { BrandMark } from "@/components/layout/BrandMark";
 
 const footerLinks = [
-  { href: "/programme", label: "Programme" },
+  { href: "/equipes", label: "Equipes" },
   { href: "/inscriptions", label: "Inscriptions" },
   { href: "/evenements", label: "Evenements" },
   { href: "/partenaires", label: "Partenaires" },

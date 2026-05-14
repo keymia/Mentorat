@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
-from apps.users.models import NiveauAcademique, Role, Utilisateur
+from apps.users.models import LoginVerificationCode, NiveauAcademique, Role, Utilisateur
 
 
 @admin.register(Role)
@@ -12,9 +12,17 @@ class RoleAdmin(admin.ModelAdmin):
 
 @admin.register(NiveauAcademique)
 class NiveauAcademiqueAdmin(admin.ModelAdmin):
-    list_display = ("nom", "ordre_niveau", "est_premier_niveau", "est_dernier_niveau")
+    list_display = ("nom", "code", "ordre_niveau", "est_premier_niveau", "est_dernier_niveau")
     list_editable = ("ordre_niveau", "est_premier_niveau", "est_dernier_niveau")
     ordering = ("ordre_niveau",)
+
+
+@admin.register(LoginVerificationCode)
+class LoginVerificationCodeAdmin(admin.ModelAdmin):
+    list_display = ("user", "challenge_id", "expires_at", "used_at", "created_at")
+    list_filter = ("used_at", "expires_at")
+    search_fields = ("user__email", "challenge_id")
+    readonly_fields = ("user", "challenge_id", "code_hash", "expires_at", "used_at", "created_at")
 
 
 @admin.register(Utilisateur)
@@ -28,9 +36,22 @@ class UtilisateurAdmin(UserAdmin):
         "profil_mentorat",
         "niveau_academique",
         "statut_compte",
+        "wants_to_appear_on_team_page",
+        "is_team_approved",
+        "can_appear_on_about_page",
+        "public_title",
+        "team_display_order",
         "is_staff",
     )
-    list_filter = ("role", "profil_mentorat", "statut_compte", "niveau_academique")
+    list_filter = (
+        "role",
+        "profil_mentorat",
+        "statut_compte",
+        "niveau_academique",
+        "wants_to_appear_on_team_page",
+        "is_team_approved",
+        "can_appear_on_about_page",
+    )
     search_fields = ("email", "nom", "prenom")
     ordering = ("email",)
     fieldsets = (
@@ -44,6 +65,16 @@ class UtilisateurAdmin(UserAdmin):
                     "profil_mentorat",
                     "disponibilite",
                     "objectifs",
+                    "mini_bio",
+                    "profile_photo",
+                    "domaine_specialite",
+                    "wants_to_appear_on_team_page",
+                    "is_team_approved",
+                    "team_display_order",
+                    "can_appear_on_about_page",
+                    "public_title",
+                    "public_description",
+                    "public_photo",
                     "capacite_mentorat",
                     "nombre_mentores_actuels",
                 )

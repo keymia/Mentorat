@@ -6,9 +6,9 @@ import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
+import { ListTable } from "@/components/ui/list-table";
 import { Modal } from "@/components/ui/modal";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
@@ -370,33 +370,49 @@ export function MentorSessionsList() {
       {sessions.length === 0 ? (
         <EmptyState icon={CalendarClock} title="Aucune seance programmee." />
       ) : (
-        <div className="grid gap-3">
+        <ListTable
+          title="Liste des seances"
+          countLabel={`${sessions.length} seance${sessions.length > 1 ? "s" : ""}`}
+          minWidth={1080}
+          headers={[
+            { label: "Mentore" },
+            { label: "Seance" },
+            { label: "Objet" },
+            { label: "Progression" },
+            { label: "Statut" },
+            { label: "Actions", className: "text-right" },
+          ]}
+        >
           {sessions.map((session) => {
             const assignment = assignmentsById.get(session.assignment);
             return (
-              <Card key={session.id}>
-                <CardContent className="grid gap-4 p-5 xl:grid-cols-[1.2fr_1fr_auto] xl:items-center">
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="font-semibold">{displayUser(session.mentoree_detail ?? assignment?.mentoree_detail)}</h3>
-                      <Badge variant={session.status === "completed" ? "success" : "outline"}>
-                        {sessionStatusLabels[session.status]}
-                      </Badge>
-                    </div>
-                    <p className="mt-2 text-sm text-muted-foreground">
-                      Seance {session.session_number} | {formatDate(session.scheduled_date)} |{" "}
-                      {normalizeTime(session.start_time) || "Heure non renseignee"}
-                      {session.end_time ? ` - ${normalizeTime(session.end_time)}` : ""}
-                    </p>
-                    <p className="mt-1 text-sm text-muted-foreground">Objet: {session.summary || "Non renseigne"}</p>
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    <p>{session.period_detail?.title ?? assignment?.period_detail?.title ?? "Periode active"}</p>
-                    <p>
-                      {assignment?.completed_sessions_count ?? 0}/{assignment?.required_sessions ?? 0} seances realisees
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap gap-2 xl:justify-end">
+              <tr key={session.id} className="align-top">
+                <td className="px-4 py-3">
+                  <p className="font-medium text-foreground">{displayUser(session.mentoree_detail ?? assignment?.mentoree_detail)}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {session.period_detail?.title ?? assignment?.period_detail?.title ?? "Periode active"}
+                  </p>
+                </td>
+                <td className="px-4 py-3 text-muted-foreground">
+                  <p className="font-medium text-foreground">Seance {session.session_number}</p>
+                  <p className="mt-1 text-xs">
+                    {formatDate(session.scheduled_date)} | {normalizeTime(session.start_time) || "Heure non renseignee"}
+                    {session.end_time ? ` - ${normalizeTime(session.end_time)}` : ""}
+                  </p>
+                </td>
+                <td className="px-4 py-3 text-muted-foreground">
+                  <p className="line-clamp-2 max-w-sm">{session.summary || "Non renseigne"}</p>
+                </td>
+                <td className="px-4 py-3 text-muted-foreground">
+                  {assignment?.completed_sessions_count ?? 0}/{assignment?.required_sessions ?? 0} realisees
+                </td>
+                <td className="px-4 py-3">
+                  <Badge variant={session.status === "completed" ? "success" : "outline"}>
+                    {sessionStatusLabels[session.status]}
+                  </Badge>
+                </td>
+                <td className="px-4 py-3">
+                  <div className="flex flex-wrap justify-end gap-2">
                     <Button type="button" variant="outline" size="sm" onClick={() => setDetailSession(session)}>
                       <Eye aria-hidden="true" />
                       Details
@@ -406,11 +422,11 @@ export function MentorSessionsList() {
                       Modifier
                     </Button>
                   </div>
-                </CardContent>
-              </Card>
+                </td>
+              </tr>
             );
           })}
-        </div>
+        </ListTable>
       )}
     </div>
   );

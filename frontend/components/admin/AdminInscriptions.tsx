@@ -1,68 +1,84 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Check, ClipboardList, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Check, ClipboardList, Search, X } from "lucide-react";
 
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Modal } from "@/components/ui/modal";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+  Inscription,
   formatApiError,
-  getAdminCollection,
+  getAdminRegistrations,
   refuserInscription,
   validerInscription,
 } from "@/lib/api";
+import { displayUser, formatDateTime } from "@/lib/mentorship";
 
-type UtilisateurDetail = {
-  nom?: string;
-  prenom?: string;
-  email?: string;
-  niveau_academique_nom?: string;
+const pageSize = 10;
+
+const registrationStatusLabels: Record<Inscription["registration_status"], string> = {
+  registered: "Inscrit",
+  pending_matching: "Jumelage requis",
+  matched: "Jumele",
+  completed: "Termine",
 };
 
-type InscriptionRow = {
-  id: number;
-  type_inscription: string;
-  statut_inscription: string;
-  date_inscription: string;
-  utilisateur_detail?: UtilisateurDetail;
-  mentor_choisi_detail?: UtilisateurDetail | null;
+const inscriptionStatusLabels: Record<Inscription["statut_inscription"], string> = {
+  EN_ATTENTE: "En attente",
+  VALIDEE: "Validee",
+  REFUSEE: "Refusee",
 };
 
-function normalizeRows(payload: Record<string, unknown>[] | { results?: Record<string, unknown>[] }) {
-  const rows = Array.isArray(payload) ? payload : payload.results ?? [];
-  return rows as InscriptionRow[];
-}
-
-function displayUser(user?: UtilisateurDetail | null) {
-  if (!user) {
-    return "Non renseigne";
+function matchingSummary(row: Inscription) {
+  if (row.type_inscription === "MENTOR") {
+    const count = row.utilisateur_detail?.nombre_mentores_actuels ?? 0;
+    return {
+      label: `${count} jumelage${count > 1 ? "s" : ""}`,
+      variant: count > 0 ? ("success" as const) : ("outline" as const),
+    };
   }
-  return `${user.prenom ?? ""} ${user.nom ?? ""}`.trim() || user.email || "Utilisateur";
+
+  const isMatched = Boolean(row.mentor_choisi || row.mentor_choisi_detail);
+  return {
+    label: isMatched ? "Jumele" : "En attente",
+    variant: isMatched ? ("success" as const) : ("outline" as const),
+  };
 }
 
 export function AdminInscriptions() {
-  const [rows, setRows] = useState<InscriptionRow[]>([]);
+  const [rows, setRows] = useState<Inscription[]>([]);
+  const [search, setSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [pendingId, setPendingId] = useState<number | null>(null);
+  const [page, setPage] = useState(1);
+  const [selectedRow, setSelectedRow] = useState<Inscription | null>(null);
 
   async function reloadRows() {
-    const payload = await getAdminCollection("/inscriptions/");
-    setRows(normalizeRows(payload));
+    const payload = await getAdminRegistrations({
+      search,
+      role: roleFilter,
+      status: statusFilter,
+    });
+    setRows(payload);
   }
 
   useEffect(() => {
     let isMounted = true;
-    getAdminCollection("/inscriptions/")
+    getAdminRegistrations({ search, role: roleFilter, status: statusFilter })
       .then((payload) => {
         if (isMounted) {
-          setRows(normalizeRows(payload));
+          setRows(payload);
           setError("");
+          setPage(1);
         }
       })
       .catch((apiError) => {
@@ -78,7 +94,10 @@ export function AdminInscriptions() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [roleFilter, search, statusFilter]);
+
+  const pageCount = Math.max(Math.ceil(rows.length / pageSize), 1);
+  const visibleRows = useMemo(() => rows.slice((page - 1) * pageSize, page * pageSize), [page, rows]);
 
   async function handleAction(id: number, action: "valider" | "refuser") {
     setPendingId(id);
@@ -87,7 +106,7 @@ export function AdminInscriptions() {
     try {
       if (action === "valider") {
         await validerInscription(id);
-        setMessage("Inscription validee. Si une periode active existe, l'affectation mentorale a ete creee.");
+        setMessage("Inscription validee.");
       } else {
         await refuserInscription(id);
         setMessage("Inscription refusee.");
@@ -103,68 +122,189 @@ export function AdminInscriptions() {
   return (
     <div className="grid gap-5">
       <div>
-        <h1 className="font-display text-3xl font-bold">Gestion inscriptions</h1>
+        <h1 className="font-display text-3xl font-bold">Inscriptions</h1>
         <p className="mt-2 text-sm leading-6 text-muted-foreground">
-          Validez les inscriptions. Une periode active permet de creer l&apos;affectation mentorale au moment de la validation.
+          Consultez les inscrits et reperez les dossiers qui demandent encore une action.
         </p>
       </div>
+
+      <Card className="grid gap-3 p-4 lg:grid-cols-[1.4fr_180px_180px]">
+        <label>
+          Recherche
+          <span className="relative block">
+            <Search
+              className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+              aria-hidden="true"
+            />
+            <input
+              className="field pl-10"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Nom, prenom ou email"
+            />
+          </span>
+        </label>
+        <label>
+          Role
+          <select className="field" value={roleFilter} onChange={(event) => setRoleFilter(event.target.value)}>
+            <option value="">Tous</option>
+            <option value="MENTOR">Mentors</option>
+            <option value="MENTORE">Mentores</option>
+          </select>
+        </label>
+        <label>
+          Statut
+          <select className="field" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+            <option value="">Tous</option>
+            {Object.entries(inscriptionStatusLabels).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </label>
+      </Card>
+
       {message ? <Alert variant="success">{message}</Alert> : null}
       {error ? <Alert variant="error">{error}</Alert> : null}
       {isLoading ? <Skeleton className="h-56" /> : null}
+
       {!isLoading && rows.length === 0 ? (
         <EmptyState icon={ClipboardList} title="Aucune inscription." />
       ) : null}
-      <div className="grid gap-3">
-        {rows.map((row) => (
-          <Card key={row.id}>
-            <CardContent className="p-4">
-            <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-              <div>
-                <Badge variant="bronze">{row.type_inscription}</Badge>
-                <h2 className="mt-3 text-lg font-semibold">{displayUser(row.utilisateur_detail)}</h2>
-                <p className="mt-1 text-sm text-muted-foreground">{row.utilisateur_detail?.email}</p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Niveau: {row.utilisateur_detail?.niveau_academique_nom ?? "Non renseigne"}
-                </p>
-                {row.type_inscription === "MENTORE" ? (
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Mentor choisi: {displayUser(row.mentor_choisi_detail)}
-                  </p>
-                ) : null}
-              </div>
-              <div className="grid gap-2 md:justify-items-end">
-                <Badge variant={row.statut_inscription === "EN_ATTENTE" ? "outline" : "success"}>
-                  {row.statut_inscription}
-                </Badge>
-                {row.statut_inscription === "EN_ATTENTE" ? (
-                  <div className="flex flex-wrap gap-2">
-                    <Button
-                      type="button"
-                      disabled={pendingId === row.id}
-                      onClick={() => void handleAction(row.id, "valider")}
-                      size="sm"
-                    >
-                      <Check aria-hidden="true" />
-                      Valider
-                    </Button>
-                    <Button
-                      type="button"
-                      disabled={pendingId === row.id}
-                      onClick={() => void handleAction(row.id, "refuser")}
-                      variant="outline"
-                      size="sm"
-                    >
-                      <X aria-hidden="true" />
-                      Refuser
-                    </Button>
-                  </div>
-                ) : null}
-              </div>
+
+      {!isLoading && rows.length > 0 ? (
+        <Card className="overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[980px] text-left text-sm">
+              <thead className="border-b border-border bg-muted text-xs uppercase text-muted-foreground">
+                <tr>
+                  <th className="px-4 py-3">Nom</th>
+                  <th className="px-4 py-3">Email</th>
+                  <th className="px-4 py-3">Role</th>
+                  <th className="px-4 py-3">Date</th>
+                  <th className="px-4 py-3">Statut</th>
+                  <th className="px-4 py-3">Jumelage</th>
+                  <th className="px-4 py-3">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {visibleRows.map((row) => (
+                  (() => {
+                    const summary = matchingSummary(row);
+                    return (
+                      <tr key={row.id} className="align-top">
+                        <td className="px-4 py-3 font-medium">{displayUser(row.utilisateur_detail)}</td>
+                        <td className="px-4 py-3 text-muted-foreground">{row.utilisateur_detail?.email ?? "-"}</td>
+                        <td className="px-4 py-3">
+                          <Badge variant="bronze">{row.type_inscription}</Badge>
+                        </td>
+                        <td className="px-4 py-3 text-muted-foreground">{formatDateTime(row.date_inscription)}</td>
+                        <td className="px-4 py-3">
+                          <Badge variant={row.statut_inscription === "VALIDEE" ? "success" : "outline"}>
+                            {inscriptionStatusLabels[row.statut_inscription]}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-3">
+                          <Badge variant={summary.variant}>{summary.label}</Badge>
+                        </td>
+                        <td className="px-4 py-3">
+                          <Button type="button" variant="outline" size="sm" onClick={() => setSelectedRow(row)}>
+                            Detail
+                          </Button>
+                        </td>
+                      </tr>
+                    );
+                  })()
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="flex items-center justify-between border-t border-border px-4 py-3 text-sm text-muted-foreground">
+            <span>
+              Page {page} sur {pageCount}
+            </span>
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((current) => current - 1)}>
+                Precedent
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={page >= pageCount}
+                onClick={() => setPage((current) => current + 1)}
+              >
+                Suivant
+              </Button>
             </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+          </div>
+        </Card>
+      ) : null}
+
+      <Modal
+        open={Boolean(selectedRow)}
+        title="Detail de l'inscription"
+        description="Informations completes du dossier inscrit."
+        className="max-w-4xl"
+        onClose={() => setSelectedRow(null)}
+      >
+        {selectedRow ? (
+          <div className="grid gap-5">
+            <div className="grid gap-3 rounded-lg border border-border bg-muted/30 p-4 md:grid-cols-2">
+              <DetailItem label="Nom complet" value={displayUser(selectedRow.utilisateur_detail)} />
+              <DetailItem label="Email" value={selectedRow.utilisateur_detail?.email ?? "Non renseigne"} />
+              <DetailItem label="Role" value={selectedRow.type_inscription} />
+              <DetailItem label="Statut inscription" value={inscriptionStatusLabels[selectedRow.statut_inscription]} />
+              <DetailItem label="Niveau academique" value={selectedRow.utilisateur_detail?.niveau_academique_nom ?? "Non renseigne"} />
+              <DetailItem label="Date inscription" value={formatDateTime(selectedRow.date_inscription)} />
+              <DetailItem label="Session" value={selectedRow.mentorship_period_title ?? "Non renseignee"} />
+              <DetailItem label="Mentor choisi" value={displayUser(selectedRow.mentor_choisi_detail)} />
+              <DetailItem
+                label="Association assigne un mentor"
+                value={selectedRow.wants_association_assignment ? "Oui" : "Non"}
+              />
+              <DetailItem label="Besoin de jumelage" value={selectedRow.needs_matching ? "Oui" : "Non"} />
+              <DetailItem label="Statut dossier" value={registrationStatusLabels[selectedRow.registration_status]} />
+              <DetailItem
+                label="Session terminee"
+                value={selectedRow.completed_session_status === "completed" ? "Oui" : "Non"}
+              />
+            </div>
+
+            {selectedRow.statut_inscription === "EN_ATTENTE" ? (
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  disabled={pendingId === selectedRow.id}
+                  onClick={() => void handleAction(selectedRow.id, "valider")}
+                >
+                  <Check aria-hidden="true" />
+                  Valider
+                </Button>
+                <Button
+                  type="button"
+                  disabled={pendingId === selectedRow.id}
+                  onClick={() => void handleAction(selectedRow.id, "refuser")}
+                  variant="outline"
+                >
+                  <X aria-hidden="true" />
+                  Refuser
+                </Button>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+      </Modal>
+    </div>
+  );
+}
+
+function DetailItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{label}</p>
+      <p className="mt-1 text-sm font-medium text-foreground">{value}</p>
     </div>
   );
 }

@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import Image from "next/image";
-import { Edit3, ExternalLink, Handshake, ImageIcon, Power, RefreshCcw, Trash2 } from "lucide-react";
+import { Edit3, ExternalLink, Eye, Handshake, ImageIcon, Power, RefreshCcw, Trash2 } from "lucide-react";
 
 import {
   Partenaire,
@@ -15,8 +15,8 @@ import {
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ListTable } from "@/components/ui/list-table";
 import { Modal } from "@/components/ui/modal";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -82,6 +82,7 @@ export function AdminPartenaires() {
   const [isSaving, setIsSaving] = useState(false);
   const [actionId, setActionId] = useState<number | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [detailsPartner, setDetailsPartner] = useState<Partenaire | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -345,82 +346,63 @@ export function AdminPartenaires() {
         {renderPartnerForm()}
       </Modal>
 
-      <Card className="overflow-hidden">
-        <div className="flex flex-col gap-3 border-b border-border bg-muted/50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-sm font-semibold text-foreground">Liste des partenaires</p>
-            <p className="text-xs text-muted-foreground">
-              {partenaires.length} partenaire{partenaires.length > 1 ? "s" : ""}
-            </p>
-          </div>
+      {isLoading ? <Skeleton className="h-40" /> : null}
+
+      {!isLoading ? (
+        <ListTable
+          title="Liste des partenaires"
+          countLabel={`${partenaires.length} partenaire${partenaires.length > 1 ? "s" : ""}`}
+          minWidth={1120}
+          action={
           <Button type="button" onClick={() => void reloadPartenaires()} variant="outline" size="sm" className="w-fit">
             <RefreshCcw aria-hidden="true" />
             Rafraichir
           </Button>
-        </div>
-
-        {isLoading ? <div className="p-4"><Skeleton className="h-40" /></div> : null}
-
-        {!isLoading && partenaires.length === 0 ? (
-          <div className="p-4">
-            <EmptyState icon={Handshake} title="Aucun partenaire pour le moment." />
-          </div>
-        ) : null}
-
-        {!isLoading && partenaires.length > 0 ? (
-          <div className="divide-y divide-border">
-            {partenaires.map((partenaire) => (
-              <article key={partenaire.id} className="grid gap-3 px-4 py-3 md:grid-cols-[64px_1fr] xl:grid-cols-[64px_1fr_auto]">
-                <div className="relative size-16 overflow-hidden rounded-lg border border-border bg-muted">
-                  {partenaire.logo ? (
-                    <Image
-                      src={partenaire.logo}
-                      alt={`Logo de ${partenaire.nom_partenaire}`}
-                      fill
-                      unoptimized
-                      sizes="64px"
-                      className="object-contain p-2"
-                    />
-                  ) : (
-                    <div className="flex h-full items-center justify-center text-muted-foreground">
-                      <ImageIcon className="size-5" aria-hidden="true" />
-                    </div>
-                  )}
-                </div>
-
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="truncate text-sm font-semibold text-foreground sm:text-base">{partenaire.nom_partenaire}</h2>
-                    <Badge variant={partenaire.statut === "ACTIF" ? "success" : "outline"}>{partenaire.statut}</Badge>
-                    <Badge variant="bronze">{partenaire.type_partenaire}</Badge>
-                  </div>
-                  <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted-foreground">
-                    {partenaire.description || "Aucune description."}
-                  </p>
-                  <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                    <span>Ordre: {partenaire.ordre_affichage}</span>
-                    {partenaire.site_web ? (
-                      <a
-                        href={partenaire.site_web}
-                        className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        <ExternalLink className="size-3.5" aria-hidden="true" />
-                        Site web
-                      </a>
-                    ) : null}
-                    {partenaire.logo ? <span>Logo ajoute</span> : <span>Logo non renseigne</span>}
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap items-start gap-2 xl:justify-end">
-                  <Button
-                    type="button"
-                    onClick={() => startEdit(partenaire)}
-                    variant="outline"
-                    size="sm"
+          }
+          headers={[
+            { label: "Nom" },
+            { label: "Type" },
+            { label: "Site" },
+            { label: "Ordre" },
+            { label: "Statut" },
+            { label: "Actions", className: "text-right" },
+          ]}
+          emptyState={partenaires.length === 0 ? <EmptyState icon={Handshake} title="Aucun partenaire pour le moment." /> : null}
+        >
+          {partenaires.map((partenaire) => (
+            <tr key={partenaire.id} className="align-top">
+              <td className="px-4 py-3 font-medium text-foreground">
+                <p className="max-w-xs truncate">{partenaire.nom_partenaire}</p>
+              </td>
+              <td className="px-4 py-3">
+                <Badge variant="bronze">{partenaire.type_partenaire}</Badge>
+              </td>
+              <td className="px-4 py-3 text-muted-foreground">
+                {partenaire.site_web ? (
+                  <a
+                    href={partenaire.site_web}
+                    className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
+                    target="_blank"
+                    rel="noreferrer"
                   >
+                    <ExternalLink className="size-3.5" aria-hidden="true" />
+                    Ouvrir
+                  </a>
+                ) : (
+                  "Non renseigne"
+                )}
+              </td>
+              <td className="px-4 py-3 text-muted-foreground">{partenaire.ordre_affichage}</td>
+              <td className="px-4 py-3">
+                <Badge variant={partenaire.statut === "ACTIF" ? "success" : "outline"}>{partenaire.statut}</Badge>
+              </td>
+              <td className="px-4 py-3">
+                <div className="flex flex-wrap justify-end gap-2">
+                  <Button type="button" onClick={() => setDetailsPartner(partenaire)} variant="ghost" size="sm">
+                    <Eye aria-hidden="true" />
+                    Details
+                  </Button>
+                  <Button type="button" onClick={() => startEdit(partenaire)} variant="outline" size="sm">
                     <Edit3 aria-hidden="true" />
                     Modifier
                   </Button>
@@ -445,11 +427,62 @@ export function AdminPartenaires() {
                     Supprimer
                   </Button>
                 </div>
-              </article>
-            ))}
+              </td>
+            </tr>
+          ))}
+        </ListTable>
+      ) : null}
+
+      <Modal
+        open={Boolean(detailsPartner)}
+        title="Details du partenaire"
+        description="Informations completes du partenaire selectionne."
+        className="max-w-3xl"
+        onClose={() => setDetailsPartner(null)}
+      >
+        {detailsPartner ? (
+          <div className="grid gap-4">
+            <div className="flex items-center gap-4">
+              <div className="relative size-20 shrink-0 overflow-hidden rounded-lg border border-border bg-muted">
+                {detailsPartner.logo ? (
+                  <Image
+                    src={detailsPartner.logo}
+                    alt={`Logo de ${detailsPartner.nom_partenaire}`}
+                    fill
+                    unoptimized
+                    sizes="80px"
+                    className="object-contain p-2"
+                  />
+                ) : (
+                  <div className="flex h-full items-center justify-center text-muted-foreground">
+                    <ImageIcon className="size-5" aria-hidden="true" />
+                  </div>
+                )}
+              </div>
+              <div>
+                <p className="font-semibold text-foreground">{detailsPartner.nom_partenaire}</p>
+                <p className="mt-1 text-sm text-muted-foreground">{detailsPartner.type_partenaire}</p>
+              </div>
+            </div>
+            <div className="grid gap-3 rounded-lg border border-border bg-muted/30 p-4 md:grid-cols-2">
+              <DetailItem label="Type" value={detailsPartner.type_partenaire} />
+              <DetailItem label="Ordre" value={String(detailsPartner.ordre_affichage)} />
+              <DetailItem label="Statut" value={detailsPartner.statut} />
+              <DetailItem label="Site web" value={detailsPartner.site_web || "Non renseigne"} />
+              <DetailItem label="Description" value={detailsPartner.description || "Non renseignee"} className="md:col-span-2" />
+            </div>
           </div>
         ) : null}
-      </Card>
+      </Modal>
+    </div>
+  );
+}
+
+function DetailItem({ label, value, className = "" }: { label: string; value: string; className?: string }) {
+  return (
+    <div className={className}>
+      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{label}</p>
+      <p className="mt-1 text-sm font-medium text-foreground">{value}</p>
     </div>
   );
 }

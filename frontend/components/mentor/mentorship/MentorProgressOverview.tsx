@@ -7,8 +7,8 @@ import { useEffect, useState } from "react";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ListTable } from "@/components/ui/list-table";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   MentoreeProgress,
@@ -71,30 +71,37 @@ export function MentorProgressOverview() {
   }
 
   return (
-    <div className="grid gap-3">
+    <ListTable
+      title="Liste des suivis"
+      countLabel={`${rows.length} suivi${rows.length > 1 ? "s" : ""}`}
+      minWidth={920}
+      headers={[
+        { label: "Mentore" },
+        { label: "Progression" },
+        { label: "Avis" },
+        { label: "Statut" },
+        { label: "Actions", className: "text-right" },
+      ]}
+    >
       {rows.map(({ assignment, progress }) => (
-        <Card key={assignment.id}>
-          <CardContent className="p-5">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-              <div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <h2 className="font-semibold">{displayUser(assignment.mentoree_detail)}</h2>
-                  <Badge variant={progress.progress_status === "difficulty" ? "outline" : "success"}>
-                    {progressStatusLabels[progress.progress_status]}
-                  </Badge>
-                </div>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Progression: {progress.progress_percentage ?? "Non renseignee"}%
-                </p>
-                {progress.mentor_opinion ? <p className="mt-2 text-sm text-muted-foreground">Avis: {progress.mentor_opinion}</p> : null}
-              </div>
-              <Button asChild variant="outline" size="sm">
-                <Link href={`/mentor/mentees/${assignment.mentoree}`}>Mettre a jour</Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <tr key={assignment.id} className="align-top">
+          <td className="px-4 py-3 font-medium text-foreground">{displayUser(assignment.mentoree_detail)}</td>
+          <td className="px-4 py-3 text-muted-foreground">{progress.progress_percentage ?? "Non renseignee"}%</td>
+          <td className="px-4 py-3 text-muted-foreground">
+            <p className="line-clamp-2 max-w-sm">{progress.mentor_opinion || "Aucun avis general"}</p>
+          </td>
+          <td className="px-4 py-3">
+            <Badge variant={progress.progress_status === "difficulty" ? "outline" : "success"}>
+              {progressStatusLabels[progress.progress_status]}
+            </Badge>
+          </td>
+          <td className="px-4 py-3 text-right">
+            <Button asChild variant="outline" size="sm">
+              <Link href={`/mentor/mentees/${assignment.mentoree}`}>Mettre a jour</Link>
+            </Button>
+          </td>
+        </tr>
       ))}
-    </div>
+    </ListTable>
   );
 }

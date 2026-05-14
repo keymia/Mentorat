@@ -1,6 +1,7 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import {
   MentorshipPeriod,
@@ -9,6 +10,7 @@ import {
   formatApiError,
   getAvailableMentorshipPeriods,
   getNiveaux,
+  mentorAcademicLevelOrders,
 } from "@/lib/api";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -23,6 +25,8 @@ function textValue(formData: FormData, key: string) {
 }
 
 export function MentorForm() {
+  const router = useRouter();
+  const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [niveaux, setNiveaux] = useState<NiveauAcademique[]>([]);
   const [periods, setPeriods] = useState<MentorshipPeriod[]>([]);
   const [status, setStatus] = useState<FormStatus>({ type: "idle", message: "" });
@@ -33,7 +37,7 @@ export function MentorForm() {
     Promise.all([getNiveaux(), getAvailableMentorshipPeriods()])
       .then(([niveauxAcademiques, mentorshipPeriods]) => {
         if (isMounted) {
-          setNiveaux(niveauxAcademiques.filter((niveau) => !niveau.est_premier_niveau));
+          setNiveaux(niveauxAcademiques.filter((niveau) => mentorAcademicLevelOrders.includes(niveau.ordre_niveau)));
           setPeriods(mentorshipPeriods);
         }
       })
@@ -47,6 +51,14 @@ export function MentorForm() {
     };
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (redirectTimerRef.current) {
+        clearTimeout(redirectTimerRef.current);
+      }
+    };
+  }, []);
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsSubmitting(true);
@@ -54,6 +66,7 @@ export function MentorForm() {
 
     const formElement = event.currentTarget;
     const formData = new FormData(formElement);
+
     const payload = {
       nom: textValue(formData, "nom"),
       prenom: textValue(formData, "prenom"),
@@ -63,8 +76,7 @@ export function MentorForm() {
       region: textValue(formData, "region"),
       niveau_academique: Number(textValue(formData, "niveau_academique")),
       mentorship_period: Number(textValue(formData, "mentorship_period")),
-      objectifs: textValue(formData, "objectifs"),
-      capacite_mentorat: Number(textValue(formData, "capacite_mentorat")),
+      mini_bio: textValue(formData, "mini_bio"),
       consentement: formData.get("consentement") === "on",
     };
 
@@ -73,8 +85,12 @@ export function MentorForm() {
       formElement.reset();
       setStatus({
         type: "success",
-        message: "Votre inscription mentor a ete envoyee et sera validee par l'administration.",
+        message:
+          "Inscription mentor reussie. Votre demande a ete enregistree et sera traitee selon le processus prevu. Redirection dans 2 secondes...",
       });
+      redirectTimerRef.current = setTimeout(() => {
+        router.push("/inscriptions");
+      }, 2000);
     } catch (error) {
       setStatus({ type: "error", message: formatApiError(error) });
     } finally {
@@ -138,14 +154,18 @@ export function MentorForm() {
             ))}
           </select>
         </label>
-        <label>
-          Capacite de mentorat
-          <input name="capacite_mentorat" type="number" min={1} required className="field" />
-        </label>
       </div>
       <label>
-        Objectifs
-        <textarea name="objectifs" rows={4} className="field" />
+        Mini bio
+        <textarea
+          name="mini_bio"
+          rows={5}
+          className="field"
+          placeholder="Neter Elysabeth, etudiante en 3e annee du baccalaureat en sciences de la sante a l'Universite d'Ottawa et presidente de l'Association des jeunes scientifiques d'Ottawa, se distingue par son engagement a faire rayonner la releve scientifique francophone."
+        />
+        <span className="mt-2 block text-xs leading-5 text-muted-foreground">
+          Presentez brievement votre parcours, votre niveau d&apos;etude, votre domaine, votre engagement et votre motivation.
+        </span>
       </label>
       <label className="flex items-start gap-3 text-sm text-muted-foreground">
         <input name="consentement" type="checkbox" required className="mt-1" />

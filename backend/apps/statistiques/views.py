@@ -5,6 +5,7 @@ from rest_framework.views import APIView
 from apps.evenements.models import Evenement
 from apps.inscriptions.models import Inscription
 from apps.mentorat.models import MentorshipAssignment
+from apps.mentorat.services import count_pending_matching_requests, get_session_ending_alert
 from apps.partenaires.models import Partenaire
 from apps.statistiques.serializers import DashboardStatistiquesSerializer
 from apps.users.models import Utilisateur
@@ -49,3 +50,28 @@ class DashboardStatistiquesView(APIView):
         }
         serializer = DashboardStatistiquesSerializer(donnees)
         return Response(serializer.data)
+
+
+class AdminActionAlertsView(APIView):
+    permission_classes = [IsAdminRole]
+
+    def get(self, request):
+        session_alert = get_session_ending_alert()
+        active_period = session_alert["active_period"]
+        return Response(
+            {
+                "pending_matching_count": count_pending_matching_requests(),
+                "pending_registration_count": Inscription.objects.filter(
+                    statut_inscription=Inscription.StatutInscription.EN_ATTENTE
+                ).count(),
+                "session_ending_soon": session_alert["session_ending_soon"],
+                "days_before_session_end": session_alert["days_before_session_end"],
+                "active_session": {
+                    "id": active_period.id,
+                    "title": active_period.title,
+                    "end_date": active_period.end_date,
+                }
+                if active_period
+                else None,
+            }
+        )

@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 const publicLinks = [
   { href: "/", label: "Accueil" },
   { href: "/about", label: "A propos" },
-  { href: "/programme", label: "Programme" },
+  { href: "/equipes", label: "Equipes" },
   { href: "/inscriptions", label: "Inscriptions" },
   { href: "/evenements", label: "Evenements" },
   { href: "/partenaires", label: "Partenaires" },

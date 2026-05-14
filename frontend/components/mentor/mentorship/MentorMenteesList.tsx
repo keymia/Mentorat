@@ -7,8 +7,8 @@ import { useEffect, useState } from "react";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ListTable } from "@/components/ui/list-table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MentorshipAssignment, formatApiError, getMentorMentees } from "@/lib/api";
 import { formatDate, progressStatusLabels } from "@/lib/mentorship";
@@ -63,54 +63,50 @@ export function MentorMenteesList() {
   }
 
   return (
-    <div className="grid gap-3">
+    <ListTable
+      title="Liste des mentores"
+      countLabel={`${assignments.length} mentore${assignments.length > 1 ? "s" : ""}`}
+      minWidth={1040}
+      headers={[
+        { label: "Mentore" },
+        { label: "Periode" },
+        { label: "Seances" },
+        { label: "Avancement" },
+        { label: "Statut" },
+        { label: "Actions", className: "text-right" },
+      ]}
+    >
       {assignments.map((assignment) => (
-        <Card key={assignment.id}>
-          <CardContent className="p-5">
-            <div className="grid gap-4 xl:grid-cols-[1.05fr_1.55fr_auto] xl:items-center">
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h2 className="text-lg font-semibold">{displayName(assignment)}</h2>
-                  <Badge variant={assignment.progress_status === "difficulty" ? "outline" : "success"}>
-                    {progressStatusLabels[assignment.progress_status]}
-                  </Badge>
-                </div>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  {assignment.mentoree_detail?.niveau_academique_nom ?? "Niveau non renseigne"}
-                </p>
-              </div>
-              <div className="grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-5">
-                <p>
-                  <span className="block text-muted-foreground">Periode</span>
-                  <span className="font-semibold text-foreground">{assignment.period_detail?.title ?? "Active"}</span>
-                </p>
-                <p>
-                  <span className="block text-muted-foreground">Prevues</span>
-                  <span className="font-semibold text-foreground">{assignment.required_sessions ?? 0}</span>
-                </p>
-                <p>
-                  <span className="block text-muted-foreground">Realisees</span>
-                  <span className="font-semibold text-foreground">{assignment.completed_sessions_count}</span>
-                </p>
-                <p>
-                  <span className="block text-muted-foreground">Restantes</span>
-                  <span className="font-semibold text-foreground">{assignment.remaining_sessions_count}</span>
-                </p>
-                <p>
-                  <span className="block text-muted-foreground">Avancement</span>
-                  <span className="font-semibold text-foreground">{assignment.progress_percentage}%</span>
-                </p>
-                <p className="text-muted-foreground sm:col-span-2 lg:col-span-5">
-                  {formatDate(assignment.period_detail?.start_date)} - {formatDate(assignment.period_detail?.end_date)}
-                </p>
-              </div>
-              <Button asChild variant="outline" size="sm" className="w-fit xl:justify-self-end">
-                <Link href={`/mentor/mentees/${assignment.mentoree}`}>Voir le dossier</Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <tr key={assignment.id} className="align-top">
+          <td className="px-4 py-3">
+            <p className="font-medium text-foreground">{displayName(assignment)}</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {assignment.mentoree_detail?.niveau_academique_nom ?? "Niveau non renseigne"}
+            </p>
+          </td>
+          <td className="px-4 py-3 text-muted-foreground">
+            <p className="font-medium text-foreground">{assignment.period_detail?.title ?? "Active"}</p>
+            <p className="mt-1 text-xs">
+              {formatDate(assignment.period_detail?.start_date)} - {formatDate(assignment.period_detail?.end_date)}
+            </p>
+          </td>
+          <td className="px-4 py-3 text-muted-foreground">
+            <p>{assignment.completed_sessions_count}/{assignment.required_sessions ?? 0} realisees</p>
+            <p className="mt-1 text-xs">{assignment.remaining_sessions_count} restantes</p>
+          </td>
+          <td className="px-4 py-3 font-medium text-foreground">{assignment.progress_percentage}%</td>
+          <td className="px-4 py-3">
+            <Badge variant={assignment.progress_status === "difficulty" ? "outline" : "success"}>
+              {progressStatusLabels[assignment.progress_status]}
+            </Badge>
+          </td>
+          <td className="px-4 py-3 text-right">
+            <Button asChild variant="outline" size="sm" className="w-fit">
+              <Link href={`/mentor/mentees/${assignment.mentoree}`}>Voir le dossier</Link>
+            </Button>
+          </td>
+        </tr>
       ))}
-    </div>
+    </ListTable>
   );
 }

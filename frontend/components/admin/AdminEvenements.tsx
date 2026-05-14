@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import Image from "next/image";
-import { CalendarDays, CalendarPlus, Edit3, Film, MapPin, Power, RefreshCcw, Trash2 } from "lucide-react";
+import { CalendarDays, CalendarPlus, Edit3, Eye, MapPin, Power, RefreshCcw, Trash2 } from "lucide-react";
 
 import {
   Evenement,
@@ -15,8 +15,8 @@ import {
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ListTable } from "@/components/ui/list-table";
 import { Modal } from "@/components/ui/modal";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -77,6 +77,7 @@ export function AdminEvenements() {
   const [isSaving, setIsSaving] = useState(false);
   const [actionId, setActionId] = useState<number | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [detailsEvent, setDetailsEvent] = useState<Evenement | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -395,85 +396,56 @@ export function AdminEvenements() {
         {renderEventForm()}
       </Modal>
 
-      <Card className="overflow-hidden">
-        <div className="flex flex-col gap-3 border-b border-border bg-muted/50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-sm font-semibold text-foreground">Liste des evenements</p>
-            <p className="text-xs text-muted-foreground">
-              {evenements.length} evenement{evenements.length > 1 ? "s" : ""}
-            </p>
-          </div>
+      {isLoading ? <Skeleton className="h-48" /> : null}
+
+      {!isLoading ? (
+        <ListTable
+          title="Liste des evenements"
+          countLabel={`${evenements.length} evenement${evenements.length > 1 ? "s" : ""}`}
+          minWidth={1180}
+          action={
           <Button type="button" onClick={() => void reloadEvenements()} variant="outline" size="sm" className="w-fit">
             <RefreshCcw aria-hidden="true" />
             Rafraichir
           </Button>
-        </div>
-
-        {isLoading ? <div className="p-4"><Skeleton className="h-48" /></div> : null}
-
-        {!isLoading && evenements.length === 0 ? (
-          <div className="p-4">
-            <EmptyState icon={CalendarDays} title="Aucun evenement pour le moment." />
-          </div>
-        ) : null}
-
-        {!isLoading && evenements.length > 0 ? (
-          <div className="divide-y divide-border">
-            {evenements.map((evenement) => (
-              <article key={evenement.id} className="grid gap-3 px-4 py-3 md:grid-cols-[76px_1fr] xl:grid-cols-[76px_1fr_auto]">
-                <div className="relative h-14 w-full overflow-hidden rounded-lg border border-border bg-muted md:w-[76px]">
-                  {evenement.image ? (
-                    <Image
-                      src={evenement.image}
-                      alt={`Image de ${evenement.titre}`}
-                      fill
-                      unoptimized
-                      sizes="76px"
-                      className="object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-full items-center justify-center text-muted-foreground">
-                      {evenement.video ? <Film className="size-5" aria-hidden="true" /> : <CalendarDays className="size-5" aria-hidden="true" />}
-                    </div>
-                  )}
-                </div>
-
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="truncate text-sm font-semibold text-foreground sm:text-base">{evenement.titre}</h2>
-                    <Badge variant={evenement.statut_evenement === "PLANIFIE" ? "success" : "outline"}>
-                      {evenement.statut_evenement}
-                    </Badge>
-                    <Badge variant="bronze">{evenement.type_evenement}</Badge>
-                  </div>
-                  <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                    <span className="inline-flex items-center gap-1">
-                      <CalendarDays className="size-3.5" aria-hidden="true" />
-                      {formatDateTime(evenement)}
-                    </span>
-                    <span className="inline-flex items-center gap-1">
-                      <MapPin className="size-3.5" aria-hidden="true" />
-                      {evenement.lieu || "Lieu non renseigne"}
-                    </span>
-                    {evenement.video ? (
-                      <span className="inline-flex items-center gap-1">
-                        <Film className="size-3.5" aria-hidden="true" />
-                        Video
-                      </span>
-                    ) : null}
-                  </div>
-                  <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted-foreground">
-                    {evenement.description || "Aucune description."}
-                  </p>
-                </div>
-
-                <div className="flex flex-wrap items-start gap-2 xl:justify-end">
-                  <Button
-                    type="button"
-                    onClick={() => startEdit(evenement)}
-                    variant="outline"
-                    size="sm"
-                  >
+          }
+          headers={[
+            { label: "Titre" },
+            { label: "Type" },
+            { label: "Date" },
+            { label: "Lieu" },
+            { label: "Statut" },
+            { label: "Actions", className: "text-right" },
+          ]}
+          emptyState={evenements.length === 0 ? <EmptyState icon={CalendarDays} title="Aucun evenement pour le moment." /> : null}
+        >
+          {evenements.map((evenement) => (
+            <tr key={evenement.id} className="align-top">
+              <td className="px-4 py-3 font-medium text-foreground">
+                <p className="max-w-xs truncate">{evenement.titre}</p>
+              </td>
+              <td className="px-4 py-3">
+                <Badge variant="bronze">{evenement.type_evenement}</Badge>
+              </td>
+              <td className="px-4 py-3 text-muted-foreground">{formatDateTime(evenement)}</td>
+              <td className="px-4 py-3 text-muted-foreground">
+                <span className="inline-flex items-center gap-1">
+                  <MapPin className="size-3.5" aria-hidden="true" />
+                  {evenement.lieu || "Lieu non renseigne"}
+                </span>
+              </td>
+              <td className="px-4 py-3">
+                <Badge variant={evenement.statut_evenement === "PLANIFIE" ? "success" : "outline"}>
+                  {evenement.statut_evenement}
+                </Badge>
+              </td>
+              <td className="px-4 py-3">
+                <div className="flex flex-wrap justify-end gap-2">
+                  <Button type="button" onClick={() => setDetailsEvent(evenement)} variant="ghost" size="sm">
+                    <Eye aria-hidden="true" />
+                    Details
+                  </Button>
+                  <Button type="button" onClick={() => startEdit(evenement)} variant="outline" size="sm">
                     <Edit3 aria-hidden="true" />
                     Modifier
                   </Button>
@@ -516,11 +488,54 @@ export function AdminEvenements() {
                     Supprimer
                   </Button>
                 </div>
-              </article>
-            ))}
+              </td>
+            </tr>
+          ))}
+        </ListTable>
+      ) : null}
+
+      <Modal
+        open={Boolean(detailsEvent)}
+        title="Details de l'evenement"
+        description="Informations completes de l'evenement selectionne."
+        className="max-w-3xl"
+        onClose={() => setDetailsEvent(null)}
+      >
+        {detailsEvent ? (
+          <div className="grid gap-4">
+            {detailsEvent.image ? (
+              <div className="relative aspect-[16/7] overflow-hidden rounded-lg border border-border bg-muted">
+                <Image
+                  src={detailsEvent.image}
+                  alt={`Image de ${detailsEvent.titre}`}
+                  fill
+                  unoptimized
+                  sizes="720px"
+                  className="object-cover"
+                />
+              </div>
+            ) : null}
+            <div className="grid gap-3 rounded-lg border border-border bg-muted/30 p-4 md:grid-cols-2">
+              <DetailItem label="Titre" value={detailsEvent.titre} />
+              <DetailItem label="Type" value={detailsEvent.type_evenement} />
+              <DetailItem label="Date" value={formatDateTime(detailsEvent)} />
+              <DetailItem label="Lieu" value={detailsEvent.lieu || "Non renseigne"} />
+              <DetailItem label="Statut" value={detailsEvent.statut_evenement} />
+              <DetailItem label="Video" value={detailsEvent.video ? "Disponible" : "Non renseignee"} />
+              <DetailItem label="Description" value={detailsEvent.description || "Non renseignee"} className="md:col-span-2" />
+            </div>
           </div>
         ) : null}
-      </Card>
+      </Modal>
+    </div>
+  );
+}
+
+function DetailItem({ label, value, className = "" }: { label: string; value: string; className?: string }) {
+  return (
+    <div className={className}>
+      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{label}</p>
+      <p className="mt-1 text-sm font-medium text-foreground">{value}</p>
     </div>
   );
 }

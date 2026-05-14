@@ -104,7 +104,7 @@ export function InscriptionModalOptions({ variant = "cards" }: InscriptionModalO
       <Modal
         open={activeForm === "mentor"}
         title="Inscription mentor"
-        description="Indiquez votre niveau academique et votre capacite d'accompagnement."
+        description="Indiquez votre niveau academique et vos informations de profil."
         className="max-w-4xl"
         onClose={closeForm}
       >

@@ -4,10 +4,14 @@ export const API_BASE_URL =
 export type NiveauAcademique = {
   id: number;
   nom: string;
+  code?: string | null;
   ordre_niveau: number;
   est_premier_niveau: boolean;
   est_dernier_niveau: boolean;
 };
+
+export const mentorAcademicLevelOrders = [2, 3, 4];
+export const mentoreeAcademicLevelOrders = [1, 2, 3];
 
 export type Role = {
   id: number;
@@ -28,6 +32,13 @@ export type MentorDisponible = {
   niveau_academique_est_premier_niveau?: boolean;
   disponibilite: string;
   objectifs: string;
+  mini_bio?: string;
+  profile_photo?: string | null;
+  profile_photo_url?: string | null;
+  domaine_specialite?: string;
+  wants_to_appear_on_team_page?: boolean;
+  is_team_approved?: boolean;
+  team_display_order?: number;
   capacite_mentorat: number;
   nombre_mentores_actuels: number;
   capacite_restante: number;
@@ -82,6 +93,11 @@ export type UtilisateurDetail = MentorDisponible & {
   profil_mentorat?: "MENTOR" | "MENTORE" | "MENTOR_ET_MENTORE" | null;
   statut_compte?: string;
   is_active?: boolean;
+  can_appear_on_about_page?: boolean;
+  public_title?: string;
+  public_description?: string;
+  public_photo?: string | null;
+  public_photo_url?: string | null;
 };
 
 export type UtilisateurPayload = {
@@ -93,12 +109,135 @@ export type UtilisateurPayload = {
   langue_preferee?: "FR" | "EN";
   region?: string;
   objectifs?: string;
+  mini_bio?: string;
+  profile_photo?: File | string | null;
+  domaine_specialite?: string;
+  wants_to_appear_on_team_page?: boolean;
+  is_team_approved?: boolean;
+  team_display_order?: number;
+  can_appear_on_about_page?: boolean;
+  public_title?: string;
+  public_description?: string;
+  public_photo?: File | string | null;
   profil_mentorat?: "MENTOR" | "MENTORE" | "MENTOR_ET_MENTORE" | "";
   capacite_mentorat?: number;
   statut_compte?: string;
   role?: number | null;
   niveau_academique?: number | null;
   is_active?: boolean;
+};
+
+export type TeamMember = {
+  id: number;
+  nom: string;
+  prenom: string;
+  nom_complet: string;
+  mini_bio: string;
+  profile_photo_url: string | null;
+  academic_level?: string;
+  niveau_academique_nom?: string;
+  domaine_specialite: string;
+  team_display_order: number;
+};
+
+export type AdminTeamMember = TeamMember & {
+  email: string;
+  niveau_academique: number | null;
+  wants_to_appear_on_team_page: boolean;
+  is_team_approved: boolean;
+};
+
+export type PublicAboutTeamMember = {
+  id: number;
+  nom: string;
+  prenom: string;
+  nom_complet: string;
+  role_label: string;
+  public_title: string;
+  public_description: string;
+  public_photo_url: string | null;
+};
+
+export type OperationalAdmin = {
+  id: number;
+  nom: string;
+  prenom: string;
+  email: string;
+  telephone: string;
+  langue_preferee: "FR" | "EN";
+  region: string;
+  statut_compte: string;
+  is_active: boolean;
+  role?: number;
+  role_nom?: string;
+  can_appear_on_about_page: boolean;
+  public_title: string;
+  public_description: string;
+  public_photo: string | null;
+  public_photo_url: string | null;
+  date_creation: string;
+};
+
+export type MentorRegistrationConfig = {
+  max_mentees_per_mentor: number;
+  mentee_capacity: number;
+};
+
+export type Inscription = {
+  id: number;
+  utilisateur: number;
+  utilisateur_detail?: UtilisateurDetail;
+  type_inscription: "MENTOR" | "MENTORE";
+  statut_inscription: "EN_ATTENTE" | "VALIDEE" | "REFUSEE";
+  consentement: boolean;
+  date_inscription: string;
+  mentor_choisi?: number | null;
+  mentor_choisi_detail?: UtilisateurDetail | null;
+  mentorship_period?: number | null;
+  mentorship_period_title?: string | null;
+  wants_association_assignment: boolean;
+  needs_matching: boolean;
+  registration_status: "registered" | "pending_matching" | "matched" | "completed";
+  completed_session_status: "none" | "completed";
+};
+
+export type AdminMatchingStatus =
+  | "assigned"
+  | "pending_matching"
+  | "association_choice"
+  | "unassigned"
+  | "completed";
+
+export type AdminMatchingRow = {
+  inscription: Inscription;
+  mentee: UtilisateurDetail;
+  period: MentorshipPeriod | null;
+  current_mentor?: UtilisateurDetail | null;
+  current_assignment?: MentorshipAssignment | null;
+  assignment_history?: MentorshipAssignment[];
+  compatible_mentors: UtilisateurDetail[];
+  matching_status: AdminMatchingStatus;
+  needs_matching?: boolean;
+  wants_association_assignment?: boolean;
+};
+
+export type AdminMatchingResponse = {
+  periods: MentorshipPeriod[];
+  selected_period: MentorshipPeriod | null;
+  show_session_filter: boolean;
+  results: AdminMatchingRow[];
+};
+
+export type AdminActionAlerts = {
+  pending_matching_count: number;
+  pending_registration_count: number;
+  session_ending_soon: boolean;
+  days_before_session_end: number | null;
+  active_session: {
+    id: number;
+    title: string;
+    end_date: string;
+  } | null;
 };
 
 export type MentorshipPeriodStatus = "draft" | "active" | "completed" | "archived";
@@ -378,15 +517,34 @@ export function formatApiError(error: unknown) {
   return "Une erreur inconnue est survenue.";
 }
 
+export type AuthSuccessResponse = {
+  access: string;
+  refresh: string;
+  user: Record<string, unknown>;
+};
+
+export type LoginChallengeResponse = {
+  requires_2fa: true;
+  challenge_id: string;
+  email: string;
+  expires_in_minutes: number;
+};
+
+export type LoginResponse = AuthSuccessResponse | LoginChallengeResponse;
+
 export function login(email: string, mot_de_passe: string) {
-  return apiFetch<{
-    access: string;
-    refresh: string;
-    user: Record<string, unknown>;
-  }>("/auth/login/", {
+  return apiFetch<LoginResponse>("/auth/login/", {
     auth: false,
     method: "POST",
     body: JSON.stringify({ email, mot_de_passe }),
+  });
+}
+
+export function verifyLoginCode(challengeId: string, code: string) {
+  return apiFetch<AuthSuccessResponse>("/auth/login/verify-code/", {
+    auth: false,
+    method: "POST",
+    body: JSON.stringify({ challenge_id: challengeId, code }),
   });
 }
 
@@ -401,10 +559,21 @@ export function getCurrentUser() {
   return apiFetch<UtilisateurDetail>("/auth/me/");
 }
 
-export function updateOwnProfile(payload: Pick<UtilisateurPayload, "nom" | "prenom" | "email" | "telephone" | "langue_preferee" | "region" | "objectifs">) {
+export function updateOwnProfile(payload: Partial<Pick<UtilisateurPayload, "nom" | "prenom" | "email" | "telephone" | "langue_preferee" | "region" | "objectifs">>) {
   return apiFetch<UtilisateurDetail>("/auth/me/", {
     method: "PATCH",
     body: JSON.stringify(payload),
+  });
+}
+
+export function getMentorProfile() {
+  return apiFetch<UtilisateurDetail>("/mentor/profile/");
+}
+
+export function updateMentorProfile(payload: FormData | Partial<UtilisateurPayload>) {
+  return apiFetch<UtilisateurDetail>("/mentor/profile/", {
+    method: "PATCH",
+    body: payload instanceof FormData ? payload : JSON.stringify(payload),
   });
 }
 
@@ -422,6 +591,18 @@ export function getMentorsDisponibles(niveauId: number, periodId?: number | stri
     params.set("period_id", String(periodId));
   }
   return apiFetch<MentorDisponible[]>(`/mentors/disponibles/?${params.toString()}`, { auth: false });
+}
+
+export function getPublicAvailableMentors(niveauId: number, periodId?: number | string) {
+  const params = new URLSearchParams({ niveau_id: String(niveauId) });
+  if (periodId) {
+    params.set("period_id", String(periodId));
+  }
+  return apiFetch<MentorDisponible[]>(`/public/available-mentors/?${params.toString()}`, { auth: false });
+}
+
+export function getMentorRegistrationConfig() {
+  return apiFetch<MentorRegistrationConfig>("/public/mentor-registration-config/", { auth: false });
 }
 
 export function createMentorInscription(payload: Record<string, unknown>) {
@@ -442,6 +623,14 @@ export function createMentoreInscription(payload: Record<string, unknown>) {
 
 export function getPublicPartenaires() {
   return apiFetch<Partenaire[]>("/partenaires/public/", { auth: false });
+}
+
+export function getPublicTeam() {
+  return apiFetch<TeamMember[]>("/public/team/", { auth: false });
+}
+
+export function getPublicAboutTeam() {
+  return apiFetch<PublicAboutTeamMember[]>("/public/about-team/", { auth: false });
 }
 
 export function getAdminPartenaires() {
@@ -474,6 +663,83 @@ export function getDashboardStats() {
 
 export function getAdminCollection(endpoint: string) {
   return apiFetch<Record<string, unknown>[] | { results?: Record<string, unknown>[] }>(endpoint);
+}
+
+export function getAdminTeamMembers() {
+  return apiFetch<AdminTeamMember[]>("/admin/team-members/");
+}
+
+export function updateAdminTeamMember(id: number, payload: Pick<AdminTeamMember, "is_team_approved" | "team_display_order">) {
+  return apiFetch<AdminTeamMember>(`/admin/team-members/${id}/`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function getAdminRegistrations(filters: { search?: string; role?: string; status?: string; ordering?: string } = {}) {
+  const params = new URLSearchParams();
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value) {
+      params.set(key, value);
+    }
+  });
+  const query = params.toString();
+  return apiFetch<Inscription[]>(`/admin/registrations/${query ? `?${query}` : ""}`);
+}
+
+export function getAdminActionAlerts() {
+  return apiFetch<AdminActionAlerts>("/admin/action-alerts/");
+}
+
+export function getAdminMatching(period?: string) {
+  const query = period ? `?period=${encodeURIComponent(period)}` : "";
+  return apiFetch<AdminMatchingResponse>(`/admin/matching/${query}`);
+}
+
+export function getAdminMatchingDetails(menteeId: number, period?: string | number) {
+  const query = period ? `?period=${encodeURIComponent(String(period))}` : "";
+  return apiFetch<AdminMatchingRow>(`/admin/matching/${menteeId}/details/${query}`);
+}
+
+export function assignAdminMatching(menteeId: number, payload: { mentor: number; period: number }) {
+  return apiFetch<MentorshipAssignment>(`/admin/matching/${menteeId}/assign/`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function reassignAdminMatching(
+  menteeId: number,
+  payload: { new_mentor_id: number; session_id: number },
+) {
+  return apiFetch<AdminMatchingRow>(`/admin/matching/${menteeId}/reassign/`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function getOperationalAdmins() {
+  return apiFetch<OperationalAdmin[]>("/admin/operational-admins/");
+}
+
+export function createOperationalAdmin(payload: FormData | Record<string, unknown>) {
+  return apiFetch<OperationalAdmin>("/admin/operational-admins/", {
+    method: "POST",
+    body: payload instanceof FormData ? payload : JSON.stringify(payload),
+  });
+}
+
+export function updateOperationalAdmin(id: number, payload: FormData | Record<string, unknown>) {
+  return apiFetch<OperationalAdmin>(`/admin/operational-admins/${id}/`, {
+    method: "PATCH",
+    body: payload instanceof FormData ? payload : JSON.stringify(payload),
+  });
+}
+
+export function deleteOperationalAdmin(id: number) {
+  return apiFetch<null>(`/admin/operational-admins/${id}/`, {
+    method: "DELETE",
+  });
 }
 
 function toQueryString(filters: MentorshipFilters = {}) {
@@ -509,6 +775,10 @@ export function getMentorshipPeriods() {
   return apiFetch<MentorshipPeriod[]>("/mentorship-periods/");
 }
 
+export function getAdminSessions() {
+  return apiFetch<MentorshipPeriod[]>("/admin/sessions/");
+}
+
 export function getAvailableMentorshipPeriods() {
   return apiFetch<MentorshipPeriod[]>("/mentorship-periods/available/", { auth: false });
 }
@@ -532,6 +802,12 @@ export function updateMentorshipPeriod(id: number, payload: Partial<MentorshipPe
 export function deleteMentorshipPeriod(id: number) {
   return apiFetch<null>(`/mentorship-periods/${id}/`, {
     method: "DELETE",
+  });
+}
+
+export function completeAdminSession(id: number) {
+  return apiFetch<MentorshipPeriod>(`/admin/sessions/${id}/complete/`, {
+    method: "PATCH",
   });
 }
 
