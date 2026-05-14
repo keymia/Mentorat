@@ -19,6 +19,7 @@ import { useState } from "react";
 
 import { BrandMark } from "@/components/layout/BrandMark";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
+import { UserSidebarIdentity } from "@/components/layout/UserSidebarIdentity";
 import { Button } from "@/components/ui/button";
 import { clearStoredAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
@@ -181,6 +182,7 @@ export function MentorShell({ children }: { children: ReactNode }) {
                 Espace mentor
               </p>
             </div>
+            <UserSidebarIdentity />
             <MentorNav onNavigate={() => setIsMobileOpen(false)} />
             <div className="border-t border-white/10 pt-4">
               <MentorUtilityNav onNavigate={() => setIsMobileOpen(false)} />
@@ -204,6 +206,10 @@ export function MentorShell({ children }: { children: ReactNode }) {
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--brand-bronze)]">
               Espace mentor
             </p>
+          </div>
+
+          <div className="mt-4">
+            <UserSidebarIdentity />
           </div>
 
           <div className="mt-5">

@@ -114,7 +114,7 @@ class MeView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        return Response(UtilisateurSerializer(request.user).data)
+        return Response(UtilisateurSerializer(request.user, context={"request": request}).data)
 
     def patch(self, request):
         serializer = SelfProfileSerializer(request.user, data=request.data, partial=True, context={"request": request})

@@ -47,6 +47,7 @@ class UtilisateurLiteSerializer(serializers.ModelSerializer):
     role_nom = serializers.CharField(source="role.nom", read_only=True)
     capacite_restante = serializers.IntegerField(read_only=True)
     profile_photo_url = serializers.SerializerMethodField()
+    public_photo_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Utilisateur
@@ -69,6 +70,7 @@ class UtilisateurLiteSerializer(serializers.ModelSerializer):
             "public_title",
             "public_description",
             "public_photo",
+            "public_photo_url",
             "profil_mentorat",
             "capacite_mentorat",
             "nombre_mentores_actuels",
@@ -84,6 +86,9 @@ class UtilisateurLiteSerializer(serializers.ModelSerializer):
     def get_profile_photo_url(self, obj: Utilisateur) -> str | None:
         return file_url(obj, "profile_photo", self.context.get("request"))
 
+    def get_public_photo_url(self, obj: Utilisateur) -> str | None:
+        return file_url(obj, "public_photo", self.context.get("request"))
+
 
 class UtilisateurSerializer(serializers.ModelSerializer):
     mot_de_passe = serializers.CharField(write_only=True, required=False, allow_blank=True, min_length=8)
@@ -95,6 +100,7 @@ class UtilisateurSerializer(serializers.ModelSerializer):
     )
     capacite_restante = serializers.IntegerField(read_only=True)
     profile_photo_url = serializers.SerializerMethodField()
+    public_photo_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Utilisateur
@@ -120,6 +126,7 @@ class UtilisateurSerializer(serializers.ModelSerializer):
             "public_title",
             "public_description",
             "public_photo",
+            "public_photo_url",
             "profil_mentorat",
             "capacite_mentorat",
             "nombre_mentores_actuels",
@@ -138,6 +145,9 @@ class UtilisateurSerializer(serializers.ModelSerializer):
 
     def get_profile_photo_url(self, obj: Utilisateur) -> str | None:
         return file_url(obj, "profile_photo", self.context.get("request"))
+
+    def get_public_photo_url(self, obj: Utilisateur) -> str | None:
+        return file_url(obj, "public_photo", self.context.get("request"))
 
     def validate(self, attrs):
         niveau = attrs.get("niveau_academique", getattr(self.instance, "niveau_academique", None))

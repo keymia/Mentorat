@@ -3,6 +3,7 @@ import { Suspense } from "react";
 
 import { BrandMark } from "@/components/layout/BrandMark";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
+import { UserSidebarIdentity } from "@/components/layout/UserSidebarIdentity";
 import { LogoutButton } from "@/components/admin/LogoutButton";
 import { AdminSidebarNav } from "@/components/admin/AdminSidebarNav";
 
@@ -14,6 +15,10 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           <div className="flex items-start justify-between gap-3">
             <BrandMark href="/admin/dashboard" inverse />
             <ThemeToggle className="text-white hover:bg-white/10 hover:text-white" />
+          </div>
+
+          <div className="mt-5">
+            <UserSidebarIdentity />
           </div>
 
           <div className="mt-6 rounded-xl border border-white/10 bg-black/15 p-3">
