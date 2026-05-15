@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Eye, Pencil, Plus, UsersRound } from "lucide-react";
 
+import { PhoneInput } from "@/components/forms/PhoneInput";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -365,7 +366,7 @@ export function AdminUsersList({
         </label>
         <label>
           Telephone
-          <input
+          <PhoneInput
             className="field"
             value={draft.telephone}
             onChange={(event) => updateDraft("telephone", event.target.value)}

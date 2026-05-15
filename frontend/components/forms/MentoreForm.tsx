@@ -16,6 +16,7 @@ import {
 } from "@/lib/api";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { PhoneInput } from "@/components/forms/PhoneInput";
 
 type FormStatus = {
   type: "idle" | "success" | "error";
@@ -164,7 +165,7 @@ export function MentoreForm() {
         </label>
         <label>
           Telephone
-          <input name="telephone" className="field" />
+          <PhoneInput name="telephone" className="field" />
         </label>
         <label>
           Langue preferee

@@ -90,9 +90,11 @@ export type Evenement = {
 export type UtilisateurDetail = MentorDisponible & {
   role?: number;
   role_nom?: string;
+  role_label?: string;
   profil_mentorat?: "MENTOR" | "MENTORE" | "MENTOR_ET_MENTORE" | null;
   statut_compte?: string;
   is_active?: boolean;
+  date_creation?: string;
   can_appear_on_about_page?: boolean;
   public_title?: string;
   public_description?: string;
@@ -175,7 +177,36 @@ export type OperationalAdmin = {
   public_description: string;
   public_photo: string | null;
   public_photo_url: string | null;
+  is_public_profile_approved: boolean;
+  pending_public_validation: boolean;
+  public_profile_status: "NON_SOUMIS" | "EN_ATTENTE" | "VALIDE" | "REFUSE";
+  public_profile_updated_at: string | null;
+  approved_public_prenom: string;
+  approved_public_nom: string;
+  approved_public_title: string;
+  approved_public_description: string;
+  approved_public_photo_url: string | null;
   date_creation: string;
+};
+
+export type AccountProfile = {
+  id: number;
+  nom: string;
+  prenom: string;
+  email: string;
+  role_nom?: string;
+  role_label?: string;
+  statut_compte: string;
+  date_creation: string;
+  profile_photo_url: string | null;
+  public_title: string;
+  public_description: string;
+  public_photo: string | null;
+  public_photo_url: string | null;
+  is_public_profile_approved: boolean;
+  pending_public_validation: boolean;
+  public_profile_status: "NON_SOUMIS" | "EN_ATTENTE" | "VALIDE" | "REFUSE";
+  public_profile_updated_at: string | null;
 };
 
 export type MentorRegistrationConfig = {
@@ -231,6 +262,7 @@ export type AdminMatchingResponse = {
 export type AdminActionAlerts = {
   pending_matching_count: number;
   pending_registration_count: number;
+  pending_public_admin_count: number;
   session_ending_soon: boolean;
   days_before_session_end: number | null;
   active_session: {
@@ -559,6 +591,17 @@ export function getCurrentUser() {
   return apiFetch<UtilisateurDetail>("/auth/me/");
 }
 
+export function getAccountMe() {
+  return apiFetch<AccountProfile>("/account/me/");
+}
+
+export function updateAccountMe(payload: FormData | Partial<AccountProfile>) {
+  return apiFetch<AccountProfile>("/account/me/", {
+    method: "PATCH",
+    body: payload instanceof FormData ? payload : JSON.stringify(payload),
+  });
+}
+
 export function updateOwnProfile(payload: Partial<Pick<UtilisateurPayload, "nom" | "prenom" | "email" | "telephone" | "langue_preferee" | "region" | "objectifs">>) {
   return apiFetch<UtilisateurDetail>("/auth/me/", {
     method: "PATCH",
@@ -733,6 +776,18 @@ export function updateOperationalAdmin(id: number, payload: FormData | Record<st
   return apiFetch<OperationalAdmin>(`/admin/operational-admins/${id}/`, {
     method: "PATCH",
     body: payload instanceof FormData ? payload : JSON.stringify(payload),
+  });
+}
+
+export function approveOperationalAdminPublicProfile(id: number) {
+  return apiFetch<OperationalAdmin>(`/admin/operational-admins/${id}/approve-public-profile/`, {
+    method: "PATCH",
+  });
+}
+
+export function rejectOperationalAdminPublicProfile(id: number) {
+  return apiFetch<OperationalAdmin>(`/admin/operational-admins/${id}/reject-public-profile/`, {
+    method: "PATCH",
   });
 }
 

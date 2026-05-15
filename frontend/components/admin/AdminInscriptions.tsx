@@ -176,7 +176,7 @@ export function AdminInscriptions() {
       {!isLoading && rows.length > 0 ? (
         <Card className="overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[980px] text-left text-sm">
+            <table className="list-table-max-five w-full min-w-[980px] text-left text-sm">
               <thead className="border-b border-border bg-muted text-xs uppercase text-muted-foreground">
                 <tr>
                   <th className="px-4 py-3">Nom</th>

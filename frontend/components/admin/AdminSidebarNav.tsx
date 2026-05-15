@@ -21,6 +21,7 @@ import { AdminActionAlerts, ParametreSysteme, UtilisateurDetail, getAdminActionA
 import { cn } from "@/lib/utils";
 
 const mentorshipPeriodKey = "MENTORSHIP_PERIODS";
+const accountSettingsKey = "ACCOUNT";
 
 const adminLinks = [
   { href: "/admin/dashboard", label: "Dashboard", icon: BarChart3 },
@@ -44,28 +45,39 @@ export function AdminSidebarNav() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const selectedParam = searchParams.get("param");
-  const selectedParamKey = selectedParam ?? mentorshipPeriodKey;
   const [parametres, setParametres] = useState<ParametreSysteme[]>([]);
   const [alerts, setAlerts] = useState<AdminActionAlerts | null>(null);
   const [currentUser, setCurrentUser] = useState<UtilisateurDetail | null>(null);
   const [isOpenByUser, setIsOpenByUser] = useState(false);
   const isOpen = pathname === "/admin/parametres" || isOpenByUser;
+  const isAdminPrincipal = currentUser?.role_nom === "ADMIN_PRINCIPAL";
+  const selectedParamKey = isAdminPrincipal ? selectedParam ?? mentorshipPeriodKey : accountSettingsKey;
 
   useEffect(() => {
     let isMounted = true;
-    Promise.all([getParametres(), getAdminActionAlerts(), getCurrentUser()])
-      .then(([rows, actionAlerts, user]) => {
-        if (isMounted) {
-          setParametres(rows);
-          setAlerts(actionAlerts);
-          setCurrentUser(user);
+    async function loadSidebarData() {
+      try {
+        const [actionAlerts, user] = await Promise.all([getAdminActionAlerts(), getCurrentUser()]);
+        if (!isMounted) {
+          return;
         }
-      })
-      .catch(() => {
+        setAlerts(actionAlerts);
+        setCurrentUser(user);
+        if (user.role_nom === "ADMIN_PRINCIPAL") {
+          const rows = await getParametres();
+          if (isMounted) {
+            setParametres(rows);
+          }
+        } else {
+          setParametres([]);
+        }
+      } catch {
         if (isMounted) {
           setParametres([]);
         }
-      });
+      }
+    }
+    void loadSidebarData();
     return () => {
       isMounted = false;
     };
@@ -89,30 +101,47 @@ export function AdminSidebarNav() {
     if (label === "Inscriptions" && alerts?.pending_registration_count) {
       return alerts.pending_registration_count;
     }
+    if (label === "Administrateurs" && isAdminPrincipal && alerts?.pending_public_admin_count) {
+      return alerts.pending_public_admin_count;
+    }
     return 0;
   }
 
   const parameterLinks = useMemo(
-    () => [
-      {
-        href: parameterHref(mentorshipPeriodKey),
-        key: mentorshipPeriodKey,
-        label: "Periode de mentorat",
-      },
-      ...parametres
-        .filter((parametre) => parametre.cle !== mentorshipPeriodKey)
-        .map((parametre) => ({
-          href: parameterHref(parametre.cle),
-          key: parametre.cle,
-          label: parametre.cle,
-        })),
-    ],
-    [parametres],
+    () =>
+      isAdminPrincipal
+        ? [
+            {
+              href: parameterHref(accountSettingsKey),
+              key: accountSettingsKey,
+              label: "Mon compte",
+            },
+            {
+              href: parameterHref(mentorshipPeriodKey),
+              key: mentorshipPeriodKey,
+              label: "Periode de mentorat",
+            },
+            ...parametres
+              .filter((parametre) => parametre.cle !== mentorshipPeriodKey)
+              .map((parametre) => ({
+                href: parameterHref(parametre.cle),
+                key: parametre.cle,
+                label: parametre.cle,
+              })),
+          ]
+        : [
+            {
+              href: "/admin/parametres",
+              key: accountSettingsKey,
+              label: "Mon compte",
+            },
+          ],
+    [isAdminPrincipal, parametres],
   );
 
   return (
     <nav className="mt-5 grid gap-1 text-sm" aria-label="Navigation admin">
-      {alerts?.session_ending_soon ? (
+      {isAdminPrincipal && alerts?.session_ending_soon ? (
         <div className="mb-3 rounded-xl border border-amber-300/40 bg-amber-400/15 p-3 text-amber-50">
           <div className="flex items-start gap-2">
             <AlertTriangle className="mt-0.5 size-4" aria-hidden="true" />
@@ -120,14 +149,12 @@ export function AdminSidebarNav() {
               Attention : la session se termine bientot. Pensez a creer une nouvelle session.
             </p>
           </div>
-          {currentUser?.role_nom === "ADMIN_PRINCIPAL" ? (
-            <Link
-              href={parameterHref(mentorshipPeriodKey)}
-              className="mt-3 inline-flex rounded-lg bg-white/15 px-3 py-1.5 text-xs font-semibold text-white hover:bg-white/25"
-            >
-              Creer une session
-            </Link>
-          ) : null}
+          <Link
+            href={parameterHref(mentorshipPeriodKey)}
+            className="mt-3 inline-flex rounded-lg bg-white/15 px-3 py-1.5 text-xs font-semibold text-white hover:bg-white/25"
+          >
+            Creer une session
+          </Link>
         </div>
       ) : null}
 
@@ -165,7 +192,7 @@ export function AdminSidebarNav() {
       >
         <Settings className="size-4" aria-hidden="true" />
         <span className="flex-1">Parametres</span>
-        {alerts?.session_ending_soon ? (
+        {isAdminPrincipal && alerts?.session_ending_soon ? (
           <span className="rounded-full bg-amber-400 px-2 py-0.5 text-[11px] font-bold text-black">
             !
           </span>

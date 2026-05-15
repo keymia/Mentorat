@@ -203,6 +203,72 @@ class AuthAndRoleRulesTests(APITestCase):
         self.max_param.refresh_from_db()
         self.assertEqual(self.max_param.valeur, "8")
 
+    def test_admin_operationnel_infos_publiques_repassent_en_validation(self):
+        self.client.force_authenticate(self.admin_operationnel)
+        response = self.client.patch(
+            "/api/account/me/",
+            {
+                "prenom": "Admina",
+                "nom": "Operations",
+                "public_title": "Responsable operations",
+                "public_description": "Coordination des operations de mentorat.",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.data["pending_public_validation"])
+        self.assertFalse(response.data["is_public_profile_approved"])
+        self.assertEqual(response.data["public_profile_status"], Utilisateur.StatutProfilPublic.EN_ATTENTE)
+
+        self.admin_operationnel.refresh_from_db()
+        self.assertTrue(self.admin_operationnel.pending_public_validation)
+        self.assertFalse(self.admin_operationnel.is_public_profile_approved)
+
+        self.client.force_authenticate(self.admin_principal)
+        response = self.client.get("/api/admin/action-alerts/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["pending_public_admin_count"], 1)
+
+        response = self.client.patch(
+            f"/api/admin/operational-admins/{self.admin_operationnel.id}/approve-public-profile/",
+            {},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.data["pending_public_validation"])
+        self.assertTrue(response.data["is_public_profile_approved"])
+        self.assertEqual(response.data["public_profile_status"], Utilisateur.StatutProfilPublic.VALIDE)
+
+        self.client.force_authenticate(user=None)
+        response = self.client.get("/api/public/about-team/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]["nom_complet"], "Admina Operations")
+
+    def test_admin_principal_peut_refuser_validation_publique_operationnelle(self):
+        self.client.force_authenticate(self.admin_operationnel)
+        response = self.client.patch(
+            "/api/account/me/",
+            {
+                "public_title": "Coordination publique",
+                "public_description": "Description a reviser.",
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200)
+
+        self.client.force_authenticate(self.admin_principal)
+        response = self.client.patch(
+            f"/api/admin/operational-admins/{self.admin_operationnel.id}/reject-public-profile/",
+            {},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.data["pending_public_validation"])
+        self.assertFalse(response.data["is_public_profile_approved"])
+        self.assertEqual(response.data["public_profile_status"], Utilisateur.StatutProfilPublic.REFUSE)
+
     def test_niveau_academique_ne_peut_pas_diminuer(self):
         self.client.force_authenticate(self.admin_principal)
         response = self.client.patch(

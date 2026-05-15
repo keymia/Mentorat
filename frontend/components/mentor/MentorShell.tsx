@@ -179,7 +179,7 @@ export function MentorShell({ children }: { children: ReactNode }) {
           <div className="grid gap-5 px-4 py-5">
             <div className="rounded-lg border border-white/10 bg-white/[0.06] p-3">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--brand-bronze)]">
-                Espace mentor
+                Mentor
               </p>
             </div>
             <UserSidebarIdentity />
@@ -204,7 +204,7 @@ export function MentorShell({ children }: { children: ReactNode }) {
 
           <div className="mt-6 rounded-lg border border-white/10 bg-white/[0.06] p-3">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--brand-bronze)]">
-              Espace mentor
+              Mentor
             </p>
           </div>
 

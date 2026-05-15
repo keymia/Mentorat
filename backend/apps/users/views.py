@@ -17,6 +17,7 @@ from apps.users.models import LoginVerificationCode, NiveauAcademique, Role, Uti
 from apps.users.permissions import CanCreateAdministrateur, IsAdminRole
 from apps.users.permissions import IsAdminPrincipal
 from apps.users.serializers import (
+    AdminOwnAccountSerializer,
     LoginSerializer,
     LoginVerifyCodeSerializer,
     AdminTeamMemberSerializer,
@@ -121,6 +122,25 @@ class MeView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(UtilisateurSerializer(request.user, context={"request": request}).data)
+
+
+class AccountMeView(APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
+
+    def get(self, request):
+        return Response(AdminOwnAccountSerializer(request.user, context={"request": request}).data)
+
+    def patch(self, request):
+        serializer = AdminOwnAccountSerializer(
+            request.user,
+            data=request.data,
+            partial=True,
+            context={"request": request},
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(AdminOwnAccountSerializer(request.user, context={"request": request}).data)
 
 
 class PasswordUpdateView(APIView):
@@ -362,6 +382,8 @@ class PublicAboutTeamView(APIView):
                 statut_compte=Utilisateur.StatutCompte.ACTIF,
                 is_active=True,
                 can_appear_on_about_page=True,
+                is_public_profile_approved=True,
+                pending_public_validation=False,
             )
             .exclude(public_title="")
             .order_by("nom", "prenom")
@@ -409,3 +431,36 @@ class OperationalAdminDetailView(APIView):
         admin = self.get_object(pk)
         admin.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class OperationalAdminApprovePublicProfileView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminPrincipal]
+
+    def patch(self, request, pk: int):
+        admin = get_object_or_404(
+            Utilisateur.objects.select_related("role"),
+            pk=pk,
+            role__nom=Role.Nom.ADMIN_OPERATIONNEL,
+        )
+        if not admin.public_title.strip():
+            return Response(
+                {"public_title": "Le titre public est obligatoire avant validation publique."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        admin.approve_public_profile()
+        admin.save()
+        return Response(OperationalAdminSerializer(admin, context={"request": request}).data)
+
+
+class OperationalAdminRejectPublicProfileView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminPrincipal]
+
+    def patch(self, request, pk: int):
+        admin = get_object_or_404(
+            Utilisateur.objects.select_related("role"),
+            pk=pk,
+            role__nom=Role.Nom.ADMIN_OPERATIONNEL,
+        )
+        admin.reject_public_profile()
+        admin.save()
+        return Response(OperationalAdminSerializer(admin, context={"request": request}).data)

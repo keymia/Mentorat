@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { Settings } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
+import { AdminAccountSettings } from "@/components/admin/AdminAccountSettings";
 import { AdminMentorshipPeriods } from "@/components/admin/mentorship/AdminMentorshipPeriods";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -13,8 +14,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   ParametreSysteme,
   formatApiError,
+  getCurrentUser,
   getParametres,
   updateParametre,
+  type UtilisateurDetail,
 } from "@/lib/api";
 
 type Drafts = Record<number, Pick<ParametreSysteme, "valeur" | "description">>;
@@ -41,29 +44,44 @@ export function AdminParametres() {
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [savingId, setSavingId] = useState<number | null>(null);
+  const [currentUser, setCurrentUser] = useState<UtilisateurDetail | null>(null);
 
   useEffect(() => {
     let isMounted = true;
-    getParametres()
-      .then((parametres) => {
-        if (isMounted) {
-          setRows(parametres);
-          setDrafts(buildDrafts(parametres));
-          const availableKeys = new Set([...parametres.map((parametre) => parametre.cle), mentorshipPeriodKey]);
-          setSelectedKey(requestedKey && availableKeys.has(requestedKey) ? requestedKey : mentorshipPeriodKey);
-          setError("");
+    async function loadSettings() {
+      try {
+        const user = await getCurrentUser();
+        if (!isMounted) {
+          return;
         }
-      })
-      .catch((apiError) => {
+        setCurrentUser(user);
+        if (user.role_nom !== "ADMIN_PRINCIPAL") {
+          setRows([]);
+          setDrafts({});
+          setSelectedKey("ACCOUNT");
+          setError("");
+          return;
+        }
+        const parametres = await getParametres();
+        if (!isMounted) {
+          return;
+        }
+        setRows(parametres);
+        setDrafts(buildDrafts(parametres));
+        const availableKeys = new Set([...parametres.map((parametre) => parametre.cle), mentorshipPeriodKey, "ACCOUNT"]);
+        setSelectedKey(requestedKey && availableKeys.has(requestedKey) ? requestedKey : mentorshipPeriodKey);
+        setError("");
+      } catch (apiError) {
         if (isMounted) {
           setError(formatApiError(apiError));
         }
-      })
-      .finally(() => {
+      } finally {
         if (isMounted) {
           setIsLoading(false);
         }
-      });
+      }
+    }
+    void loadSettings();
     return () => {
       isMounted = false;
     };
@@ -104,6 +122,7 @@ export function AdminParametres() {
   }
 
   const selectedParametre = rows.find((row) => row.cle === selectedKey);
+  const isAdminPrincipal = currentUser?.role_nom === "ADMIN_PRINCIPAL";
   const isMentorshipPeriodSelected = selectedKey === mentorshipPeriodKey;
   const pageTitle = isMentorshipPeriodSelected
     ? "Periode de mentorat"
@@ -113,6 +132,22 @@ export function AdminParametres() {
   const pageDescription = isMentorshipPeriodSelected
     ? "Creez ou modifiez les periodes utilisees pour les affectations, les seances et les suivis."
     : "Ajustez la valeur et la description du parametre selectionne.";
+
+  if (isLoading) {
+    return <Skeleton className="h-56" />;
+  }
+
+  if (error && !currentUser) {
+    return <Alert variant="error">{error}</Alert>;
+  }
+
+  if (!isAdminPrincipal) {
+    return <AdminAccountSettings />;
+  }
+
+  if (selectedKey === "ACCOUNT") {
+    return <AdminAccountSettings />;
+  }
 
   return (
     <div className="grid gap-5">
@@ -125,9 +160,8 @@ export function AdminParametres() {
 
       {message ? <Alert variant="success">{message}</Alert> : null}
       {error ? <Alert variant="error">{error}</Alert> : null}
-      {isLoading ? <Skeleton className="h-56" /> : null}
 
-      {!isLoading && !error ? (
+      {!error ? (
         <div className="grid gap-4">
           {selectedParametre && !isMentorshipPeriodSelected ? (
             <Card>

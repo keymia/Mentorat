@@ -96,6 +96,12 @@ class Utilisateur(AbstractBaseUser, PermissionsMixin):
         INACTIF = "INACTIF", "Inactif"
         SUSPENDU = "SUSPENDU", "Suspendu"
 
+    class StatutProfilPublic(models.TextChoices):
+        NON_SOUMIS = "NON_SOUMIS", "Non soumis"
+        EN_ATTENTE = "EN_ATTENTE", "En attente"
+        VALIDE = "VALIDE", "Valide"
+        REFUSE = "REFUSE", "Refuse"
+
     nom = models.CharField(max_length=150)
     prenom = models.CharField(max_length=150)
     email = models.EmailField(unique=True)
@@ -114,6 +120,19 @@ class Utilisateur(AbstractBaseUser, PermissionsMixin):
     public_title = models.CharField(max_length=120, blank=True)
     public_description = models.TextField(blank=True)
     public_photo = models.ImageField(upload_to="admin_profiles/", blank=True, null=True)
+    is_public_profile_approved = models.BooleanField(default=False)
+    public_profile_updated_at = models.DateTimeField(null=True, blank=True)
+    pending_public_validation = models.BooleanField(default=False)
+    public_profile_status = models.CharField(
+        max_length=20,
+        choices=StatutProfilPublic.choices,
+        default=StatutProfilPublic.NON_SOUMIS,
+    )
+    approved_public_prenom = models.CharField(max_length=150, blank=True)
+    approved_public_nom = models.CharField(max_length=150, blank=True)
+    approved_public_title = models.CharField(max_length=120, blank=True)
+    approved_public_description = models.TextField(blank=True)
+    approved_public_photo = models.ImageField(upload_to="admin_profiles/approved/", blank=True, null=True)
     profil_mentorat = models.CharField(
         max_length=20,
         choices=ProfilMentorat.choices,
@@ -190,6 +209,35 @@ class Utilisateur(AbstractBaseUser, PermissionsMixin):
     @property
     def requiert_double_authentification(self) -> bool:
         return self.est_administrateur or self.est_mentor
+
+    def snapshot_public_profile(self):
+        self.approved_public_prenom = self.prenom
+        self.approved_public_nom = self.nom
+        self.approved_public_title = self.public_title
+        self.approved_public_description = self.public_description
+        self.approved_public_photo = self.public_photo
+
+    def mark_public_profile_pending(self):
+        self.pending_public_validation = True
+        self.is_public_profile_approved = False
+        self.public_profile_status = self.StatutProfilPublic.EN_ATTENTE
+        self.public_profile_updated_at = timezone.now()
+        self.can_appear_on_about_page = True
+
+    def approve_public_profile(self):
+        self.snapshot_public_profile()
+        self.pending_public_validation = False
+        self.is_public_profile_approved = True
+        self.can_appear_on_about_page = True
+        self.public_profile_status = self.StatutProfilPublic.VALIDE
+        self.public_profile_updated_at = timezone.now()
+
+    def reject_public_profile(self):
+        self.pending_public_validation = False
+        self.is_public_profile_approved = False
+        self.can_appear_on_about_page = False
+        self.public_profile_status = self.StatutProfilPublic.REFUSE
+        self.public_profile_updated_at = timezone.now()
 
     @classmethod
     def profil_inclut_mentor(cls, profil: str | None) -> bool:

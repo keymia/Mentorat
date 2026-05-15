@@ -1,11 +1,11 @@
-import { ShieldCheck } from "lucide-react";
 import { Suspense } from "react";
 
+import { AdminAccountTypeCard } from "@/components/admin/AdminAccountTypeCard";
+import { AdminSidebarNav } from "@/components/admin/AdminSidebarNav";
+import { LogoutButton } from "@/components/admin/LogoutButton";
 import { BrandMark } from "@/components/layout/BrandMark";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { UserSidebarIdentity } from "@/components/layout/UserSidebarIdentity";
-import { LogoutButton } from "@/components/admin/LogoutButton";
-import { AdminSidebarNav } from "@/components/admin/AdminSidebarNav";
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
   return (
@@ -21,15 +21,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             <UserSidebarIdentity />
           </div>
 
-          <div className="mt-6 rounded-xl border border-white/10 bg-black/15 p-3">
-            <div className="flex items-center gap-2 text-[var(--brand-bronze)]">
-              <ShieldCheck className="size-4" aria-hidden="true" />
-              <p className="text-xs font-semibold uppercase tracking-[0.18em]">Administration</p>
-            </div>
-            <p className="mt-2 text-sm leading-6 text-white/70">
-              Gestion des inscriptions, jumelages, evenements, partenaires et parametres.
-            </p>
-          </div>
+          <AdminAccountTypeCard />
 
           <Suspense fallback={null}>
             <AdminSidebarNav />

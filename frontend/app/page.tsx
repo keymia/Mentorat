@@ -1,5 +1,4 @@
 import { BookOpenCheck, GraduationCap, HeartHandshake, ShieldCheck, UsersRound } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
 
@@ -41,44 +40,36 @@ export default function Home() {
     <div className="min-h-screen bg-background">
       <SiteHeader />
       <main>
-        <section className="premium-gradient relative overflow-hidden border-b border-border">
-          <div className="absolute inset-y-10 right-0 hidden w-1/2 opacity-20 lg:block">
-            <Image
-              src="/bmc-logo.png"
-              alt=""
-              fill
-              sizes="50vw"
-              priority
-              className="object-contain object-right"
-            />
-          </div>
-          <div className="relative mx-auto grid max-w-7xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[1.08fr_0.92fr] lg:items-center lg:py-24">
+        <section className="relative isolate overflow-hidden border-b border-border bg-[var(--brand-ink)] text-white">
+          <video
+            className="absolute inset-0 h-full w-full object-cover"
+            src="/videos/accueil-final.mp4"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            aria-hidden="true"
+          />
+          <div className="absolute inset-0 bg-black/28 dark:bg-black/45" />
+          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(10,10,10,0.88)_0%,rgba(10,10,10,0.72)_34%,rgba(10,10,10,0.36)_68%,rgba(10,10,10,0.18)_100%)]" />
+          <div className="absolute inset-y-0 left-0 w-full max-w-4xl bg-gradient-to-r from-black/55 via-black/24 to-transparent backdrop-blur-sm" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_72%_16%,rgba(183,131,75,0.24),transparent_32%)]" />
+          <div className="relative mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:py-28">
             <Reveal>
-              <Badge variant="bronze">Association of Black Aspiring Physicians</Badge>
-              <h1 className="mt-5 max-w-4xl text-4xl font-bold leading-tight tracking-normal text-foreground sm:text-6xl">
+              <Badge variant="bronze" className="border-white/20 bg-white/12 text-white shadow-card backdrop-blur">
+                Association of Black Aspiring Physicians
+              </Badge>
+              <h1 className="mt-5 max-w-4xl text-4xl font-bold leading-tight tracking-normal text-white sm:text-6xl">
                 <span className="font-display">Mentorer, soutenir et elever la releve academique.</span>
               </h1>
-              <p className="mt-5 max-w-2xl text-lg leading-8 text-muted-foreground">
+              <p className="mt-5 max-w-2xl text-lg leading-8 text-white/86">
                 BMC Mentorat connecte mentors et mentores dans un cadre exigeant, humain et structure autour de la
                 progression academique.
               </p>
               <Suspense fallback={null}>
                 <InscriptionModalOptions variant="hero" />
               </Suspense>
-            </Reveal>
-
-            <Reveal delay={0.12} className="relative">
-              <div className="relative mx-auto aspect-[4/3] max-w-xl">
-                <div className="absolute inset-0 rounded-[2rem] bg-[var(--brand-red)]/8 blur-3xl" />
-                <Image
-                  src="/bmc-logo.png"
-                  alt="Logo BMC Association of Black Aspiring Physicians"
-                  fill
-                  sizes="(max-width: 1024px) 90vw, 520px"
-                  priority
-                  className="relative object-contain drop-shadow-2xl"
-                />
-              </div>
             </Reveal>
           </div>
         </section>

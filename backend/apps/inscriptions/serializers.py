@@ -6,7 +6,7 @@ from apps.mentorat.models import MentorshipAssignment, MentorshipPeriod
 from apps.mentorat.services import get_mentors_disponibles_for_niveau, validate_mentor_for_mentore_level
 from apps.parametres.models import ParametreSysteme
 from apps.users.models import NiveauAcademique, Role, Utilisateur
-from apps.users.serializers import UtilisateurLiteSerializer
+from apps.users.serializers import UtilisateurLiteSerializer, validate_phone_number
 
 
 class InscriptionSerializer(serializers.ModelSerializer):
@@ -57,6 +57,9 @@ class MentorInscriptionSerializer(serializers.Serializer):
     capacite_mentorat = serializers.IntegerField(min_value=1, required=False)
     mentorship_period = serializers.PrimaryKeyRelatedField(queryset=available_periods_queryset())
     consentement = serializers.BooleanField()
+
+    def validate_telephone(self, value):
+        return validate_phone_number(value)
 
     def validate(self, attrs):
         if not attrs["consentement"]:
@@ -123,6 +126,9 @@ class MentoreInscriptionSerializer(serializers.Serializer):
     mentorship_period = serializers.PrimaryKeyRelatedField(queryset=available_periods_queryset())
     wants_association_assignment = serializers.BooleanField(default=False)
     consentement = serializers.BooleanField()
+
+    def validate_telephone(self, value):
+        return validate_phone_number(value)
 
     def validate(self, attrs):
         if not attrs["consentement"]:

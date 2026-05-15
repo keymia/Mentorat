@@ -43,7 +43,7 @@ export function ListTable({
         <div className="p-4">{emptyState}</div>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm" style={{ minWidth }}>
+          <table className="list-table-max-five w-full text-left text-sm" style={{ minWidth }}>
             <thead className="border-b border-border bg-muted text-xs uppercase text-muted-foreground">
               <tr>
                 {headers.map((header) => (

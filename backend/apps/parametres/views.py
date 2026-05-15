@@ -13,8 +13,8 @@ class ParametreSystemeViewSet(viewsets.ModelViewSet):
     http_method_names = ["get", "put", "patch", "head", "options"]
 
     def perform_update(self, serializer):
-        if serializer.instance.cle == "MAX_MENTORES_PAR_MENTOR" and not self.request.user.est_admin_principal:
+        if not self.request.user.est_admin_principal:
             raise PermissionDenied(
-                "Seul l'administrateur principal peut modifier le nombre maximal de mentores par mentor."
+                "Seul l'administrateur principal peut modifier les parametres systeme."
             )
         serializer.save()

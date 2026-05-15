@@ -39,6 +39,9 @@ class UtilisateurAdmin(UserAdmin):
         "wants_to_appear_on_team_page",
         "is_team_approved",
         "can_appear_on_about_page",
+        "pending_public_validation",
+        "is_public_profile_approved",
+        "public_profile_status",
         "public_title",
         "team_display_order",
         "is_staff",
@@ -51,6 +54,9 @@ class UtilisateurAdmin(UserAdmin):
         "wants_to_appear_on_team_page",
         "is_team_approved",
         "can_appear_on_about_page",
+        "pending_public_validation",
+        "is_public_profile_approved",
+        "public_profile_status",
     )
     search_fields = ("email", "nom", "prenom")
     ordering = ("email",)
@@ -72,9 +78,18 @@ class UtilisateurAdmin(UserAdmin):
                     "is_team_approved",
                     "team_display_order",
                     "can_appear_on_about_page",
+                    "pending_public_validation",
+                    "is_public_profile_approved",
+                    "public_profile_status",
+                    "public_profile_updated_at",
                     "public_title",
                     "public_description",
                     "public_photo",
+                    "approved_public_prenom",
+                    "approved_public_nom",
+                    "approved_public_title",
+                    "approved_public_description",
+                    "approved_public_photo",
                     "capacite_mentorat",
                     "nombre_mentores_actuels",
                 )
@@ -84,7 +99,7 @@ class UtilisateurAdmin(UserAdmin):
         ("Permissions Django", {"fields": ("is_active", "is_staff", "is_superuser", "groups", "user_permissions")}),
         ("Dates", {"fields": ("last_login", "date_creation")}),
     )
-    readonly_fields = ("date_creation", "nombre_mentores_actuels")
+    readonly_fields = ("date_creation", "nombre_mentores_actuels", "public_profile_updated_at")
     add_fieldsets = (
         (
             None,

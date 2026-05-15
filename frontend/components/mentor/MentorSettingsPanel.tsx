@@ -1,13 +1,16 @@
 "use client";
 
-import { CalendarClock, CalendarPlus, ChevronDown, ChevronUp, ImagePlus, Pencil, Save } from "lucide-react";
+import { CalendarClock, CalendarPlus, ChevronDown, ChevronUp, Eye, ImagePlus, Pencil, Save } from "lucide-react";
+import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
 import { Alert } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { ListTable } from "@/components/ui/list-table";
 import { Modal } from "@/components/ui/modal";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
@@ -23,6 +26,7 @@ import {
   getMentorProfile,
   updateMentorProfile,
   updateOwnProfile,
+  updateOwnPassword,
 } from "@/lib/api";
 
 type SettingsSection = "account" | "profile" | "session";
@@ -71,15 +75,18 @@ export function MentorSettingsPanel() {
   const [error, setError] = useState("");
   const [profileMessage, setProfileMessage] = useState("");
   const [sessionMessage, setSessionMessage] = useState("");
+  const [passwordMessage, setPasswordMessage] = useState("");
   const [profileError, setProfileError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
   const [publicProfileError, setPublicProfileError] = useState("");
   const [sessionError, setSessionError] = useState("");
   const [isProfileSaving, setIsProfileSaving] = useState(false);
+  const [isPasswordSaving, setIsPasswordSaving] = useState(false);
   const [isPublicProfileSaving, setIsPublicProfileSaving] = useState(false);
   const [isSessionSaving, setIsSessionSaving] = useState(false);
-  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isAccountDetailsOpen, setIsAccountDetailsOpen] = useState(false);
+  const [isAccountUpdateOpen, setIsAccountUpdateOpen] = useState(false);
   const [selectedPhotoName, setSelectedPhotoName] = useState("");
-  const [isAccountExpanded, setIsAccountExpanded] = useState(false);
   const [isTeamProfileExpanded, setIsTeamProfileExpanded] = useState(false);
 
   useEffect(() => {
@@ -124,22 +131,6 @@ export function MentorSettingsPanel() {
     );
   }, [assignments, expiredAssignments, periods]);
 
-  const accountRows = useMemo(() => {
-    if (!user) {
-      return [];
-    }
-    return [
-      { label: "Nom complet", value: formatFullName(user) },
-      { label: "Email de connexion", value: formatValue(user.email) },
-      { label: "Statut du compte", value: formatValue(user.statut_compte) },
-      { label: "Niveau academique", value: formatValue(user.niveau_academique_nom) },
-      { label: "Telephone", value: formatValue(user.telephone) },
-      { label: "Profil", value: formatValue(user.profil_mentorat) },
-      { label: "Langue preferee", value: user.langue_preferee === "EN" ? "Anglais" : "Francais" },
-      { label: "Region", value: formatValue(user.region) },
-    ];
-  }, [user]);
-
   const teamProfileRows = useMemo(
     () => [
       { label: "Niveau academique", value: formatValue(mentorProfile?.niveau_academique_nom ?? user?.niveau_academique_nom) },
@@ -157,9 +148,11 @@ export function MentorSettingsPanel() {
     setAssignments(assignmentRows);
   }
 
-  function openProfileModal() {
+  function openAccountUpdateModal() {
     setProfileError("");
-    setIsProfileModalOpen(true);
+    setPasswordError("");
+    setPasswordMessage("");
+    setIsAccountUpdateOpen(true);
   }
 
   async function handleContinueSubmit(event: FormEvent<HTMLFormElement>) {
@@ -207,18 +200,35 @@ export function MentorSettingsPanel() {
       const updatedUser = await updateOwnProfile({
         nom: formString(formData, "nom"),
         prenom: formString(formData, "prenom"),
-        email: formString(formData, "email"),
-        telephone: formString(formData, "telephone"),
-        langue_preferee: formString(formData, "langue_preferee") as "FR" | "EN",
-        region: formString(formData, "region"),
       });
       setUser(updatedUser);
       setProfileMessage("Informations personnelles mises a jour.");
-      setIsProfileModalOpen(false);
+      setIsAccountUpdateOpen(false);
     } catch (apiError) {
       setProfileError(formatApiError(apiError));
     } finally {
       setIsProfileSaving(false);
+    }
+  }
+
+  async function handlePasswordSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    setPasswordMessage("");
+    setPasswordError("");
+    setIsPasswordSaving(true);
+    try {
+      await updateOwnPassword(
+        String(formData.get("ancien_mot_de_passe") ?? ""),
+        String(formData.get("mot_de_passe") ?? ""),
+      );
+      setPasswordMessage("Mot de passe mis a jour.");
+      form.reset();
+    } catch (apiError) {
+      setPasswordError(formatApiError(apiError));
+    } finally {
+      setIsPasswordSaving(false);
     }
   }
 
@@ -274,94 +284,141 @@ export function MentorSettingsPanel() {
     return <Skeleton className="h-96" />;
   }
 
-  const visibleAccountRows = isAccountExpanded ? accountRows : accountRows.slice(0, 4);
   const visibleTeamProfileRows = isTeamProfileExpanded ? teamProfileRows : teamProfileRows.slice(0, 3);
+  const accountPhotoUrl = mentorProfile?.profile_photo_url || user.profile_photo_url || "";
+  const accountType = user.role_label || "Mentor";
 
   return (
     <div className="grid gap-6">
       <Modal
-        open={isProfileModalOpen}
-        title="Modifier les informations personnelles"
-        description="Mettez a jour les donnees principales de votre compte mentor."
-        className="max-w-4xl"
-        onClose={() => setIsProfileModalOpen(false)}
+        open={isAccountDetailsOpen}
+        title="Detail du compte"
+        description="Informations completes visibles pour votre compte mentor."
+        className="max-w-3xl"
+        onClose={() => setIsAccountDetailsOpen(false)}
       >
-        <form onSubmit={handleProfileSubmit} className="grid gap-4 md:grid-cols-2">
-          <label>
-            Nom
-            <Input name="nom" defaultValue={user.nom} required />
-          </label>
-          <label>
-            Prenom
-            <Input name="prenom" defaultValue={user.prenom} required />
-          </label>
-          <label>
-            Email de connexion
-            <Input name="email" type="email" defaultValue={user.email} required />
-          </label>
-          <label>
-            Telephone
-            <Input name="telephone" defaultValue={user.telephone ?? ""} />
-          </label>
-          <label>
-            Langue preferee
-            <select name="langue_preferee" className="field" defaultValue={user.langue_preferee ?? "FR"}>
-              <option value="FR">Francais</option>
-              <option value="EN">Anglais</option>
-            </select>
-          </label>
-          <label>
-            Region
-            <Input name="region" defaultValue={user.region ?? ""} />
-          </label>
-          <Button type="submit" className="w-fit" disabled={isProfileSaving}>
-            <Save aria-hidden="true" />
-            {isProfileSaving ? "Enregistrement..." : "Enregistrer"}
-          </Button>
-        </form>
-        {profileError ? <Alert variant="error">{profileError}</Alert> : null}
+        <div className="grid gap-4">
+          {accountPhotoUrl ? (
+            <Image
+              src={accountPhotoUrl}
+              alt=""
+              width={96}
+              height={96}
+              unoptimized
+              className="size-24 rounded-xl object-cover"
+            />
+          ) : null}
+          <div className="grid gap-3 rounded-lg border border-border bg-muted/30 p-4 md:grid-cols-2">
+            <DetailItem label="Prenom" value={user.prenom || "Non renseigne"} />
+            <DetailItem label="Nom" value={user.nom || "Non renseigne"} />
+            <DetailItem label="Email" value={user.email} />
+            <DetailItem label="Type de compte" value={accountType} />
+            <DetailItem label="Statut du compte" value={formatValue(user.statut_compte)} />
+            <DetailItem
+              label="Date de creation"
+              value={user.date_creation ? new Date(user.date_creation).toLocaleDateString("fr-CA") : "Non renseignee"}
+            />
+            {mentorProfile?.domaine_specialite ? (
+              <DetailItem label="Titre public" value={mentorProfile.domaine_specialite} />
+            ) : null}
+            {mentorProfile?.mini_bio ? (
+              <DetailItem label="Description publique" value={mentorProfile.mini_bio} className="md:col-span-2" />
+            ) : null}
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        open={isAccountUpdateOpen}
+        title="Mettre a jour le compte"
+        description="Seules les informations personnelles autorisees sont modifiables."
+        className="max-w-4xl"
+        onClose={() => setIsAccountUpdateOpen(false)}
+      >
+        <div className="grid gap-5">
+          <form onSubmit={handleProfileSubmit} className="grid gap-4 md:grid-cols-2">
+            {profileError ? <Alert variant="error" className="md:col-span-2">{profileError}</Alert> : null}
+            <label>
+              Prenom
+              <Input name="prenom" defaultValue={user.prenom} required />
+            </label>
+            <label>
+              Nom
+              <Input name="nom" defaultValue={user.nom} required />
+            </label>
+            <div className="md:col-span-2">
+              <Button type="submit" className="w-fit" disabled={isProfileSaving}>
+                <Save aria-hidden="true" />
+                {isProfileSaving ? "Enregistrement..." : "Enregistrer"}
+              </Button>
+            </div>
+          </form>
+
+          <form onSubmit={handlePasswordSubmit} className="grid gap-4 border-t border-border pt-4 md:grid-cols-2">
+            {passwordMessage ? <Alert variant="success" className="md:col-span-2">{passwordMessage}</Alert> : null}
+            {passwordError ? <Alert variant="error" className="md:col-span-2">{passwordError}</Alert> : null}
+            <label>
+              Ancien mot de passe
+              <Input name="ancien_mot_de_passe" type="password" required />
+            </label>
+            <label>
+              Nouveau mot de passe
+              <Input name="mot_de_passe" type="password" minLength={8} required />
+            </label>
+            <div className="md:col-span-2">
+              <Button type="submit" variant="outline" disabled={isPasswordSaving}>
+                {isPasswordSaving ? "Mise a jour..." : "Mettre a jour le mot de passe"}
+              </Button>
+            </div>
+          </form>
+        </div>
       </Modal>
 
       {section === "account" ? (
-        <Card>
-          <CardHeader className="gap-4 lg:flex lg:flex-row lg:items-start lg:justify-between">
-            <div>
-              <CardTitle>Compte mentor</CardTitle>
-              <CardDescription>Donnees de compte disponibles pour votre espace mentor.</CardDescription>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <Button type="button" variant="outline" onClick={openProfileModal}>
-                <Pencil aria-hidden="true" />
-                Modifier
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="grid gap-4">
-            {profileMessage ? <Alert variant="success">{profileMessage}</Alert> : null}
-            <ul className="overflow-hidden rounded-lg border border-border">
-              {visibleAccountRows.map((row, index) => (
-                <li
-                  key={row.label}
-                  className={`grid gap-1 p-4 text-sm sm:grid-cols-[220px_1fr] ${
-                    index < visibleAccountRows.length - 1 ? "border-b border-border" : ""
-                  }`}
-                >
-                  <span className="font-medium text-muted-foreground">{row.label}</span>
-                  <span className="break-words font-semibold text-foreground">{row.value}</span>
-                </li>
-              ))}
-            </ul>
-            <Button
-              type="button"
-              variant="ghost"
-              className="w-fit"
-              onClick={() => setIsAccountExpanded((current) => !current)}
-            >
-              {isAccountExpanded ? <ChevronUp aria-hidden="true" /> : <ChevronDown aria-hidden="true" />}
-              {isAccountExpanded ? "Reduire" : "Voir plus"}
-            </Button>
-          </CardContent>
-        </Card>
+        <div className="grid gap-4">
+          <div>
+            <h1 className="font-display text-3xl font-bold">Mon compte</h1>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+              Consultez et mettez a jour uniquement les informations personnelles autorisees.
+            </p>
+          </div>
+          {profileMessage ? <Alert variant="success">{profileMessage}</Alert> : null}
+          <ListTable
+            title="Informations du compte"
+            countLabel="1 compte"
+            minWidth={900}
+            headers={[
+              { label: "Nom complet" },
+              { label: "Email" },
+              { label: "Type de compte" },
+              { label: "Statut" },
+              { label: "Actions", className: "text-right" },
+            ]}
+          >
+            <tr className="align-top">
+              <td className="px-4 py-3 font-medium text-foreground">{formatFullName(user)}</td>
+              <td className="px-4 py-3 text-muted-foreground">{user.email}</td>
+              <td className="px-4 py-3 text-muted-foreground">{accountType}</td>
+              <td className="px-4 py-3">
+                <Badge variant={user.statut_compte === "ACTIF" ? "success" : "outline"}>
+                  {formatValue(user.statut_compte)}
+                </Badge>
+              </td>
+              <td className="px-4 py-3">
+                <div className="flex flex-wrap justify-end gap-2">
+                  <Button type="button" variant="ghost" size="sm" onClick={() => setIsAccountDetailsOpen(true)}>
+                    <Eye aria-hidden="true" />
+                    Detail
+                  </Button>
+                  <Button type="button" variant="outline" size="sm" onClick={openAccountUpdateModal}>
+                    <Pencil aria-hidden="true" />
+                    Mettre a jour
+                  </Button>
+                </div>
+              </td>
+            </tr>
+          </ListTable>
+        </div>
       ) : null}
 
       {section === "profile" ? (
@@ -525,6 +582,15 @@ export function MentorSettingsPanel() {
           </CardContent>
         </Card>
       ) : null}
+    </div>
+  );
+}
+
+function DetailItem({ label, value, className = "" }: { label: string; value: string; className?: string }) {
+  return (
+    <div className={className}>
+      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{label}</p>
+      <p className="mt-1 break-words text-sm font-medium text-foreground">{value}</p>
     </div>
   );
 }

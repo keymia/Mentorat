@@ -1,8 +1,8 @@
 import { HeartHandshake, Scale, ShieldCheck, UsersRound } from "lucide-react";
-import Image from "next/image";
 
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { PageHeader } from "@/components/PageHeader";
+import { PublicProfileCard } from "@/components/public/PublicProfileCard";
 import { SiteHeader } from "@/components/SiteHeader";
 import { Card, CardContent } from "@/components/ui/card";
 import { getPublicAboutTeam } from "@/lib/api";
@@ -31,60 +31,15 @@ const pillars = [
   },
 ];
 
-function initials(name: string) {
-  return name
-    .split(" ")
-    .filter(Boolean)
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-}
-
 function AdminTeamCard({ member }: { member: PublicAboutTeamMember }) {
-  if (!member.public_photo_url) {
-    return (
-      <Card className="overflow-hidden">
-        <CardContent className="p-5">
-          <div className="mb-4 flex aspect-[4/3] items-center justify-center rounded-lg bg-[linear-gradient(135deg,var(--brand-ink),var(--brand-red-strong))] text-4xl font-bold text-white shadow-card">
-            {initials(member.nom_complet)}
-          </div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-            {member.public_title}
-          </p>
-          <h3 className="mt-2 text-xl font-semibold">{member.nom_complet}</h3>
-          {member.public_description ? (
-            <p className="mt-3 text-sm leading-6 text-muted-foreground">{member.public_description}</p>
-          ) : null}
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
-    <Card className="group relative min-h-[320px] overflow-hidden bg-muted shadow-card sm:min-h-[360px]">
-      <Image
-        src={member.public_photo_url}
-        alt={member.nom_complet}
-        fill
-        unoptimized
-        className="object-cover transition duration-700 ease-out motion-safe:group-hover:scale-105"
-        sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
-      />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/45 to-black/10" />
-      <div className="absolute inset-0 bg-[linear-gradient(120deg,rgba(159,20,22,0.28),transparent_48%)]" />
-      <CardContent className="relative z-10 flex min-h-[320px] items-end p-5 sm:min-h-[360px]">
-        <div className="w-full rounded-lg border border-white/15 bg-black/28 p-4 text-white shadow-2xl backdrop-blur-md">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--brand-bronze)]">
-            {member.public_title}
-          </p>
-          <h3 className="mt-2 text-2xl font-semibold leading-tight text-white">{member.nom_complet}</h3>
-          {member.public_description ? (
-            <p className="mt-3 line-clamp-5 text-sm leading-6 text-white/88">{member.public_description}</p>
-          ) : null}
-        </div>
-      </CardContent>
-    </Card>
+    <PublicProfileCard
+      name={member.nom_complet}
+      title={member.public_title}
+      description={member.public_description}
+      imageUrl={member.public_photo_url}
+      minHeightClassName="min-h-[360px]"
+    />
   );
 }
 

@@ -8,7 +8,7 @@ from apps.mentorat.models import MentorshipAssignment
 from apps.mentorat.services import count_pending_matching_requests, get_session_ending_alert
 from apps.partenaires.models import Partenaire
 from apps.statistiques.serializers import DashboardStatistiquesSerializer
-from apps.users.models import Utilisateur
+from apps.users.models import Role, Utilisateur
 from apps.users.permissions import IsAdminRole
 
 
@@ -64,6 +64,12 @@ class AdminActionAlertsView(APIView):
                 "pending_registration_count": Inscription.objects.filter(
                     statut_inscription=Inscription.StatutInscription.EN_ATTENTE
                 ).count(),
+                "pending_public_admin_count": Utilisateur.objects.filter(
+                    role__nom=Role.Nom.ADMIN_OPERATIONNEL,
+                    pending_public_validation=True,
+                ).count()
+                if request.user.est_admin_principal
+                else 0,
                 "session_ending_soon": session_alert["session_ending_soon"],
                 "days_before_session_end": session_alert["days_before_session_end"],
                 "active_session": {

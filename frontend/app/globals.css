@@ -164,3 +164,7 @@ label {
 .dark .notice.error {
   color: #fecaca;
 }
+
+.list-table-max-five tr > :nth-child(n + 5):not(:last-child) {
+  display: none;
+}

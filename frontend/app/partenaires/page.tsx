@@ -35,16 +35,17 @@ export default async function PartenairesPage() {
         ) : (
           <div className="grid gap-4 md:grid-cols-3">
             {partenaires.map((partenaire) => (
-              <Card key={partenaire.id} className="overflow-hidden">
+              <Card key={partenaire.id} className="group overflow-hidden shadow-card">
                 {partenaire.logo ? (
-                  <div className="relative flex aspect-[16/9] items-center justify-center border-b border-border bg-secondary/40">
+                  <div className="relative flex aspect-[16/9] items-center justify-center overflow-hidden border-b border-border bg-secondary/40">
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(183,131,75,0.18),transparent_44%)] opacity-80" />
                     <Image
                       src={partenaire.logo}
                       alt={`Logo de ${partenaire.nom_partenaire}`}
                       fill
                       unoptimized
                       sizes="(max-width: 768px) 100vw, 33vw"
-                      className="object-contain p-6"
+                      className="object-contain p-6 transition duration-500 ease-out motion-safe:group-hover:scale-105"
                     />
                   </div>
                 ) : null}

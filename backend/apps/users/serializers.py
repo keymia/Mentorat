@@ -1,8 +1,12 @@
+import re
+
 from django.contrib.auth import authenticate
 from rest_framework import serializers
 
 from apps.parametres.models import ParametreSysteme
 from apps.users.models import LoginVerificationCode, NiveauAcademique, Role, Utilisateur
+
+PHONE_PATTERN = re.compile(r"^[0-9+()\s-]*$")
 
 
 def file_url(obj, field_name: str, request=None) -> str | None:
@@ -11,6 +15,12 @@ def file_url(obj, field_name: str, request=None) -> str | None:
         return None
     url = field.url
     return request.build_absolute_uri(url) if request else url
+
+
+def validate_phone_number(value: str) -> str:
+    if value and not PHONE_PATTERN.fullmatch(value):
+        raise serializers.ValidationError("Le telephone accepte seulement les chiffres, espaces, +, -, et parentheses.")
+    return value
 
 
 def validate_level_for_profile(niveau: NiveauAcademique | None, profil: str | None):
@@ -149,6 +159,9 @@ class UtilisateurSerializer(serializers.ModelSerializer):
     def get_public_photo_url(self, obj: Utilisateur) -> str | None:
         return file_url(obj, "public_photo", self.context.get("request"))
 
+    def validate_telephone(self, value: str) -> str:
+        return validate_phone_number(value)
+
     def validate(self, attrs):
         niveau = attrs.get("niveau_academique", getattr(self.instance, "niveau_academique", None))
         profil = attrs.get("profil_mentorat", getattr(self.instance, "profil_mentorat", None))
@@ -257,6 +270,9 @@ class SelfProfileSerializer(serializers.ModelSerializer):
 
     def get_profile_photo_url(self, obj: Utilisateur) -> str | None:
         return file_url(obj, "profile_photo", self.context.get("request"))
+
+    def validate_telephone(self, value: str) -> str:
+        return validate_phone_number(value)
 
     def validate(self, attrs):
         mini_bio = attrs.get("mini_bio", getattr(self.instance, "mini_bio", ""))
@@ -439,6 +455,7 @@ class OperationalAdminSerializer(serializers.ModelSerializer):
     mot_de_passe = serializers.CharField(write_only=True, required=False, allow_blank=True, min_length=8)
     role_nom = serializers.CharField(source="role.nom", read_only=True)
     public_photo_url = serializers.SerializerMethodField()
+    approved_public_photo_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Utilisateur
@@ -460,12 +477,43 @@ class OperationalAdminSerializer(serializers.ModelSerializer):
             "public_description",
             "public_photo",
             "public_photo_url",
+            "is_public_profile_approved",
+            "pending_public_validation",
+            "public_profile_status",
+            "public_profile_updated_at",
+            "approved_public_prenom",
+            "approved_public_nom",
+            "approved_public_title",
+            "approved_public_description",
+            "approved_public_photo_url",
             "date_creation",
         ]
-        read_only_fields = ["id", "is_active", "role", "role_nom", "date_creation", "public_photo_url"]
+        read_only_fields = [
+            "id",
+            "is_active",
+            "role",
+            "role_nom",
+            "date_creation",
+            "public_photo_url",
+            "is_public_profile_approved",
+            "pending_public_validation",
+            "public_profile_status",
+            "public_profile_updated_at",
+            "approved_public_prenom",
+            "approved_public_nom",
+            "approved_public_title",
+            "approved_public_description",
+            "approved_public_photo_url",
+        ]
 
     def get_public_photo_url(self, obj: Utilisateur) -> str | None:
         return file_url(obj, "public_photo", self.context.get("request"))
+
+    def get_approved_public_photo_url(self, obj: Utilisateur) -> str | None:
+        return file_url(obj, "approved_public_photo", self.context.get("request"))
+
+    def validate_telephone(self, value: str) -> str:
+        return validate_phone_number(value)
 
     def validate(self, attrs):
         wants_public = attrs.get(
@@ -491,28 +539,59 @@ class OperationalAdminSerializer(serializers.ModelSerializer):
             defaults={"description": "Gestion operationnelle sans creation d'administrateur."},
         )
         validated_data = self.sync_active_status(validated_data)
-        return Utilisateur.objects.create_user(
+        admin = Utilisateur.objects.create_user(
             password=password,
             role=role,
             is_staff=True,
             **validated_data,
         )
+        if admin.can_appear_on_about_page:
+            admin.approve_public_profile()
+            admin.save(
+                update_fields=[
+                    "approved_public_prenom",
+                    "approved_public_nom",
+                    "approved_public_title",
+                    "approved_public_description",
+                    "approved_public_photo",
+                    "pending_public_validation",
+                    "is_public_profile_approved",
+                    "can_appear_on_about_page",
+                    "public_profile_status",
+                    "public_profile_updated_at",
+                ]
+            )
+        return admin
 
     def update(self, instance, validated_data):
         password = validated_data.pop("mot_de_passe", None)
+        public_fields_touched = bool(
+            {"prenom", "nom", "public_title", "public_description", "public_photo"}.intersection(validated_data.keys())
+        )
         if "statut_compte" in validated_data:
             validated_data = self.sync_active_status(validated_data)
         for field, value in validated_data.items():
             setattr(instance, field, value)
         if password:
             instance.set_password(password)
+        if "can_appear_on_about_page" in validated_data or public_fields_touched:
+            if instance.can_appear_on_about_page:
+                instance.approve_public_profile()
+            else:
+                instance.pending_public_validation = False
+                instance.is_public_profile_approved = False
+                instance.public_profile_status = Utilisateur.StatutProfilPublic.NON_SOUMIS
         instance.save()
         return instance
 
 
 class PublicAboutTeamMemberSerializer(serializers.ModelSerializer):
-    nom_complet = serializers.CharField(read_only=True)
+    nom = serializers.SerializerMethodField()
+    prenom = serializers.SerializerMethodField()
+    nom_complet = serializers.SerializerMethodField()
     role_label = serializers.CharField(source="role.get_nom_display", read_only=True)
+    public_title = serializers.SerializerMethodField()
+    public_description = serializers.SerializerMethodField()
     public_photo_url = serializers.SerializerMethodField()
 
     class Meta:
@@ -528,8 +607,88 @@ class PublicAboutTeamMemberSerializer(serializers.ModelSerializer):
             "public_photo_url",
         ]
 
+    def get_nom(self, obj: Utilisateur) -> str:
+        return obj.approved_public_nom or obj.nom
+
+    def get_prenom(self, obj: Utilisateur) -> str:
+        return obj.approved_public_prenom or obj.prenom
+
+    def get_nom_complet(self, obj: Utilisateur) -> str:
+        return f"{self.get_prenom(obj)} {self.get_nom(obj)}".strip()
+
+    def get_public_title(self, obj: Utilisateur) -> str:
+        return obj.approved_public_title or obj.public_title
+
+    def get_public_description(self, obj: Utilisateur) -> str:
+        return obj.approved_public_description or obj.public_description
+
+    def get_public_photo_url(self, obj: Utilisateur) -> str | None:
+        if obj.approved_public_photo:
+            return file_url(obj, "approved_public_photo", self.context.get("request"))
+        return file_url(obj, "public_photo", self.context.get("request"))
+
+
+class AdminOwnAccountSerializer(serializers.ModelSerializer):
+    role_nom = serializers.CharField(source="role.nom", read_only=True)
+    role_label = serializers.CharField(source="role.get_nom_display", read_only=True)
+    profile_photo_url = serializers.SerializerMethodField()
+    public_photo_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Utilisateur
+        fields = [
+            "id",
+            "nom",
+            "prenom",
+            "email",
+            "role_nom",
+            "role_label",
+            "statut_compte",
+            "date_creation",
+            "profile_photo_url",
+            "public_title",
+            "public_description",
+            "public_photo",
+            "public_photo_url",
+            "is_public_profile_approved",
+            "pending_public_validation",
+            "public_profile_status",
+            "public_profile_updated_at",
+        ]
+        read_only_fields = [
+            "id",
+            "email",
+            "role_nom",
+            "role_label",
+            "statut_compte",
+            "date_creation",
+            "profile_photo_url",
+            "public_photo_url",
+            "is_public_profile_approved",
+            "pending_public_validation",
+            "public_profile_status",
+            "public_profile_updated_at",
+        ]
+
+    def get_profile_photo_url(self, obj: Utilisateur) -> str | None:
+        return file_url(obj, "profile_photo", self.context.get("request"))
+
     def get_public_photo_url(self, obj: Utilisateur) -> str | None:
         return file_url(obj, "public_photo", self.context.get("request"))
+
+    def update(self, instance, validated_data):
+        review_fields = {"prenom", "nom", "public_title", "public_description", "public_photo"}
+        public_info_changed = False
+        for field, value in validated_data.items():
+            if field in review_fields and (field == "public_photo" or getattr(instance, field) != value):
+                public_info_changed = True
+            setattr(instance, field, value)
+
+        if instance.est_admin_operationnel and public_info_changed:
+            instance.mark_public_profile_pending()
+
+        instance.save()
+        return instance
 
 
 class LoginSerializer(serializers.Serializer):
@@ -578,9 +737,9 @@ class PasswordUpdateSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         user = self.context["request"].user
-        if not user.est_mentor:
+        if not (user.est_mentor or user.est_administrateur):
             raise serializers.ValidationError(
-                {"mot_de_passe": "Le mot de passe sera activable lorsque ce compte deviendra mentor."}
+                {"mot_de_passe": "Le mot de passe est reserve aux comptes mentor ou administrateur."}
             )
         if not user.check_password(attrs["ancien_mot_de_passe"]):
             raise serializers.ValidationError({"ancien_mot_de_passe": "Ancien mot de passe incorrect."})

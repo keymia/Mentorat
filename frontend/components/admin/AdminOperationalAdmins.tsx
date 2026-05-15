@@ -1,8 +1,9 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import { Eye, Pencil, Plus, Trash2, UserCog } from "lucide-react";
+import { CheckCircle2, Eye, Pencil, Plus, Trash2, UserCog, XCircle } from "lucide-react";
 
+import { PhoneInput } from "@/components/forms/PhoneInput";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,10 +13,12 @@ import { Modal } from "@/components/ui/modal";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   OperationalAdmin,
+  approveOperationalAdminPublicProfile,
   createOperationalAdmin,
   deleteOperationalAdmin,
   formatApiError,
   getOperationalAdmins,
+  rejectOperationalAdminPublicProfile,
   updateOperationalAdmin,
 } from "@/lib/api";
 
@@ -47,6 +50,36 @@ const emptyDraft: Draft = {
 
 function fullName(admin: OperationalAdmin) {
   return `${admin.prenom} ${admin.nom}`.trim() || admin.email;
+}
+
+function approvedFullName(admin: OperationalAdmin) {
+  return `${admin.approved_public_prenom} ${admin.approved_public_nom}`.trim() || "Non valide";
+}
+
+function publicValidationLabel(admin: OperationalAdmin) {
+  if (admin.pending_public_validation) {
+    return "En attente";
+  }
+  if (admin.is_public_profile_approved) {
+    return "Valide";
+  }
+  if (admin.public_profile_status === "REFUSE") {
+    return "Refuse";
+  }
+  return "Non soumis";
+}
+
+function publicValidationBadge(admin: OperationalAdmin) {
+  if (admin.pending_public_validation) {
+    return <Badge variant="bronze">En attente</Badge>;
+  }
+  if (admin.is_public_profile_approved) {
+    return <Badge variant="success">Valide</Badge>;
+  }
+  if (admin.public_profile_status === "REFUSE") {
+    return <Badge variant="outline" className="border-red-200 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-200">Refuse</Badge>;
+  }
+  return <Badge variant="outline">Non soumis</Badge>;
 }
 
 export function AdminOperationalAdmins() {
@@ -176,6 +209,34 @@ export function AdminOperationalAdmins() {
     }
   }
 
+  async function handleApprovePublicProfile(admin: OperationalAdmin) {
+    setError("");
+    setMessage("");
+    try {
+      const updated = await approveOperationalAdminPublicProfile(admin.id);
+      setRows((currentRows) => currentRows.map((row) => (row.id === updated.id ? updated : row)));
+      setDetailsAdmin((current) => (current?.id === updated.id ? updated : current));
+      setMessage(`Profil public approuve pour ${fullName(updated)}.`);
+    } catch (apiError) {
+      setError(formatApiError(apiError));
+    }
+  }
+
+  async function handleRejectPublicProfile(admin: OperationalAdmin) {
+    setError("");
+    setMessage("");
+    try {
+      const updated = await rejectOperationalAdminPublicProfile(admin.id);
+      setRows((currentRows) => currentRows.map((row) => (row.id === updated.id ? updated : row)));
+      setDetailsAdmin((current) => (current?.id === updated.id ? updated : current));
+      setMessage(`Profil public refuse pour ${fullName(updated)}.`);
+    } catch (apiError) {
+      setError(formatApiError(apiError));
+    }
+  }
+
+  const pendingPublicRows = rows.filter((admin) => admin.pending_public_validation);
+
   return (
     <div className="grid gap-5">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -195,6 +256,54 @@ export function AdminOperationalAdmins() {
       {error ? <Alert variant="error">{error}</Alert> : null}
       {isLoading ? <Skeleton className="h-56" /> : null}
 
+      {!isLoading && pendingPublicRows.length > 0 ? (
+        <ListTable
+          title="En attente de validation publique"
+          countLabel={`${pendingPublicRows.length} validation${pendingPublicRows.length > 1 ? "s" : ""}`}
+          minWidth={1080}
+          headers={[
+            { label: "Administrateur" },
+            { label: "Anciennes informations" },
+            { label: "Nouvelles informations" },
+            { label: "Statut" },
+            { label: "Actions", className: "text-right" },
+          ]}
+        >
+          {pendingPublicRows.map((admin) => (
+            <tr key={admin.id} className="align-top">
+              <td className="px-4 py-3">
+                <p className="font-medium text-foreground">{fullName(admin)}</p>
+              </td>
+              <td className="px-4 py-3 text-sm text-muted-foreground">
+                <p>{approvedFullName(admin)}</p>
+                <p>{admin.approved_public_title || "Titre non valide"}</p>
+              </td>
+              <td className="px-4 py-3 text-sm text-muted-foreground">
+                <p>{fullName(admin)}</p>
+                <p>{admin.public_title || "Titre non renseigne"}</p>
+              </td>
+              <td className="px-4 py-3">{publicValidationBadge(admin)}</td>
+              <td className="px-4 py-3">
+                <div className="flex flex-wrap justify-end gap-2">
+                  <Button type="button" variant="ghost" size="sm" onClick={() => setDetailsAdmin(admin)}>
+                    <Eye aria-hidden="true" />
+                    Details
+                  </Button>
+                  <Button type="button" variant="secondary" size="sm" onClick={() => void handleApprovePublicProfile(admin)}>
+                    <CheckCircle2 aria-hidden="true" />
+                    Approuver
+                  </Button>
+                  <Button type="button" variant="outline" size="sm" onClick={() => void handleRejectPublicProfile(admin)}>
+                    <XCircle aria-hidden="true" />
+                    Refuser
+                  </Button>
+                </div>
+              </td>
+            </tr>
+          ))}
+        </ListTable>
+      ) : null}
+
       {!isLoading ? (
         <ListTable
           title="Liste des administrateurs"
@@ -207,6 +316,7 @@ export function AdminOperationalAdmins() {
             { label: "Titre public" },
             { label: "Statut" },
             { label: "Affichage public" },
+            { label: "Validation publique" },
             { label: "Actions", className: "text-right" },
           ]}
           emptyState={rows.length === 0 ? <EmptyState icon={UserCog} title="Aucun administrateur operationnel." /> : null}
@@ -227,6 +337,7 @@ export function AdminOperationalAdmins() {
               <td className="px-4 py-3">
                 {admin.can_appear_on_about_page ? <Badge variant="bronze">Visible a propos</Badge> : <Badge variant="outline">Masque</Badge>}
               </td>
+              <td className="px-4 py-3">{publicValidationBadge(admin)}</td>
               <td className="px-4 py-3">
                 <div className="flex flex-wrap justify-end gap-2">
                   <Button type="button" variant="ghost" size="sm" onClick={() => setDetailsAdmin(admin)}>
@@ -281,7 +392,11 @@ export function AdminOperationalAdmins() {
           </label>
           <label>
             Telephone
-            <input className="field" value={draft.telephone} onChange={(event) => setDraft({ ...draft, telephone: event.target.value })} />
+            <PhoneInput
+              className="field"
+              value={draft.telephone}
+              onChange={(event) => setDraft({ ...draft, telephone: event.target.value })}
+            />
           </label>
           <label>
             Region
@@ -345,16 +460,43 @@ export function AdminOperationalAdmins() {
         onClose={() => setDetailsAdmin(null)}
       >
         {detailsAdmin ? (
-          <div className="grid gap-3 rounded-lg border border-border bg-muted/30 p-4 md:grid-cols-2">
-            <DetailItem label="Nom complet" value={fullName(detailsAdmin)} />
-            <DetailItem label="Email" value={detailsAdmin.email} />
-            <DetailItem label="Telephone" value={detailsAdmin.telephone || "Non renseigne"} />
-            <DetailItem label="Region" value={detailsAdmin.region || "Non renseignee"} />
-            <DetailItem label="Statut du compte" value={detailsAdmin.statut_compte} />
-            <DetailItem label="Acces actif" value={detailsAdmin.is_active ? "Oui" : "Non"} />
-            <DetailItem label="Affichage A propos" value={detailsAdmin.can_appear_on_about_page ? "Visible" : "Masque"} />
-            <DetailItem label="Titre public" value={detailsAdmin.public_title || "Non renseigne"} />
-            <DetailItem label="Description publique" value={detailsAdmin.public_description || "Non renseignee"} className="md:col-span-2" />
+          <div className="grid gap-4">
+            <div className="grid gap-3 rounded-lg border border-border bg-muted/30 p-4 md:grid-cols-2">
+              <DetailItem label="Nom complet" value={fullName(detailsAdmin)} />
+              <DetailItem label="Email" value={detailsAdmin.email} />
+              <DetailItem label="Telephone" value={detailsAdmin.telephone || "Non renseigne"} />
+              <DetailItem label="Region" value={detailsAdmin.region || "Non renseignee"} />
+              <DetailItem label="Statut du compte" value={detailsAdmin.statut_compte} />
+              <DetailItem label="Acces actif" value={detailsAdmin.is_active ? "Oui" : "Non"} />
+              <DetailItem label="Affichage A propos" value={detailsAdmin.can_appear_on_about_page ? "Visible" : "Masque"} />
+              <DetailItem label="Validation publique" value={publicValidationLabel(detailsAdmin)} />
+            </div>
+            <div className="grid gap-3 md:grid-cols-2">
+              <div className="rounded-lg border border-border p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Anciennes informations validees</p>
+                <DetailItem label="Nom public" value={approvedFullName(detailsAdmin)} className="mt-3" />
+                <DetailItem label="Titre public" value={detailsAdmin.approved_public_title || "Non valide"} className="mt-3" />
+                <DetailItem label="Description publique" value={detailsAdmin.approved_public_description || "Non validee"} className="mt-3" />
+              </div>
+              <div className="rounded-lg border border-border p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Nouvelles informations</p>
+                <DetailItem label="Nom public" value={fullName(detailsAdmin)} className="mt-3" />
+                <DetailItem label="Titre public" value={detailsAdmin.public_title || "Non renseigne"} className="mt-3" />
+                <DetailItem label="Description publique" value={detailsAdmin.public_description || "Non renseignee"} className="mt-3" />
+              </div>
+            </div>
+            {detailsAdmin.pending_public_validation ? (
+              <div className="flex flex-wrap gap-2">
+                <Button type="button" variant="secondary" onClick={() => void handleApprovePublicProfile(detailsAdmin)}>
+                  <CheckCircle2 aria-hidden="true" />
+                  Approuver
+                </Button>
+                <Button type="button" variant="outline" onClick={() => void handleRejectPublicProfile(detailsAdmin)}>
+                  <XCircle aria-hidden="true" />
+                  Refuser
+                </Button>
+              </div>
+            ) : null}
           </div>
         ) : null}
       </Modal>
