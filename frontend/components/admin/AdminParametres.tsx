@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 
 import { AdminAccountSettings } from "@/components/admin/AdminAccountSettings";
 import { AdminMentorshipPeriods } from "@/components/admin/mentorship/AdminMentorshipPeriods";
+import { HelpIconButton } from "@/components/help/HelpIconButton";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -23,6 +24,7 @@ import {
 type Drafts = Record<number, Pick<ParametreSysteme, "valeur" | "description">>;
 
 const mentorshipPeriodKey = "MENTORSHIP_PERIODS";
+const legacyMaxMenteesKey = "MAX_MENTORES_PAR_MENTOR";
 
 function buildDrafts(rows: ParametreSysteme[]) {
   return rows.reduce<Drafts>((accumulator, row) => {
@@ -66,10 +68,11 @@ export function AdminParametres() {
         if (!isMounted) {
           return;
         }
-        setRows(parametres);
-        setDrafts(buildDrafts(parametres));
-        const availableKeys = new Set([...parametres.map((parametre) => parametre.cle), mentorshipPeriodKey, "ACCOUNT"]);
-        setSelectedKey(requestedKey && availableKeys.has(requestedKey) ? requestedKey : mentorshipPeriodKey);
+        const visibleParametres = parametres.filter((parametre) => parametre.cle !== legacyMaxMenteesKey);
+        setRows(visibleParametres);
+        setDrafts(buildDrafts(visibleParametres));
+        const availableKeys = new Set([...visibleParametres.map((parametre) => parametre.cle), mentorshipPeriodKey, "ACCOUNT"]);
+        setSelectedKey(requestedKey && availableKeys.has(requestedKey) ? requestedKey : "ACCOUNT");
         setError("");
       } catch (apiError) {
         if (isMounted) {
@@ -113,7 +116,7 @@ export function AdminParametres() {
           description: updated.description,
         },
       }));
-      setMessage(`Parametre ${updated.cle} mis a jour.`);
+      setMessage(`Paramètre ${updated.cle} mis à jour.`);
     } catch (apiError) {
       setError(formatApiError(apiError));
     } finally {
@@ -125,13 +128,13 @@ export function AdminParametres() {
   const isAdminPrincipal = currentUser?.role_nom === "ADMIN_PRINCIPAL";
   const isMentorshipPeriodSelected = selectedKey === mentorshipPeriodKey;
   const pageTitle = isMentorshipPeriodSelected
-    ? "Periode de mentorat"
+    ? "Période de mentorat"
     : selectedParametre
-      ? `Parametre ${selectedParametre.cle}`
-      : "Parametres systeme";
+      ? `Paramètre ${selectedParametre.cle}`
+      : "Paramètres système";
   const pageDescription = isMentorshipPeriodSelected
-    ? "Creez ou modifiez les periodes utilisees pour les affectations, les seances et les suivis."
-    : "Ajustez la valeur et la description du parametre selectionne.";
+    ? "Créez ou modifiez les périodes utilisées pour les affectations, les séances et les suivis."
+    : "Ajustez la valeur et la description du paramètre sélectionné.";
 
   if (isLoading) {
     return <Skeleton className="h-56" />;
@@ -152,7 +155,10 @@ export function AdminParametres() {
   return (
     <div className="grid gap-5">
       <div>
-        <h1 className="font-display text-3xl font-bold">{pageTitle}</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="font-display text-3xl font-bold">{pageTitle}</h1>
+          <HelpIconButton moduleKey={isMentorshipPeriodSelected ? "periods" : "settings"} scope="admin" />
+        </div>
         <p className="mt-2 text-sm leading-6 text-muted-foreground">
           {pageDescription}
         </p>
@@ -199,15 +205,15 @@ export function AdminParametres() {
           ) : null}
 
           {rows.length === 0 && selectedKey !== mentorshipPeriodKey ? (
-            <EmptyState icon={Settings} title="Aucun parametre systeme pour le moment." />
+            <EmptyState icon={Settings} title="Aucun paramètre système pour le moment." />
           ) : null}
         </div>
       ) : null}
 
       {isMentorshipPeriodSelected ? (
         <AdminMentorshipPeriods
-          title="Periode de mentorat"
-          description="Creez ou modifiez les periodes utilisees pour les affectations, les seances et les suivis."
+          title="Période de mentorat"
+          description="Créez ou modifiez les périodes utilisées pour les affectations, les séances et les suivis."
           showHeader={false}
         />
       ) : null}

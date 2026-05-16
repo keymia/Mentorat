@@ -135,8 +135,8 @@ export function MentoreForm() {
       setStatus({
         type: "success",
         message: !wantsAssociationAssignment
-          ? "Inscription mentore reussie. Votre demande est enregistree et votre mentor a ete associe. Redirection dans 2 secondes..."
-          : "Inscription mentore reussie. Votre demande est enregistree; l'association vous assignera un mentor. Redirection dans 2 secondes...",
+          ? "Inscription mentoré réussie. Votre demande est enregistrée et votre mentor a été associé. Redirection dans 2 secondes..."
+          : "Inscription mentoré réussie. Votre demande est enregistrée; l’association vous assignera un mentor. Redirection dans 2 secondes...",
       });
       redirectTimerRef.current = setTimeout(() => {
         router.push("/inscriptions");
@@ -199,7 +199,7 @@ export function MentoreForm() {
         </select>
       </label>
       <label>
-        Niveau academique
+        Niveau académique
         <select
           name="niveau_academique"
           required
@@ -251,7 +251,7 @@ export function MentoreForm() {
         disabled={isSubmitting}
         className="w-fit"
       >
-        {isSubmitting ? "Envoi..." : "Soumettre l'inscription mentore"}
+        {isSubmitting ? "Envoi..." : "Soumettre l’inscription mentoré"}
       </Button>
       {status.message ? (
         <Alert variant={status.type === "success" ? "success" : "error"}>{status.message}</Alert>

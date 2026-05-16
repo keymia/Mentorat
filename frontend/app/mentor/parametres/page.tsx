@@ -8,8 +8,9 @@ export default function MentorSettingsPage() {
   return (
     <div className="grid gap-6">
       <MentorPageHeader
-        title="Parametres"
-        description="Compte, profil Equipes et session de mentorat."
+        title="Paramètres"
+        description="Compte, profil Équipes et session de mentorat."
+        helpModuleKey="mentor_settings"
       />
       <Suspense fallback={<Skeleton className="h-96" />}>
         <MentorSettingsPanel />

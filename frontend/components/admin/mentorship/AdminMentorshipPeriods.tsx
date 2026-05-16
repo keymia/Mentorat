@@ -1,8 +1,9 @@
 "use client";
 
-import { CalendarPlus, CheckCircle2, Eye, Pencil, Save, Trash2 } from "lucide-react";
+import { CalendarPlus, CheckCircle2, Eye, FileSpreadsheet, FileText, Pencil, Save, Trash2 } from "lucide-react";
 import { FormEvent, useEffect, useState } from "react";
 
+import { HelpIconButton } from "@/components/help/HelpIconButton";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,12 +13,12 @@ import { Input } from "@/components/ui/input";
 import { ListTable } from "@/components/ui/list-table";
 import { Modal } from "@/components/ui/modal";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Textarea } from "@/components/ui/textarea";
 import {
   MentorshipPeriod,
   MentorshipPeriodStatus,
   createMentorshipPeriod,
   deleteMentorshipPeriod,
+  exportMentorshipPeriod,
   formatApiError,
   getCurrentUser,
   getMentorshipPeriods,
@@ -28,19 +29,19 @@ import { formatDate, periodStatusLabels } from "@/lib/mentorship";
 
 type PeriodDraft = {
   title: string;
-  description: string;
   start_date: string;
   end_date: string;
   required_sessions: string;
+  max_mentees_per_mentor: string;
   status: MentorshipPeriodStatus;
 };
 
 const emptyDraft: PeriodDraft = {
   title: "",
-  description: "",
   start_date: "",
   end_date: "",
   required_sessions: "1",
+  max_mentees_per_mentor: "5",
   status: "draft",
 };
 
@@ -51,8 +52,8 @@ type AdminMentorshipPeriodsProps = {
 };
 
 export function AdminMentorshipPeriods({
-  title = "Periodes de mentorat",
-  description = "Definissez les dates et le nombre de seances attendues pour chaque periode.",
+  title = "Périodes de mentorat",
+  description = "Définissez les dates et le nombre de séances attendues pour chaque période.",
   showHeader = true,
 }: AdminMentorshipPeriodsProps) {
   const [periods, setPeriods] = useState<MentorshipPeriod[]>([]);
@@ -65,7 +66,10 @@ export function AdminMentorshipPeriods({
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<UtilisateurDetail | null>(null);
   const [detailsPeriod, setDetailsPeriod] = useState<MentorshipPeriod | null>(null);
+  const [exportingKey, setExportingKey] = useState<string | null>(null);
   const canManagePeriods = currentUser?.role_nom === "ADMIN_PRINCIPAL";
+  const canExportPeriods = currentUser?.role_nom === "ADMIN_PRINCIPAL";
+  const exportRecommendedPeriods = periods.filter((period) => isExportRecommended(period));
 
   async function loadPeriods() {
     try {
@@ -108,10 +112,10 @@ export function AdminMentorshipPeriods({
     setEditingId(period.id);
     setDraft({
       title: period.title,
-      description: period.description,
       start_date: period.start_date,
       end_date: period.end_date,
       required_sessions: String(period.required_sessions),
+      max_mentees_per_mentor: String(period.max_mentees_per_mentor ?? 5),
       status: period.status,
     });
     setMessage("");
@@ -142,21 +146,21 @@ export function AdminMentorshipPeriods({
 
     const payload = {
       title: draft.title,
-      description: draft.description,
       start_date: draft.start_date,
       end_date: draft.end_date,
       required_sessions: Number(draft.required_sessions),
+      max_mentees_per_mentor: Number(draft.max_mentees_per_mentor),
       status: draft.status,
     };
 
     try {
       if (editingId !== null) {
         await updateMentorshipPeriod(editingId, payload);
-        setMessage("Periode mise a jour.");
+        setMessage("Période mise à jour.");
         resetForm();
       } else {
-        await createMentorshipPeriod(payload);
-        setMessage("Periode creee.");
+        await createMentorshipPeriod({ ...payload, description: "" });
+        setMessage("Période créée.");
         setDraft(emptyDraft);
         setIsCreateOpen(false);
       }
@@ -192,7 +196,7 @@ export function AdminMentorshipPeriods({
           </select>
         </label>
         <label>
-          Date de debut
+          Date de début
           <Input
             type="date"
             value={draft.start_date}
@@ -210,7 +214,7 @@ export function AdminMentorshipPeriods({
           />
         </label>
         <label>
-          Seances obligatoires
+          Séances obligatoires
           <Input
             type="number"
             min={1}
@@ -219,14 +223,20 @@ export function AdminMentorshipPeriods({
             required
           />
         </label>
-        <label className="lg:col-span-2">
-          Description
-          <Textarea value={draft.description} onChange={(event) => setDraft({ ...draft, description: event.target.value })} />
+        <label>
+          Nombre maximal de mentorés par mentor
+          <Input
+            type="number"
+            min={1}
+            value={draft.max_mentees_per_mentor}
+            onChange={(event) => setDraft({ ...draft, max_mentees_per_mentor: event.target.value })}
+            required
+          />
         </label>
         <div className="flex flex-wrap gap-2 lg:col-span-2">
           <Button type="submit" disabled={isSaving}>
             {isEditMode ? <Save aria-hidden="true" /> : <CalendarPlus aria-hidden="true" />}
-            {isSaving ? "Enregistrement..." : isEditMode ? "Enregistrer" : "Creer la periode"}
+            {isSaving ? "Enregistrement..." : isEditMode ? "Enregistrer" : "Créer la période"}
           </Button>
           {isEditMode ? (
             <Button type="button" variant="outline" onClick={resetForm}>
@@ -243,7 +253,7 @@ export function AdminMentorshipPeriods({
     setMessage("");
     try {
       await updateMentorshipPeriod(period.id, { status });
-      setMessage(`Periode ${periodStatusLabels[status].toLowerCase()}.`);
+      setMessage(`Période ${periodStatusLabels[status].toLowerCase()}.`);
       await loadPeriods();
     } catch (apiError) {
       setError(formatApiError(apiError));
@@ -255,10 +265,33 @@ export function AdminMentorshipPeriods({
     setMessage("");
     try {
       await deleteMentorshipPeriod(period.id);
-      setMessage("Periode supprimee.");
+      setMessage("Période supprimée.");
       await loadPeriods();
     } catch (apiError) {
       setError(formatApiError(apiError));
+    }
+  }
+
+  async function handleExport(period: MentorshipPeriod, format: "excel" | "csv") {
+    const key = `${period.id}-${format}`;
+    setExportingKey(key);
+    setError("");
+    setMessage("");
+    try {
+      const { blob, filename } = await exportMentorshipPeriod(period.id, format);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      setMessage(`Téléchargement ${format === "excel" ? "Excel" : "CSV"} lancé pour ${period.title}.`);
+    } catch (apiError) {
+      setError(formatApiError(apiError));
+    } finally {
+      setExportingKey(null);
     }
   }
 
@@ -267,7 +300,10 @@ export function AdminMentorshipPeriods({
       {showHeader ? (
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <h1 className="font-display text-3xl font-bold">{title}</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="font-display text-3xl font-bold">{title}</h1>
+              <HelpIconButton moduleKey="periods" scope="admin" />
+            </div>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
               {description}
             </p>
@@ -275,7 +311,7 @@ export function AdminMentorshipPeriods({
           {canManagePeriods ? (
             <Button type="button" className="w-fit" onClick={openCreateModal}>
               <CalendarPlus aria-hidden="true" />
-              Creer une periode
+              Créer une période
             </Button>
           ) : null}
         </div>
@@ -284,7 +320,7 @@ export function AdminMentorshipPeriods({
           {canManagePeriods ? (
             <Button type="button" className="w-fit" onClick={openCreateModal}>
               <CalendarPlus aria-hidden="true" />
-              Creer une periode
+              Créer une période
             </Button>
           ) : null}
         </div>
@@ -292,11 +328,18 @@ export function AdminMentorshipPeriods({
 
       {error ? <Alert variant="error">{error}</Alert> : null}
       {message ? <Alert variant="success">{message}</Alert> : null}
+      {!isLoading && canExportPeriods && exportRecommendedPeriods.length > 0 ? (
+        <Alert variant="warning">
+          {exportRecommendedPeriods.length === 1
+            ? `La période ${exportRecommendedPeriods[0].title} est terminée ou archivée. Pensez à exporter et archiver les données.`
+            : `${exportRecommendedPeriods.length} périodes sont terminées ou archivées. Pensez à exporter les données pour conservation administrative.`}
+        </Alert>
+      ) : null}
 
       <Modal
         open={isCreateOpen}
-        title="Creer une periode de mentorat"
-        description="Definissez les dates, le statut et le nombre de seances obligatoires."
+        title="Créer une période de mentorat"
+        description="Définissez les dates, le statut, le nombre de séances et la limite de mentorés par mentor."
         onClose={closeCreateModal}
       >
         {renderPeriodForm("create")}
@@ -305,7 +348,7 @@ export function AdminMentorshipPeriods({
       {editingId !== null ? (
         <Card>
           <CardHeader>
-            <CardTitle>Modifier une periode</CardTitle>
+            <CardTitle>Modifier une période</CardTitle>
           </CardHeader>
           <CardContent>{renderPeriodForm("edit")}</CardContent>
         </Card>
@@ -315,18 +358,17 @@ export function AdminMentorshipPeriods({
 
       {!isLoading ? (
         <ListTable
-          title="Liste des periodes"
-          countLabel={`${periods.length} periode${periods.length > 1 ? "s" : ""}`}
+          title="Liste des périodes"
+          countLabel={`${periods.length} période${periods.length > 1 ? "s" : ""}`}
           minWidth={1040}
           headers={[
             { label: "Titre" },
-            { label: "Debut" },
+            { label: "Début" },
             { label: "Fin" },
-            { label: "Seances" },
             { label: "Statut" },
             { label: "Actions", className: "text-right" },
           ]}
-          emptyState={periods.length === 0 ? <EmptyState icon={CalendarPlus} title="Aucune periode pour le moment." /> : null}
+          emptyState={periods.length === 0 ? <EmptyState icon={CalendarPlus} title="Aucune période pour le moment." /> : null}
         >
           {periods.map((period) => (
             <tr key={period.id} className="align-top">
@@ -335,39 +377,40 @@ export function AdminMentorshipPeriods({
               </td>
               <td className="px-4 py-3 text-muted-foreground">{formatDate(period.start_date)}</td>
               <td className="px-4 py-3 text-muted-foreground">{formatDate(period.end_date)}</td>
-              <td className="px-4 py-3 text-muted-foreground">
-                {period.required_sessions} seance{period.required_sessions > 1 ? "s" : ""}
-              </td>
               <td className="px-4 py-3">
                 <Badge variant={period.status === "active" ? "success" : "outline"}>{periodStatusLabels[period.status]}</Badge>
+                {isExportRecommended(period) ? (
+                  <p className="mt-2 text-xs leading-5 text-amber-700 dark:text-amber-200">Export recommandé</p>
+                ) : null}
               </td>
               <td className="px-4 py-3">
                 <div className="flex flex-wrap justify-end gap-2">
                   <Button type="button" variant="ghost" size="sm" onClick={() => setDetailsPeriod(period)}>
                     <Eye aria-hidden="true" />
-                    Details
+                    Détails
                   </Button>
-                  {canManagePeriods ? (
+                  {canExportPeriods ? (
                     <>
-                    <Button type="button" variant="outline" size="sm" onClick={() => editPeriod(period)}>
-                      <Pencil aria-hidden="true" />
-                      Modifier
-                    </Button>
-                    {period.status !== "active" ? (
-                      <Button type="button" variant="secondary" size="sm" onClick={() => void changeStatus(period, "active")}>
-                        <CheckCircle2 aria-hidden="true" />
-                        Activer
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={exportingKey === `${period.id}-excel`}
+                        onClick={() => void handleExport(period, "excel")}
+                      >
+                        <FileSpreadsheet aria-hidden="true" />
+                        {exportingKey === `${period.id}-excel` ? "Export..." : "Export Excel"}
                       </Button>
-                    ) : (
-                      <Button type="button" variant="secondary" size="sm" onClick={() => void changeStatus(period, "completed")}>
-                        <CheckCircle2 aria-hidden="true" />
-                        Terminer
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={exportingKey === `${period.id}-csv`}
+                        onClick={() => void handleExport(period, "csv")}
+                      >
+                        <FileText aria-hidden="true" />
+                        {exportingKey === `${period.id}-csv` ? "Export..." : "Export CSV"}
                       </Button>
-                    )}
-                    <Button type="button" variant="danger" size="sm" onClick={() => void removePeriod(period)}>
-                      <Trash2 aria-hidden="true" />
-                      Supprimer
-                    </Button>
                     </>
                   ) : null}
                 </div>
@@ -379,8 +422,8 @@ export function AdminMentorshipPeriods({
 
       <Modal
         open={Boolean(detailsPeriod)}
-        title="Details de la periode"
-        description="Informations completes de la periode selectionnee."
+        title="Détails de la période"
+        description="Informations complètes de la période sélectionnée."
         className="max-w-3xl"
         onClose={() => setDetailsPeriod(null)}
       >
@@ -388,18 +431,89 @@ export function AdminMentorshipPeriods({
           <div className="grid gap-3 rounded-lg border border-border bg-muted/30 p-4 md:grid-cols-2">
             <DetailItem label="Titre" value={detailsPeriod.title} />
             <DetailItem label="Statut" value={periodStatusLabels[detailsPeriod.status]} />
-            <DetailItem label="Date de debut" value={formatDate(detailsPeriod.start_date)} />
+            <DetailItem label="Date de début" value={formatDate(detailsPeriod.start_date)} />
             <DetailItem label="Date de fin" value={formatDate(detailsPeriod.end_date)} />
             <DetailItem
-              label="Seances obligatoires"
-              value={`${detailsPeriod.required_sessions} seance${detailsPeriod.required_sessions > 1 ? "s" : ""}`}
+              label="Séances obligatoires"
+              value={`${detailsPeriod.required_sessions} séance${detailsPeriod.required_sessions > 1 ? "s" : ""}`}
             />
-            <DetailItem label="Description" value={detailsPeriod.description || "Non renseignee"} className="md:col-span-2" />
+            <DetailItem
+              label="Maximum de mentorés par mentor"
+              value={`${detailsPeriod.max_mentees_per_mentor} mentoré${detailsPeriod.max_mentees_per_mentor > 1 ? "s" : ""}`}
+            />
+            <DetailItem label="Description" value={detailsPeriod.description || "Non renseignée"} className="md:col-span-2" />
+            {isExportRecommended(detailsPeriod) ? (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm leading-6 text-amber-900 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-100 md:col-span-2">
+                Cette période est terminée ou archivée. Pensez à exporter les données pour les rapports et la
+                conservation historique.
+              </div>
+            ) : null}
+            <div className="flex flex-wrap gap-2 md:col-span-2">
+              {canExportPeriods ? (
+                <>
+                  <Button type="button" variant="outline" onClick={() => void handleExport(detailsPeriod, "excel")}>
+                    <FileSpreadsheet aria-hidden="true" />
+                    Export Excel
+                  </Button>
+                  <Button type="button" variant="outline" onClick={() => void handleExport(detailsPeriod, "csv")}>
+                    <FileText aria-hidden="true" />
+                    Export CSV
+                  </Button>
+                </>
+              ) : null}
+              {canManagePeriods ? (
+                <>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setDetailsPeriod(null);
+                      editPeriod(detailsPeriod);
+                    }}
+                  >
+                    <Pencil aria-hidden="true" />
+                    Modifier
+                  </Button>
+                  {detailsPeriod.status !== "active" ? (
+                    <Button type="button" variant="secondary" onClick={() => void changeStatus(detailsPeriod, "active")}>
+                      <CheckCircle2 aria-hidden="true" />
+                      Activer
+                    </Button>
+                  ) : (
+                    <Button type="button" variant="secondary" onClick={() => void changeStatus(detailsPeriod, "completed")}>
+                      <CheckCircle2 aria-hidden="true" />
+                      Terminer
+                    </Button>
+                  )}
+                  <Button
+                    type="button"
+                    variant="danger"
+                    onClick={() => {
+                      setDetailsPeriod(null);
+                      void removePeriod(detailsPeriod);
+                    }}
+                  >
+                    <Trash2 aria-hidden="true" />
+                    Supprimer
+                  </Button>
+                </>
+              ) : null}
+            </div>
           </div>
         ) : null}
       </Modal>
     </div>
   );
+}
+
+function isExportRecommended(period: MentorshipPeriod) {
+  if (period.status === "completed" || period.status === "archived") {
+    return true;
+  }
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const endDate = new Date(`${period.end_date}T00:00:00`);
+  return endDate < today;
 }
 
 function DetailItem({ label, value, className = "" }: { label: string; value: string; className?: string }) {

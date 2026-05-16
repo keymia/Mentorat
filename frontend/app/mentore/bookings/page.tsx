@@ -8,9 +8,9 @@ export default function MentoreBookingsPage() {
     <div className="min-h-screen bg-background">
       <SiteHeader />
       <PageHeader
-        eyebrow="Espace mentore"
+        eyebrow="Espace mentoré"
         title="Reservations automatiques desactivees"
-        description="Les rencontres sont maintenant programmees par le mentor dans le cadre de la periode active."
+        description="Les rencontres sont maintenant programmées par le mentor dans le cadre de la période active."
       />
       <main className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
         <Alert variant="info">

@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Eye, Pencil, Plus, UsersRound } from "lucide-react";
 
 import { PhoneInput } from "@/components/forms/PhoneInput";
+import { HelpIconButton } from "@/components/help/HelpIconButton";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -24,8 +25,11 @@ import {
   mentoreeAcademicLevelOrders,
   updateUtilisateur,
 } from "@/lib/api";
+import type { HelpModuleKey } from "@/lib/helpContent";
 
 const DEFAULT_MENTORAT_PASSWORD = "mentor123";
+
+type MentoratProfile = "MENTOR" | "MENTORE" | "MENTOR_ET_MENTORE";
 
 type UserRow = {
   id: number;
@@ -35,8 +39,7 @@ type UserRow = {
   telephone?: string;
   langue_preferee?: "FR" | "EN";
   region?: string;
-  objectifs?: string;
-  profil_mentorat?: "MENTOR" | "MENTORE" | "MENTOR_ET_MENTORE";
+  profil_mentorat?: MentoratProfile;
   nombre_mentores_actuels?: number;
   statut_compte?: string;
   role?: number;
@@ -53,8 +56,7 @@ type UserDraft = {
   mot_de_passe: string;
   langue_preferee: "FR" | "EN";
   region: string;
-  objectifs: string;
-  profil_mentorat: "MENTOR" | "MENTORE" | "MENTOR_ET_MENTORE";
+  profil_mentorat: MentoratProfile;
   statut_compte: string;
   role: string;
   niveau_academique: string;
@@ -66,9 +68,10 @@ type AdminUsersListProps = {
   endpoint: string;
   emptyMessage: string;
   defaultRoleName: "MENTOR" | "MENTORE";
-  defaultProfile: "MENTOR" | "MENTORE" | "MENTOR_ET_MENTORE";
-  profileOptions: Array<"MENTOR" | "MENTORE" | "MENTOR_ET_MENTORE">;
+  defaultProfile: MentoratProfile;
+  profileOptions: MentoratProfile[];
   createButtonLabel: string;
+  helpModuleKey?: HelpModuleKey;
 };
 
 const accountStatusLabels: Record<string, string> = {
@@ -82,10 +85,10 @@ function normalizeAccountStatus(status?: string) {
   return status === "REFUSE" ? "INACTIF" : status;
 }
 
-const profileLabels: Record<UserDraft["profil_mentorat"], string> = {
+const profileLabels: Record<MentoratProfile, string> = {
   MENTOR: "Mentor",
-  MENTORE: "Mentore",
-  MENTOR_ET_MENTORE: "Mentor et mentore",
+  MENTORE: "Mentoré",
+  MENTOR_ET_MENTORE: "Mentor et mentoré",
 };
 
 function normalizeRows(payload: Record<string, unknown>[] | { results?: Record<string, unknown>[] }) {
@@ -97,7 +100,7 @@ function fullName(row: UserRow) {
   return `${row.prenom ?? ""} ${row.nom ?? ""}`.trim() || "Utilisateur sans nom";
 }
 
-function levelAllowedForProfile(level: NiveauAcademique, profile: UserDraft["profil_mentorat"]) {
+function levelAllowedForProfile(level: NiveauAcademique, profile: MentoratProfile) {
   if (profile === "MENTOR") {
     return mentorAcademicLevelOrders.includes(level.ordre_niveau);
   }
@@ -105,6 +108,32 @@ function levelAllowedForProfile(level: NiveauAcademique, profile: UserDraft["pro
     return mentorAcademicLevelOrders.includes(level.ordre_niveau) && mentoreeAcademicLevelOrders.includes(level.ordre_niveau);
   }
   return mentoreeAcademicLevelOrders.includes(level.ordre_niveau);
+}
+
+function profileOptionsForLevel(level: NiveauAcademique | undefined, requestedProfiles: MentoratProfile[]): MentoratProfile[] {
+  if (!level) {
+    return requestedProfiles;
+  }
+  if (level.ordre_niveau === 1) {
+    return requestedProfiles.includes("MENTORE") ? ["MENTORE"] : [];
+  }
+  if (level.ordre_niveau === 4) {
+    return requestedProfiles.includes("MENTOR") ? ["MENTOR"] : [];
+  }
+  return requestedProfiles.filter((profile) => levelAllowedForProfile(level, profile));
+}
+
+function levelGuidance(level: NiveauAcademique | undefined) {
+  if (!level) {
+    return "Choisissez d'abord un niveau académique pour afficher les profils autorisés.";
+  }
+  if (level.ordre_niveau === 1) {
+    return "Le secondaire est réservé aux mentorés : l’option mentor est bloquée.";
+  }
+  if (level.ordre_niveau === 4) {
+    return "Le niveau médecine est réservé aux mentors : le statut mentoré est bloqué.";
+  }
+  return "Ce niveau permet un profil mentor, mentoré, ou mentor et mentoré selon le besoin.";
 }
 
 export function AdminUsersList({
@@ -116,6 +145,7 @@ export function AdminUsersList({
   defaultProfile,
   profileOptions,
   createButtonLabel,
+  helpModuleKey,
 }: AdminUsersListProps) {
   const [rows, setRows] = useState<UserRow[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
@@ -134,10 +164,30 @@ export function AdminUsersList({
     () => roles.find((role) => role.nom === defaultRoleName)?.id,
     [defaultRoleName, roles],
   );
-  const allowedLevels = useMemo(
-    () => levels.filter((level) => levelAllowedForProfile(level, draft.profil_mentorat)),
-    [draft.profil_mentorat, levels],
+  const mentorRoleId = useMemo(() => roles.find((role) => role.nom === "MENTOR")?.id, [roles]);
+  const mentoreRoleId = useMemo(() => roles.find((role) => role.nom === "MENTORE")?.id, [roles]);
+  const selectedLevel = useMemo(
+    () => levels.find((level) => String(level.id) === draft.niveau_academique),
+    [draft.niveau_academique, levels],
   );
+  const availableProfileOptions = useMemo(
+    () => profileOptionsForLevel(selectedLevel, profileOptions),
+    [profileOptions, selectedLevel],
+  );
+  const selectableLevels = useMemo(
+    () => levels.filter((level) => profileOptionsForLevel(level, profileOptions).length > 0),
+    [levels, profileOptions],
+  );
+
+  function roleIdForProfile(profile: MentoratProfile, fallbackRole = draft.role) {
+    if (profile === "MENTOR") {
+      return mentorRoleId ? String(mentorRoleId) : fallbackRole;
+    }
+    if (profile === "MENTORE") {
+      return mentoreRoleId ? String(mentoreRoleId) : fallbackRole;
+    }
+    return mentorRoleId ? String(mentorRoleId) : fallbackRole || (defaultRoleId ? String(defaultRoleId) : "");
+  }
 
   function createEmptyDraft(profile = defaultProfile): UserDraft {
     return {
@@ -148,7 +198,6 @@ export function AdminUsersList({
       mot_de_passe: DEFAULT_MENTORAT_PASSWORD,
       langue_preferee: "FR",
       region: "",
-      objectifs: "",
       profil_mentorat: profile,
       statut_compte: "ACTIF",
       role: "",
@@ -213,7 +262,6 @@ export function AdminUsersList({
       mot_de_passe: DEFAULT_MENTORAT_PASSWORD,
       langue_preferee: row.langue_preferee ?? "FR",
       region: row.region ?? "",
-      objectifs: row.objectifs ?? "",
       profil_mentorat: row.profil_mentorat ?? defaultProfile,
       statut_compte: normalizeAccountStatus(row.statut_compte) ?? "ACTIF",
       role: row.role ? String(row.role) : defaultRoleId ? String(defaultRoleId) : "",
@@ -247,7 +295,7 @@ export function AdminUsersList({
             : currentRow,
         ),
       );
-      setMessage(`Statut de ${fullName(row)} mis a jour.`);
+      setMessage(`Statut de ${fullName(row)} mis à jour.`);
     } catch (apiError) {
       setError(formatApiError(apiError));
     } finally {
@@ -263,7 +311,7 @@ export function AdminUsersList({
 
     const roleId = draft.role ? Number(draft.role) : defaultRoleId;
     if (!roleId) {
-      setError("Role introuvable pour ce profil.");
+      setError("Rôle introuvable pour ce profil.");
       setIsSaving(false);
       return;
     }
@@ -275,10 +323,9 @@ export function AdminUsersList({
       telephone: draft.telephone,
       langue_preferee: draft.langue_preferee,
       region: draft.region,
-      objectifs: draft.objectifs,
       profil_mentorat: draft.profil_mentorat,
       statut_compte: draft.statut_compte,
-      role: roleId,
+      role: Number(roleIdForProfile(draft.profil_mentorat, String(roleId))),
       niveau_academique: draft.niveau_academique ? Number(draft.niveau_academique) : null,
     };
     if (draft.mot_de_passe && draft.profil_mentorat !== "MENTORE") {
@@ -291,10 +338,10 @@ export function AdminUsersList({
     try {
       if (editingId) {
         await updateUtilisateur(editingId, payload);
-        setMessage("Profil mis a jour.");
+        setMessage("Profil mis à jour.");
       } else {
         await createUtilisateur(payload);
-        setMessage("Profil cree.");
+        setMessage("Profil créé.");
       }
       closeFormModal();
       await loadData();
@@ -309,10 +356,21 @@ export function AdminUsersList({
     setDraft((currentDraft) => {
       const nextDraft = { ...currentDraft, [field]: value };
       if (field === "profil_mentorat") {
+        const nextProfile = value as MentoratProfile;
         nextDraft.mot_de_passe = currentDraft.mot_de_passe || DEFAULT_MENTORAT_PASSWORD;
-        const selectedLevel = levels.find((level) => String(level.id) === currentDraft.niveau_academique);
-        if (selectedLevel && !levelAllowedForProfile(selectedLevel, value as UserDraft["profil_mentorat"])) {
+        nextDraft.role = roleIdForProfile(nextProfile, currentDraft.role);
+        const currentLevel = levels.find((level) => String(level.id) === currentDraft.niveau_academique);
+        if (currentLevel && !levelAllowedForProfile(currentLevel, nextProfile)) {
           nextDraft.niveau_academique = "";
+        }
+      }
+      if (field === "niveau_academique") {
+        const nextLevel = levels.find((level) => String(level.id) === value);
+        const nextProfiles = profileOptionsForLevel(nextLevel, profileOptions);
+        if (nextProfiles.length > 0 && !nextProfiles.includes(currentDraft.profil_mentorat)) {
+          nextDraft.profil_mentorat = nextProfiles[0];
+          nextDraft.role = roleIdForProfile(nextProfiles[0], currentDraft.role);
+          nextDraft.mot_de_passe = currentDraft.mot_de_passe || DEFAULT_MENTORAT_PASSWORD;
         }
       }
       return nextDraft;
@@ -325,7 +383,7 @@ export function AdminUsersList({
     return (
       <form onSubmit={handleSubmit} className="grid gap-4 md:grid-cols-2">
         <label>
-          Prenom
+          Prénom
           <input
             className="field"
             required
@@ -353,7 +411,7 @@ export function AdminUsersList({
           />
         </label>
         <label>
-          Mot de passe {passwordDisabled ? "(active quand le compte devient mentor)" : ""}
+          Mot de passe {passwordDisabled ? "(actif quand le compte devient mentor)" : ""}
           <input
             className="field"
             type="password"
@@ -365,7 +423,7 @@ export function AdminUsersList({
           />
         </label>
         <label>
-          Telephone
+          Téléphone
           <PhoneInput
             className="field"
             value={draft.telephone}
@@ -373,7 +431,7 @@ export function AdminUsersList({
           />
         </label>
         <label>
-          Region
+          Région
           <input
             className="field"
             value={draft.region}
@@ -381,21 +439,7 @@ export function AdminUsersList({
           />
         </label>
         <label>
-          Profil
-          <select
-            className="field"
-            value={draft.profil_mentorat}
-            onChange={(event) => updateDraft("profil_mentorat", event.target.value)}
-          >
-            {profileOptions.map((profile) => (
-              <option key={profile} value={profile}>
-                {profileLabels[profile]}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Niveau academique
+          Niveau académique
           <select
             className="field"
             required
@@ -403,12 +447,28 @@ export function AdminUsersList({
             onChange={(event) => updateDraft("niveau_academique", event.target.value)}
           >
             <option value="">Choisir un niveau</option>
-            {allowedLevels.map((level) => (
+            {selectableLevels.map((level) => (
               <option key={level.id} value={level.id}>
                 {level.nom}
               </option>
             ))}
           </select>
+        </label>
+        <label>
+          Profil
+          <select
+            className="field"
+            disabled={!selectedLevel}
+            value={draft.profil_mentorat}
+            onChange={(event) => updateDraft("profil_mentorat", event.target.value)}
+          >
+            {availableProfileOptions.map((profile) => (
+              <option key={profile} value={profile}>
+                {profileLabels[profile]}
+              </option>
+            ))}
+          </select>
+          <span className="mt-1 block text-xs leading-5 text-muted-foreground">{levelGuidance(selectedLevel)}</span>
         </label>
         <label>
           Langue
@@ -417,7 +477,7 @@ export function AdminUsersList({
             value={draft.langue_preferee}
             onChange={(event) => updateDraft("langue_preferee", event.target.value)}
           >
-            <option value="FR">Francais</option>
+            <option value="FR">Français</option>
             <option value="EN">Anglais</option>
           </select>
         </label>
@@ -434,15 +494,6 @@ export function AdminUsersList({
               </option>
             ))}
           </select>
-        </label>
-        <label className="md:col-span-2">
-          Objectifs
-          <textarea
-            className="field"
-            rows={3}
-            value={draft.objectifs}
-            onChange={(event) => updateDraft("objectifs", event.target.value)}
-          />
         </label>
         <div className="flex flex-wrap gap-2 md:col-span-2">
           <Button type="submit" disabled={isSaving}>
@@ -461,7 +512,10 @@ export function AdminUsersList({
     <div className="grid gap-5">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <h1 className="font-display text-3xl font-bold">{title}</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="font-display text-3xl font-bold">{title}</h1>
+            {helpModuleKey ? <HelpIconButton moduleKey={helpModuleKey} scope="admin" /> : null}
+          </div>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">{description}</p>
         </div>
         <Button type="button" className="w-fit" onClick={openCreateModal}>
@@ -492,7 +546,7 @@ export function AdminUsersList({
           headers={[
             { label: "Nom" },
             { label: "Email" },
-            { label: "Telephone" },
+            { label: "Téléphone" },
             { label: "Niveau" },
             { label: "Statut" },
             { label: "Profil" },
@@ -505,9 +559,9 @@ export function AdminUsersList({
               <td className="px-4 py-3">
                 <p className="font-medium text-foreground">{fullName(row)}</p>
               </td>
-              <td className="px-4 py-3 text-muted-foreground">{row.email ?? "Non renseigne"}</td>
-              <td className="px-4 py-3 text-muted-foreground">{row.telephone || "Non renseigne"}</td>
-              <td className="px-4 py-3 text-muted-foreground">{row.niveau_academique_nom ?? "Non renseigne"}</td>
+              <td className="px-4 py-3 text-muted-foreground">{row.email ?? "Non renseigné"}</td>
+              <td className="px-4 py-3 text-muted-foreground">{row.telephone || "Non renseigné"}</td>
+              <td className="px-4 py-3 text-muted-foreground">{row.niveau_academique_nom ?? "Non renseigné"}</td>
               <td className="px-4 py-3">
                 <select
                   className="field min-h-9 w-36 py-1 text-xs"
@@ -524,13 +578,13 @@ export function AdminUsersList({
                 </select>
               </td>
               <td className="px-4 py-3 text-muted-foreground">
-                <Badge variant="bronze">{row.profil_mentorat ? profileLabels[row.profil_mentorat] : "Non renseigne"}</Badge>
+                <Badge variant="bronze">{row.profil_mentorat ? profileLabels[row.profil_mentorat] : "Non renseigné"}</Badge>
               </td>
               <td className="px-4 py-3">
                 <div className="flex flex-wrap justify-end gap-2">
                   <Button type="button" variant="ghost" size="sm" onClick={() => setSelectedRow(row)}>
                     <Eye aria-hidden="true" />
-                    Details
+                    Détails
                   </Button>
                   <Button type="button" variant="outline" size="sm" onClick={() => openEditModal(row)}>
                     <Pencil aria-hidden="true" />
@@ -545,29 +599,31 @@ export function AdminUsersList({
 
       <Modal
         open={Boolean(selectedRow)}
-        title="Details du profil"
-        description="Informations completes du compte selectionne."
+        title="Détails du profil"
+        description="Informations complètes du compte sélectionné."
         className="max-w-3xl"
         onClose={() => setSelectedRow(null)}
       >
         {selectedRow ? (
           <div className="grid gap-3 rounded-lg border border-border bg-muted/30 p-4 md:grid-cols-2">
             <DetailItem label="Nom complet" value={fullName(selectedRow)} />
-            <DetailItem label="Email" value={selectedRow.email ?? "Non renseigne"} />
-            <DetailItem label="Telephone" value={selectedRow.telephone || "Non renseigne"} />
-            <DetailItem label="Region" value={selectedRow.region || "Non renseignee"} />
-            <DetailItem label="Langue" value={selectedRow.langue_preferee || "Non renseignee"} />
-            <DetailItem label="Niveau academique" value={selectedRow.niveau_academique_nom ?? "Non renseigne"} />
+            <DetailItem label="Email" value={selectedRow.email ?? "Non renseigné"} />
+            <DetailItem label="Téléphone" value={selectedRow.telephone || "Non renseigné"} />
+            <DetailItem label="Région" value={selectedRow.region || "Non renseignée"} />
+            <DetailItem label="Langue" value={selectedRow.langue_preferee || "Non renseignée"} />
+            <DetailItem label="Niveau académique" value={selectedRow.niveau_academique_nom ?? "Non renseigné"} />
             <DetailItem
               label="Statut"
               value={
                 selectedRow.statut_compte
                   ? accountStatusLabels[normalizeAccountStatus(selectedRow.statut_compte) ?? ""] ?? selectedRow.statut_compte
-                  : "Non renseigne"
+                  : "Non renseigné"
               }
             />
-            <DetailItem label="Profil" value={selectedRow.profil_mentorat ? profileLabels[selectedRow.profil_mentorat] : "Non renseigne"} />
-            <DetailItem label="Objectifs" value={selectedRow.objectifs || "Non renseignes"} className="md:col-span-2" />
+            <DetailItem
+              label="Type de compte mentorat"
+              value={selectedRow.profil_mentorat ? profileLabels[selectedRow.profil_mentorat] : "Non renseigné"}
+            />
           </div>
         ) : null}
       </Modal>

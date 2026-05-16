@@ -9,7 +9,7 @@ import { UserSidebarIdentity } from "@/components/layout/UserSidebarIdentity";
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-[var(--brand-ink)] text-white">
+    <div data-no-translate className="min-h-screen bg-[var(--brand-ink)] text-white">
       <div className="mx-auto grid max-w-[1500px] gap-6 px-4 py-5 lg:grid-cols-[290px_1fr]">
         <aside className="sticky top-5 max-h-[calc(100vh-2.5rem)] overflow-y-auto overscroll-contain rounded-2xl border border-white/10 bg-white/[0.06] p-4 shadow-soft backdrop-blur-xl">
           <div className="flex items-start justify-between gap-3">

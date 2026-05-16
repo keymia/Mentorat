@@ -1,13 +1,16 @@
 from datetime import date, time
+from io import BytesIO
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
+from openpyxl import load_workbook
 from rest_framework.test import APITestCase
 
 from apps.mentorat.models import (
     MentoreeProgress,
     MentorshipAssignment,
     MentorshipPeriod,
+    MentorshipPeriodExportLog,
     MentorshipSession,
 )
 from apps.users.models import NiveauAcademique, Role, Utilisateur
@@ -18,6 +21,10 @@ class MentorshipSetupMixin:
         self.role_admin, _ = Role.objects.update_or_create(
             nom=Role.Nom.ADMIN_PRINCIPAL,
             defaults={"description": "Admin"},
+        )
+        self.role_admin_operationnel, _ = Role.objects.update_or_create(
+            nom=Role.Nom.ADMIN_OPERATIONNEL,
+            defaults={"description": "Admin operationnel"},
         )
         self.role_mentor, _ = Role.objects.update_or_create(
             nom=Role.Nom.MENTOR,
@@ -53,6 +60,16 @@ class MentorshipSetupMixin:
             is_active=True,
             is_staff=True,
             is_superuser=True,
+        )
+        self.admin_operationnel = Utilisateur.objects.create_user(
+            email="admin.operationnel@example.com",
+            password="Testpass123!",
+            nom="Admin",
+            prenom="Oumar",
+            role=self.role_admin_operationnel,
+            statut_compte=Utilisateur.StatutCompte.ACTIF,
+            is_active=True,
+            is_staff=True,
         )
         self.mentor = Utilisateur.objects.create_user(
             email="mentor@example.com",
@@ -95,6 +112,7 @@ class MentorshipSetupMixin:
             start_date=date(2026, 1, 15),
             end_date=date(2026, 4, 30),
             required_sessions=8,
+            max_mentees_per_mentor=5,
             status=MentorshipPeriod.Status.ACTIVE,
         )
 
@@ -110,6 +128,7 @@ class MentorshipModelTests(MentorshipSetupMixin, TestCase):
         )
 
         self.assertEqual(period.required_sessions, 4)
+        self.assertEqual(period.max_mentees_per_mentor, 5)
         self.assertEqual(period.status, MentorshipPeriod.Status.DRAFT)
 
     def test_refus_periode_avec_date_debut_apres_date_fin(self):
@@ -146,6 +165,44 @@ class MentorshipModelTests(MentorshipSetupMixin, TestCase):
         self.assertEqual(assignment.status, MentorshipAssignment.Status.ACTIVE)
         self.mentor.refresh_from_db()
         self.assertEqual(self.mentor.nombre_mentores_actuels, 1)
+
+    def test_affectation_respecte_limite_de_la_periode(self):
+        self.period.max_mentees_per_mentor = 1
+        self.period.save(update_fields=["max_mentees_per_mentor", "updated_at"])
+        first_mentoree = Utilisateur.objects.create_user(
+            email="first.period.limit@example.com",
+            password="Testpass123!",
+            nom="Limit",
+            prenom="First",
+            role=self.role_mentore,
+            profil_mentorat=Utilisateur.ProfilMentorat.MENTORE,
+            niveau_academique=self.level_mentoree,
+            statut_compte=Utilisateur.StatutCompte.ACTIF,
+            is_active=True,
+        )
+        second_mentoree = Utilisateur.objects.create_user(
+            email="second.period.limit@example.com",
+            password="Testpass123!",
+            nom="Limit",
+            prenom="Second",
+            role=self.role_mentore,
+            profil_mentorat=Utilisateur.ProfilMentorat.MENTORE,
+            niveau_academique=self.level_mentoree,
+            statut_compte=Utilisateur.StatutCompte.ACTIF,
+            is_active=True,
+        )
+        MentorshipAssignment.objects.create(
+            mentor=self.mentor,
+            mentoree=first_mentoree,
+            period=self.period,
+        )
+
+        with self.assertRaises(ValidationError):
+            MentorshipAssignment.objects.create(
+                mentor=self.mentor,
+                mentoree=second_mentoree,
+                period=self.period,
+            )
 
     def test_refus_double_affectation_active_meme_periode(self):
         MentorshipAssignment.objects.create(
@@ -426,6 +483,123 @@ class MentorshipApiTests(MentorshipSetupMixin, APITestCase):
         self.assertEqual(response.status_code, 200)
         self.mentor.refresh_from_db()
         self.assertEqual(self.mentor.niveau_academique, self.level_mentor)
+
+    def test_admin_export_excel_periode_reussi(self):
+        assignment = MentorshipAssignment.objects.create(
+            mentor=self.mentor,
+            mentoree=self.mentoree,
+            period=self.period,
+        )
+        MentorshipSession.objects.create(
+            assignment=assignment,
+            session_number=1,
+            scheduled_date=date(2026, 2, 10),
+            status=MentorshipSession.Status.COMPLETED,
+            summary="Seance realisee.",
+            mentor_comment="Bonne progression.",
+        )
+        MentoreeProgress.objects.create(
+            assignment=assignment,
+            progress_status=MentoreeProgress.ProgressStatus.GOOD,
+            progress_percentage=75,
+            recommendations="Continuer les exercices.",
+        )
+        self.client.force_authenticate(self.admin)
+
+        response = self.client.get(f"/api/admin/mentorship-periods/{self.period.id}/export/excel/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response["Content-Type"],
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+        self.assertIn("periode_session-hiver-2026_", response["Content-Disposition"])
+        workbook = load_workbook(BytesIO(response.content), read_only=True)
+        self.assertEqual(
+            workbook.sheetnames,
+            ["Resume periode", "Mentors", "Mentores", "Affectations", "Seances", "Suivis", "Statistiques"],
+        )
+        self.assertEqual(workbook["Resume periode"]["B2"].value, "Session hiver 2026")
+        self.assertEqual(workbook["Mentors"]["A2"].value, self.mentor.nom_complet)
+        self.assertTrue(
+            MentorshipPeriodExportLog.objects.filter(
+                period=self.period,
+                format=MentorshipPeriodExportLog.Format.EXCEL,
+                exported_by=self.admin,
+            ).exists()
+        )
+
+    def test_admin_export_csv_periode_reussi(self):
+        assignment = MentorshipAssignment.objects.create(
+            mentor=self.mentor,
+            mentoree=self.mentoree,
+            period=self.period,
+        )
+        MentorshipSession.objects.create(
+            assignment=assignment,
+            session_number=1,
+            scheduled_date=date(2026, 2, 10),
+            status=MentorshipSession.Status.COMPLETED,
+        )
+        self.client.force_authenticate(self.admin)
+
+        response = self.client.get(f"/api/admin/mentorship-periods/{self.period.id}/export/csv/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response["Content-Type"].startswith("text/csv"))
+        csv_content = response.content.decode("utf-8-sig")
+        self.assertIn("Session hiver 2026", csv_content)
+        self.assertIn("mentor@example.com", csv_content)
+        self.assertIn("mentoree@example.com", csv_content)
+        self.assertTrue(
+            MentorshipPeriodExportLog.objects.filter(
+                period=self.period,
+                format=MentorshipPeriodExportLog.Format.CSV,
+                exported_by=self.admin,
+            ).exists()
+        )
+
+    def test_export_refuse_aux_non_admins(self):
+        self.client.force_authenticate(self.mentor)
+
+        response = self.client.get(f"/api/admin/mentorship-periods/{self.period.id}/export/csv/")
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_export_refuse_admin_operationnel(self):
+        self.client.force_authenticate(self.admin_operationnel)
+
+        response = self.client.get(f"/api/admin/mentorship-periods/{self.period.id}/export/csv/")
+
+        self.assertEqual(response.status_code, 403)
+        self.assertFalse(
+            MentorshipPeriodExportLog.objects.filter(
+                period=self.period,
+                exported_by=self.admin_operationnel,
+            ).exists()
+        )
+
+    def test_export_periode_inexistante(self):
+        self.client.force_authenticate(self.admin)
+
+        response = self.client.get("/api/admin/mentorship-periods/99999/export/excel/")
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_export_csv_fonctionne_avec_donnees_incompletes(self):
+        MentorshipAssignment.objects.create(
+            mentor=self.mentor,
+            mentoree=self.mentoree,
+            period=self.period,
+        )
+        self.client.force_authenticate(self.admin)
+
+        response = self.client.get(f"/api/admin/mentorship-periods/{self.period.id}/export/csv/")
+
+        self.assertEqual(response.status_code, 200)
+        csv_content = response.content.decode("utf-8-sig")
+        self.assertIn("Non programmee", csv_content)
+        self.assertIn("Aucun suivi", csv_content)
 
     def test_admin_valide_affichage_equipe_et_api_publique_filtre(self):
         self.mentor.mini_bio = "Mentore engagee en sciences de la sante."

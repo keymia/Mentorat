@@ -5,7 +5,7 @@ from rest_framework.views import APIView
 from apps.evenements.models import Evenement
 from apps.inscriptions.models import Inscription
 from apps.mentorat.models import MentorshipAssignment
-from apps.mentorat.services import count_pending_matching_requests, get_session_ending_alert
+from apps.mentorat.services import count_pending_matching_requests, get_current_or_latest_period, get_session_ending_alert
 from apps.partenaires.models import Partenaire
 from apps.statistiques.serializers import DashboardStatistiquesSerializer
 from apps.users.models import Role, Utilisateur
@@ -29,8 +29,28 @@ class DashboardStatistiquesView(APIView):
                 Utilisateur.ProfilMentorat.MENTOR_ET_MENTORE,
             ]
         )
-        mentors_disponibles = sum(1 for mentor in mentors_actifs if mentor.capacite_restante() > 0)
-        mentors_satures = sum(1 for mentor in mentors_actifs if mentor.capacite_effective() > 0 and mentor.capacite_restante() == 0)
+        active_period = get_current_or_latest_period()
+        mentors_disponibles = sum(
+            1
+            for mentor in mentors_actifs
+            if MentorshipAssignment.objects.filter(
+                mentor=mentor,
+                period=active_period,
+                status=MentorshipAssignment.Status.ACTIVE,
+            ).count()
+            < mentor.capacite_effective(active_period)
+        )
+        mentors_satures = sum(
+            1
+            for mentor in mentors_actifs
+            if mentor.capacite_effective(active_period) > 0
+            and MentorshipAssignment.objects.filter(
+                mentor=mentor,
+                period=active_period,
+                status=MentorshipAssignment.Status.ACTIVE,
+            ).count()
+            >= mentor.capacite_effective(active_period)
+        )
         donnees = {
             "total_mentors": mentors_actifs.count(),
             "total_mentores": mentores.count(),

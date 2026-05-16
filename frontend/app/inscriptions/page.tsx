@@ -12,7 +12,7 @@ export default function InscriptionsPage() {
       <PageHeader
         eyebrow="Inscriptions"
         title="Choisir le bon formulaire"
-        description="Les inscriptions sont creees en attente, puis validees par l'administration."
+        description="Les inscriptions sont créées avec le statut « en attente », puis validées par l’administration."
       />
       <main className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
         <Suspense fallback={null}>

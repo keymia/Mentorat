@@ -8,6 +8,7 @@ from apps.mentorat.models import (
     Mentorat,
     MentorshipAssignment,
     MentorshipPeriod,
+    MentorshipPeriodExportLog,
     MentorshipSession,
     SessionBooking,
 )
@@ -50,9 +51,25 @@ class SessionBookingAdmin(admin.ModelAdmin):
 
 @admin.register(MentorshipPeriod)
 class MentorshipPeriodAdmin(admin.ModelAdmin):
-    list_display = ("title", "start_date", "end_date", "required_sessions", "status", "updated_at")
+    list_display = (
+        "title",
+        "start_date",
+        "end_date",
+        "required_sessions",
+        "max_mentees_per_mentor",
+        "status",
+        "updated_at",
+    )
     list_filter = ("status", "start_date", "end_date")
     search_fields = ("title", "description")
+
+
+@admin.register(MentorshipPeriodExportLog)
+class MentorshipPeriodExportLogAdmin(admin.ModelAdmin):
+    list_display = ("period", "format", "file_name", "exported_by", "exported_at")
+    list_filter = ("format", "exported_at", "period")
+    search_fields = ("period__title", "file_name", "exported_by__email")
+    autocomplete_fields = ("period", "exported_by")
 
 
 @admin.register(MentorshipAssignment)

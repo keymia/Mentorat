@@ -4,6 +4,7 @@ import { AlertTriangle, CheckCircle2, ClipboardList, UsersRound } from "lucide-r
 import { useEffect, useState } from "react";
 
 import { StatCard } from "@/components/dashboard/StatCard";
+import { HelpIconButton } from "@/components/help/HelpIconButton";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -91,9 +92,12 @@ export function AdminMentorshipReports({
     <div className="grid gap-5">
       {showHeader ? (
         <div>
-          <h1 className="font-display text-3xl font-bold">Rapports mentorat</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="font-display text-3xl font-bold">Rapports mentorat</h1>
+            <HelpIconButton moduleKey="exports_imports" scope="admin" />
+          </div>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            Suivez les seances manquantes, les affectations actives et les alertes de progression.
+            Suivez les séances manquantes, les affectations actives et les alertes de progression.
           </p>
         </div>
       ) : null}
@@ -104,7 +108,7 @@ export function AdminMentorshipReports({
       <Card>
         <CardContent className="grid gap-4 p-5 md:grid-cols-2 xl:grid-cols-4">
           <label>
-            Periode
+            Période
             <select className="field" value={localFilters.period} onChange={(event) => setLocalFilters({ ...localFilters, period: event.target.value })}>
               <option value="">Toutes</option>
               {periods.map((period) => (
@@ -126,7 +130,7 @@ export function AdminMentorshipReports({
             </select>
           </label>
           <label>
-            Mentore
+            Mentoré
             <select className="field" value={localFilters.mentoree} onChange={(event) => setLocalFilters({ ...localFilters, mentoree: event.target.value })}>
               <option value="">Tous</option>
               {mentees.map((mentee) => (
@@ -157,9 +161,9 @@ export function AdminMentorshipReports({
         <>
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <StatCard label="Affectations" value={overview.assignments.total} icon={UsersRound} tone="red" />
-            <StatCard label="Seances realisees" value={overview.sessions.completed} icon={CheckCircle2} tone="bronze" />
-            <StatCard label="Seances manquantes" value={report.summary.missing_sessions} icon={AlertTriangle} tone="dark" />
-            <StatCard label="Suivis a risque" value={overview.progress.watch + overview.progress.difficulty} icon={ClipboardList} tone="red" />
+            <StatCard label="Séances réalisées" value={overview.sessions.completed} icon={CheckCircle2} tone="bronze" />
+            <StatCard label="Séances manquantes" value={report.summary.missing_sessions} icon={AlertTriangle} tone="dark" />
+            <StatCard label="Suivis à risque" value={overview.progress.watch + overview.progress.difficulty} icon={ClipboardList} tone="red" />
           </div>
 
           <ListTable
@@ -167,28 +171,28 @@ export function AdminMentorshipReports({
             countLabel={`${report.results.length} affectation${report.results.length > 1 ? "s" : ""}`}
             minWidth={1080}
             headers={[
-              { label: "Mentore" },
+              { label: "Mentoré" },
               { label: "Mentor" },
-              { label: "Session" },
-              { label: "Seances" },
-              { label: "Etat" },
+              { label: "Période" },
+              { label: "Séances" },
+              { label: "État" },
             ]}
-            emptyState={report.results.length === 0 ? <EmptyState icon={ClipboardList} title="Aucun rapport a afficher." /> : null}
+            emptyState={report.results.length === 0 ? <EmptyState icon={ClipboardList} title="Aucun rapport à afficher." /> : null}
           >
             {report.results.map((row) => (
               <tr key={row.assignment.id} className="align-top">
                 <td className="px-4 py-3 font-medium text-foreground">{displayUser(row.assignment.mentoree_detail)}</td>
                 <td className="px-4 py-3 text-muted-foreground">{displayUser(row.assignment.mentor_detail)}</td>
-                <td className="px-4 py-3 text-muted-foreground">{row.assignment.period_detail?.title ?? "Non renseignee"}</td>
+                <td className="px-4 py-3 text-muted-foreground">{row.assignment.period_detail?.title ?? "Non renseignée"}</td>
                 <td className="px-4 py-3 text-muted-foreground">
-                  <p>Prevues: {row.required_sessions}</p>
-                  <p className="mt-1 text-xs">Programmees: {row.scheduled_sessions}</p>
-                  <p className="mt-1 text-xs">Realisees: {row.completed_sessions}</p>
+                  <p>Prévues : {row.required_sessions}</p>
+                  <p className="mt-1 text-xs">Programmées : {row.scheduled_sessions}</p>
+                  <p className="mt-1 text-xs">Réalisées : {row.completed_sessions}</p>
                   <p className="mt-1 text-xs">Restantes: {row.remaining_sessions}</p>
                 </td>
                 <td className="px-4 py-3">
                   <Badge variant={row.missing_sessions > 0 ? "outline" : "success"}>
-                    {row.missing_sessions > 0 ? `${row.missing_sessions} a programmer` : "Complet"}
+                    {row.missing_sessions > 0 ? `${row.missing_sessions} à programmer` : "Complet"}
                   </Badge>
                 </td>
               </tr>

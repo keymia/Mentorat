@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Eye, Handshake, RefreshCcw, Search, UserCheck } from "lucide-react";
 
+import { HelpIconButton } from "@/components/help/HelpIconButton";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -44,7 +45,7 @@ function assignedMentor(row: AdminMatchingRow) {
 }
 
 function periodTitle(row: AdminMatchingRow) {
-  return row.period?.title ?? row.inscription.mentorship_period_title ?? "Non renseignee";
+  return row.period?.title ?? row.inscription.mentorship_period_title ?? "Non renseignée";
 }
 
 function periodId(row: AdminMatchingRow) {
@@ -168,7 +169,7 @@ export function AdminMentorshipAssignments() {
         new_mentor_id: Number(selectedMentor),
         session_id: Number(sessionId),
       });
-      setMessage("Jumelage mis a jour.");
+      setMessage("Jumelage mis à jour.");
       closeReassignModal();
       await loadData();
     } catch (apiError) {
@@ -182,9 +183,12 @@ export function AdminMentorshipAssignments() {
     <div className="grid gap-5">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <h1 className="font-display text-3xl font-bold">Jumelage</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="font-display text-3xl font-bold">Jumelage</h1>
+            <HelpIconButton moduleKey="matching" scope="admin" />
+          </div>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            Consultez tous les mentores et ajustez les affectations de mentorat par session.
+            Consultez tous les mentorés et ajustez les affectations de mentorat par période.
           </p>
         </div>
         <Button type="button" variant="outline" className="w-fit" onClick={() => void loadData()}>
@@ -214,9 +218,9 @@ export function AdminMentorshipAssignments() {
         </label>
         {data?.show_session_filter ? (
           <label>
-            Session
+            Période
             <select className="field" value={selectedPeriod} onChange={(event) => setSelectedPeriod(event.target.value)}>
-              <option value="">Session active ou la plus recente</option>
+              <option value="">Période active ou la plus récente</option>
               {data.periods.map((period) => (
                 <option key={period.id} value={period.id}>
                   {period.title}
@@ -232,7 +236,7 @@ export function AdminMentorshipAssignments() {
       {isLoading ? <Skeleton className="h-56" /> : null}
 
       {!isLoading && filteredRows.length === 0 ? (
-        <EmptyState icon={UserCheck} title="Aucun mentore a afficher." />
+        <EmptyState icon={UserCheck} title="Aucun mentoré à afficher." />
       ) : null}
 
       {!isLoading && filteredRows.length > 0 ? (
@@ -241,9 +245,9 @@ export function AdminMentorshipAssignments() {
             <table className="w-full min-w-[860px] text-left text-sm">
               <thead className="border-b border-border bg-muted text-xs uppercase text-muted-foreground">
                 <tr>
-                  <th className="px-4 py-3">Mentore</th>
-                  <th className="px-4 py-3">Niveau academique</th>
-                  <th className="px-4 py-3">Session</th>
+                  <th className="px-4 py-3">Mentoré</th>
+                  <th className="px-4 py-3">Niveau académique</th>
+                  <th className="px-4 py-3">Période</th>
                   <th className="px-4 py-3">Statut</th>
                   <th className="px-4 py-3 text-right">Actions</th>
                 </tr>
@@ -254,7 +258,7 @@ export function AdminMentorshipAssignments() {
                     <tr key={`${row.inscription.id}-${row.period?.id ?? "none"}`} className="align-top">
                       <td className="px-4 py-3 font-medium">{displayUser(row.mentee)}</td>
                       <td className="px-4 py-3 text-muted-foreground">
-                        {row.mentee.niveau_academique_nom ?? "Non renseigne"}
+                        {row.mentee.niveau_academique_nom ?? "Non renseigné"}
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">{periodTitle(row)}</td>
                       <td className="px-4 py-3">
@@ -266,11 +270,11 @@ export function AdminMentorshipAssignments() {
                         <div className="flex flex-wrap justify-end gap-2">
                           <Button type="button" variant="outline" size="sm" onClick={() => void openDetailsModal(row)}>
                             <Eye aria-hidden="true" />
-                            Details
+                            Détails
                           </Button>
                           <Button type="button" size="sm" onClick={() => openReassignModal(row)}>
                             <Handshake aria-hidden="true" />
-                            Reassignation
+                            Réassignation
                           </Button>
                         </div>
                       </td>
@@ -286,7 +290,7 @@ export function AdminMentorshipAssignments() {
             </span>
             <div className="flex gap-2">
               <Button type="button" variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((current) => current - 1)}>
-                Precedent
+                Précédent
               </Button>
               <Button
                 type="button"
@@ -304,18 +308,18 @@ export function AdminMentorshipAssignments() {
 
       <Modal
         open={Boolean(selectedRow)}
-        title="Reassignation"
-        description="Choisissez un nouveau mentor compatible avec le niveau du mentore."
+        title="Réassignation"
+        description="Choisissez un nouveau mentor compatible avec le niveau du mentoré."
         onClose={closeReassignModal}
       >
         <form onSubmit={handleReassign} className="grid gap-4">
           <div className="grid gap-3 rounded-lg border border-border bg-muted/30 p-4 md:grid-cols-2">
-            <DetailItem label="Mentore concerne" value={displayUser(selectedRow?.mentee)} />
-            <DetailItem label="Session" value={selectedRow ? periodTitle(selectedRow) : "Non renseignee"} />
+            <DetailItem label="Mentoré concerné" value={displayUser(selectedRow?.mentee)} />
+            <DetailItem label="Période" value={selectedRow ? periodTitle(selectedRow) : "Non renseignée"} />
             <DetailItem label="Mentor actuel" value={displayUser(selectedRow ? assignedMentor(selectedRow) : null)} />
             <DetailItem
-              label="Niveau academique"
-              value={selectedRow?.mentee.niveau_academique_nom ?? "Non renseigne"}
+              label="Niveau académique"
+              value={selectedRow?.mentee.niveau_academique_nom ?? "Non renseigné"}
             />
           </div>
 
@@ -332,13 +336,13 @@ export function AdminMentorshipAssignments() {
               </select>
             </label>
           ) : (
-            <Alert variant="error">Aucun mentor compatible avec une capacite disponible pour cette session.</Alert>
+            <Alert variant="error">Aucun mentor compatible avec une capacité disponible pour cette période.</Alert>
           )}
 
           <div className="flex flex-wrap gap-2">
             <Button type="submit" disabled={isSaving || !selectedMentor || !selectedRow?.compatible_mentors.length}>
               <Handshake aria-hidden="true" />
-              {isSaving ? "Mise a jour..." : "Confirmer"}
+              {isSaving ? "Mise à jour..." : "Confirmer"}
             </Button>
             <Button type="button" variant="outline" onClick={closeReassignModal}>
               Annuler
@@ -349,23 +353,23 @@ export function AdminMentorshipAssignments() {
 
       <Modal
         open={Boolean(detailsRow)}
-        title="Details du jumelage"
-        description="Informations du mentore, de la session et des affectations."
+        title="Détails du jumelage"
+        description="Informations du mentoré, de la période et des affectations."
         className="max-w-4xl"
         onClose={() => setDetailsRow(null)}
       >
         {detailsRow ? (
           <div className="grid gap-5">
             <div className="grid gap-3 rounded-lg border border-border bg-muted/30 p-4 md:grid-cols-2">
-              <DetailItem label="Mentore" value={displayUser(detailsRow.mentee)} />
-              <DetailItem label="Email" value={detailsRow.mentee.email || "Non renseigne"} />
-              <DetailItem label="Niveau academique" value={detailsRow.mentee.niveau_academique_nom ?? "Non renseigne"} />
-              <DetailItem label="Session active" value={periodTitle(detailsRow)} />
+              <DetailItem label="Mentoré" value={displayUser(detailsRow.mentee)} />
+              <DetailItem label="Email" value={detailsRow.mentee.email || "Non renseigné"} />
+              <DetailItem label="Niveau académique" value={detailsRow.mentee.niveau_academique_nom ?? "Non renseigné"} />
+              <DetailItem label="Période active" value={periodTitle(detailsRow)} />
               <DetailItem label="Mentor actuel" value={displayUser(assignedMentor(detailsRow))} />
               <DetailItem label="Statut du jumelage" value={matchingStatusLabels[detailsRow.matching_status]} />
               <DetailItem label="Date inscription" value={formatDateTime(detailsRow.inscription.date_inscription)} />
               <DetailItem
-                label="Dates session"
+                label="Dates de période"
                 value={`${formatDate(detailsRow.period?.start_date)} - ${formatDate(detailsRow.period?.end_date)}`}
               />
               <DetailItem

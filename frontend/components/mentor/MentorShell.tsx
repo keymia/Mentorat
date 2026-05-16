@@ -4,6 +4,7 @@ import {
   CalendarClock,
   ChevronDown,
   ChevronRight,
+  HelpCircle,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -26,19 +27,20 @@ import { cn } from "@/lib/utils";
 
 const mentorLinks = [
   { href: "/mentor/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/mentor/mentees", label: "Mentores", icon: UsersRound },
-  { href: "/mentor/sessions", label: "Seances", icon: CalendarClock },
+  { href: "/mentor/mentees", label: "Mentorés", icon: UsersRound },
+  { href: "/mentor/sessions", label: "Séances", icon: CalendarClock },
   { href: "/mentor/follow-ups", label: "Suivis", icon: TrendingUp },
+  { href: "/mentor/help", label: "Aide", icon: HelpCircle },
 ];
 
 const mentorUtilityLinks = [
-  { href: "/mentor/parametres", label: "Parametres", icon: Settings },
+  { href: "/mentor/parametres", label: "Paramètres", icon: Settings },
 ];
 
 const mentorSettingsLinks = [
   { href: "/mentor/parametres?section=account", section: "account", label: "Compte" },
-  { href: "/mentor/parametres?section=profile", section: "profile", label: "Profil Equipes" },
-  { href: "/mentor/parametres?section=session", section: "session", label: "Session de mentorat" },
+  { href: "/mentor/parametres?section=profile", section: "profile", label: "Profil Équipes" },
+  { href: "/mentor/parametres?section=session", section: "session", label: "Période de mentorat" },
 ];
 
 function isActivePath(pathname: string, href: string) {

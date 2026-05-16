@@ -111,13 +111,13 @@ export function MentorFollowUpsPanel() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!updateSession) {
-      setFormError("Selectionnez une seance.");
+      setFormError("Sélectionnez une séance.");
       return;
     }
     const formData = new FormData(event.currentTarget);
     const progressStatus = formString(formData, "progress_status") as MentoreeProgressStatus;
     if (!progressStatus) {
-      setFormError("Choisissez une appreciation.");
+      setFormError("Choisissez une appréciation.");
       return;
     }
 
@@ -133,7 +133,7 @@ export function MentorFollowUpsPanel() {
         recommendations: formString(formData, "recommendations"),
         summary: updateSession.summary,
       });
-      setMessage(`Suivi mis a jour. Avancement automatique: ${generatedPercentage(assignment)}%.`);
+      setMessage(`Suivi mis à jour. Avancement automatique : ${generatedPercentage(assignment)}%.`);
       setUpdateSession(null);
       await loadData();
     } catch (apiError) {
@@ -151,7 +151,7 @@ export function MentorFollowUpsPanel() {
       <div className="grid gap-5">
         <div className="grid gap-3 rounded-lg border border-border bg-muted/25 p-4 text-sm md:grid-cols-2">
           <p>
-            <span className="block text-muted-foreground">Mentore</span>
+            <span className="block text-muted-foreground">Mentoré</span>
             <span className="font-semibold">{displayUser(session.mentoree_detail ?? assignment?.mentoree_detail)}</span>
           </p>
           <p>
@@ -165,23 +165,23 @@ export function MentorFollowUpsPanel() {
           <p>
             <span className="block text-muted-foreground">Horaire</span>
             <span className="font-semibold">
-              {normalizeTime(session.start_time) || "Non renseigne"}
+              {normalizeTime(session.start_time) || "Non renseigné"}
               {session.end_time ? ` - ${normalizeTime(session.end_time)}` : ""}
             </span>
           </p>
           <p className="md:col-span-2">
-            <span className="block text-muted-foreground">Objet / resume</span>
-            <span className="font-semibold">{session.summary || "Non renseigne"}</span>
+            <span className="block text-muted-foreground">Objet / résumé</span>
+            <span className="font-semibold">{session.summary || "Non renseigné"}</span>
           </p>
           <p className="md:col-span-2">
-            <span className="block text-muted-foreground">Commentaire de seance</span>
+            <span className="block text-muted-foreground">Commentaire de séance</span>
             <span className="font-semibold">{session.mentor_comment || "Aucun commentaire"}</span>
           </p>
         </div>
 
         <div className="grid gap-3 rounded-lg border border-border bg-card p-4 text-sm md:grid-cols-2">
           <p>
-            <span className="block text-muted-foreground">Appreciation</span>
+            <span className="block text-muted-foreground">Appréciation</span>
             <span className="font-semibold">{progressStatusLabels[status]}</span>
           </p>
           <p>
@@ -190,15 +190,15 @@ export function MentorFollowUpsPanel() {
           </p>
           <p className="md:col-span-2">
             <span className="block text-muted-foreground">Observations</span>
-            <span className="font-semibold">{progress?.achievements || "Non renseignees"}</span>
+            <span className="font-semibold">{progress?.achievements || "Non renseignées"}</span>
           </p>
           <p className="md:col-span-2">
             <span className="block text-muted-foreground">Recommandations</span>
-            <span className="font-semibold">{progress?.recommendations || "Non renseignees"}</span>
+            <span className="font-semibold">{progress?.recommendations || "Non renseignées"}</span>
           </p>
           <p className="md:col-span-2">
-            <span className="block text-muted-foreground">Avis general</span>
-            <span className="font-semibold">{progress?.mentor_opinion || "Non renseigne"}</span>
+            <span className="block text-muted-foreground">Avis général</span>
+            <span className="font-semibold">{progress?.mentor_opinion || "Non renseigné"}</span>
           </p>
         </div>
       </div>
@@ -213,17 +213,17 @@ export function MentorFollowUpsPanel() {
         <div className="rounded-lg border border-border bg-muted/25 p-4 text-sm">
           <p className="font-semibold">{displayUser(session.mentoree_detail ?? assignment?.mentoree_detail)}</p>
           <p className="mt-1 text-muted-foreground">
-            {assignment?.completed_sessions_count ?? 0} seance{(assignment?.completed_sessions_count ?? 0) > 1 ? "s" : ""} achevee
+            {assignment?.completed_sessions_count ?? 0} séance{(assignment?.completed_sessions_count ?? 0) > 1 ? "s" : ""} achevée
             {(assignment?.completed_sessions_count ?? 0) > 1 ? "s" : ""} sur {assignment?.required_sessions ?? 0}
           </p>
           <div className="mt-3 flex items-center gap-2 text-primary">
             <TrendingUp className="size-4" aria-hidden="true" />
-            <span className="font-semibold">Avancement automatique: {generatedPercentage(assignment)}%</span>
+            <span className="font-semibold">Avancement automatique : {generatedPercentage(assignment)}%</span>
           </div>
         </div>
 
         <label>
-          Appreciation
+          Appréciation
           <select name="progress_status" className="field" defaultValue={progress?.progress_status ?? assignment?.progress_status ?? "average"} required>
             {appreciationOptions.map((value) => (
               <option key={value} value={value}>
@@ -258,35 +258,35 @@ export function MentorFollowUpsPanel() {
   }
 
   if (sessions.length === 0) {
-    return <EmptyState icon={ClipboardCheck} title="Aucune seance achevee a suivre." />;
+    return <EmptyState icon={ClipboardCheck} title="Aucune séance achevée à suivre." />;
   }
 
   return (
     <div className="grid gap-5">
       <div>
-        <h2 className="text-lg font-semibold">Seances achevees</h2>
+        <h2 className="text-lg font-semibold">Séances achevées</h2>
         <p className="text-sm text-muted-foreground">
-          {sessions.length} seance{sessions.length > 1 ? "s" : ""} realisee{sessions.length > 1 ? "s" : ""}.
+          {sessions.length} séance{sessions.length > 1 ? "s" : ""} réalisée{sessions.length > 1 ? "s" : ""}.
         </p>
       </div>
 
       {message ? <Alert variant="success">{message}</Alert> : null}
 
-      <Modal open={Boolean(detailSession)} title="Details du suivi" onClose={() => setDetailSession(null)}>
+      <Modal open={Boolean(detailSession)} title="Détails du suivi" onClose={() => setDetailSession(null)}>
         {detailSession ? renderDetails(detailSession) : null}
       </Modal>
 
-      <Modal open={Boolean(updateSession)} title="Mise a jour du suivi" onClose={() => setUpdateSession(null)}>
+      <Modal open={Boolean(updateSession)} title="Mise à jour du suivi" onClose={() => setUpdateSession(null)}>
         {updateSession ? renderUpdateForm(updateSession) : null}
       </Modal>
 
       <ListTable
-        title="Liste des seances achevees"
-        countLabel={`${sessions.length} seance${sessions.length > 1 ? "s" : ""}`}
+        title="Liste des séances achevées"
+        countLabel={`${sessions.length} séance${sessions.length > 1 ? "s" : ""}`}
         minWidth={1080}
         headers={[
-          { label: "Mentore" },
-          { label: "Seance" },
+          { label: "Mentoré" },
+          { label: "Séance" },
           { label: "Objet" },
           { label: "Avancement" },
           { label: "Statut" },
@@ -303,14 +303,14 @@ export function MentorFollowUpsPanel() {
                 <p className="font-medium text-foreground">{displayUser(session.mentoree_detail ?? assignment?.mentoree_detail)}</p>
               </td>
               <td className="px-4 py-3 text-muted-foreground">
-                <p className="font-medium text-foreground">Seance {session.session_number}</p>
+                <p className="font-medium text-foreground">Séance {session.session_number}</p>
                 <p className="mt-1 text-xs">
-                  {formatDate(session.scheduled_date)} | {normalizeTime(session.start_time) || "Heure non renseignee"}
+                  {formatDate(session.scheduled_date)} | {normalizeTime(session.start_time) || "Heure non renseignée"}
                   {session.end_time ? ` - ${normalizeTime(session.end_time)}` : ""}
                 </p>
               </td>
               <td className="px-4 py-3 text-muted-foreground">
-                <p className="line-clamp-2 max-w-sm">{session.summary || "Non renseigne"}</p>
+                <p className="line-clamp-2 max-w-sm">{session.summary || "Non renseigné"}</p>
               </td>
               <td className="px-4 py-3 text-muted-foreground">
                 <p>{generatedPercentage(assignment)}%</p>
@@ -323,11 +323,11 @@ export function MentorFollowUpsPanel() {
                 <div className="flex flex-wrap justify-end gap-2">
                   <Button type="button" variant="outline" size="sm" onClick={() => setDetailSession(session)}>
                     <Eye aria-hidden="true" />
-                    Details
+                    Détails
                   </Button>
                   <Button type="button" variant="outline" size="sm" onClick={() => setUpdateSession(session)}>
                     <Pencil aria-hidden="true" />
-                    Mise a jour
+                    Mise à jour
                   </Button>
                 </div>
               </td>

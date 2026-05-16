@@ -11,8 +11,9 @@ export default async function MentorMenteeDetailPage({ params }: { params: Promi
   return (
     <div className="grid gap-6">
       <MentorPageHeader
-        title="Dossier mentore"
-        description="Seances, commentaires et avancement."
+        title="Dossier mentoré"
+        description="Séances, commentaires et avancement."
+        helpModuleKey="mentor_mentee_file"
         actions={
           <Button asChild variant="outline">
             <Link href="/mentor/mentees">

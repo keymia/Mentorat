@@ -51,9 +51,9 @@ export function MentorDashboardPanel() {
   return (
     <div className="grid gap-6">
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-        <StatCard label="Mentores" value={dashboard.counts.mentees} icon={UsersRound} tone="red" />
-        <StatCard label="Programmees" value={dashboard.counts.scheduled_sessions} icon={CalendarClock} tone="bronze" />
-        <StatCard label="Realisees" value={dashboard.counts.completed_sessions} icon={UserRoundCheck} tone="dark" />
+        <StatCard label="Mentorés" value={dashboard.counts.mentees} icon={UsersRound} tone="red" />
+        <StatCard label="Programmées" value={dashboard.counts.scheduled_sessions} icon={CalendarClock} tone="bronze" />
+        <StatCard label="Réalisées" value={dashboard.counts.completed_sessions} icon={UserRoundCheck} tone="dark" />
         <StatCard label="Restantes" value={dashboard.counts.remaining_sessions} icon={AlertTriangle} tone="red" />
         <StatCard label="Progression" value={`${dashboard.global_progress}%`} icon={TrendingUp} tone="bronze" />
       </div>
@@ -61,8 +61,8 @@ export function MentorDashboardPanel() {
       <div className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
         <Card>
           <CardHeader>
-            <CardTitle>Dernieres seances</CardTitle>
-            <CardDescription>Les rencontres les plus recentes a verifier.</CardDescription>
+            <CardTitle>Dernières séances</CardTitle>
+            <CardDescription>Les rencontres les plus récentes à vérifier.</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3">
             {dashboard.last_sessions.length > 0 ? (
@@ -74,7 +74,7 @@ export function MentorDashboardPanel() {
                   <div>
                     <p className="font-semibold">{displayUser(session.mentoree_detail)}</p>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      Seance {session.session_number} | {formatDate(session.scheduled_date)}{" "}
+                      Séance {session.session_number} | {formatDate(session.scheduled_date)}{" "}
                       {normalizeTime(session.start_time)}
                     </p>
                     <p className="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary">
@@ -87,7 +87,7 @@ export function MentorDashboardPanel() {
                 </div>
               ))
             ) : (
-              <p className="text-sm text-muted-foreground">Aucune seance programmee pour le moment.</p>
+              <p className="text-sm text-muted-foreground">Aucune séance programmée pour le moment.</p>
             )}
           </CardContent>
         </Card>
@@ -95,7 +95,7 @@ export function MentorDashboardPanel() {
         <div className="grid gap-6">
           <Card>
             <CardHeader>
-              <CardTitle>Mentores a suivre</CardTitle>
+              <CardTitle>Mentorés à suivre</CardTitle>
               <CardDescription>Dossiers sans suivi ou avec un statut sensible.</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-3">
@@ -119,8 +119,8 @@ export function MentorDashboardPanel() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Periodes actives</CardTitle>
-              <CardDescription>Cadre actuel defini par l&apos;administration.</CardDescription>
+              <CardTitle>Périodes actives</CardTitle>
+              <CardDescription>Cadre actuel défini par l&apos;administration.</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-3">
               {dashboard.active_periods.length > 0 ? (
@@ -131,13 +131,13 @@ export function MentorDashboardPanel() {
                       {formatDate(period.start_date)} - {formatDate(period.end_date)}
                     </p>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      {period.required_sessions} seance{period.required_sessions > 1 ? "s" : ""} obligatoire
+                      {period.required_sessions} séance{period.required_sessions > 1 ? "s" : ""} obligatoire
                       {period.required_sessions > 1 ? "s" : ""}
                     </p>
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-muted-foreground">Aucune periode active pour le moment.</p>
+                <p className="text-sm text-muted-foreground">Aucune période active pour le moment.</p>
               )}
             </CardContent>
           </Card>

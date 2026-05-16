@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Check, ClipboardList, Search, X } from "lucide-react";
 
+import { HelpIconButton } from "@/components/help/HelpIconButton";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -122,7 +123,10 @@ export function AdminInscriptions() {
   return (
     <div className="grid gap-5">
       <div>
-        <h1 className="font-display text-3xl font-bold">Inscriptions</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="font-display text-3xl font-bold">Inscriptions</h1>
+          <HelpIconButton moduleKey="registrations" scope="admin" />
+        </div>
         <p className="mt-2 text-sm leading-6 text-muted-foreground">
           Consultez les inscrits et reperez les dossiers qui demandent encore une action.
         </p>
@@ -149,7 +153,7 @@ export function AdminInscriptions() {
           <select className="field" value={roleFilter} onChange={(event) => setRoleFilter(event.target.value)}>
             <option value="">Tous</option>
             <option value="MENTOR">Mentors</option>
-            <option value="MENTORE">Mentores</option>
+            <option value="MENTORE">Mentorés</option>
           </select>
         </label>
         <label>
@@ -245,7 +249,7 @@ export function AdminInscriptions() {
       <Modal
         open={Boolean(selectedRow)}
         title="Detail de l'inscription"
-        description="Informations completes du dossier inscrit."
+        description="Informations complètes du dossier inscrit."
         className="max-w-4xl"
         onClose={() => setSelectedRow(null)}
       >
@@ -253,12 +257,12 @@ export function AdminInscriptions() {
           <div className="grid gap-5">
             <div className="grid gap-3 rounded-lg border border-border bg-muted/30 p-4 md:grid-cols-2">
               <DetailItem label="Nom complet" value={displayUser(selectedRow.utilisateur_detail)} />
-              <DetailItem label="Email" value={selectedRow.utilisateur_detail?.email ?? "Non renseigne"} />
+              <DetailItem label="Email" value={selectedRow.utilisateur_detail?.email ?? "Non renseigné"} />
               <DetailItem label="Role" value={selectedRow.type_inscription} />
               <DetailItem label="Statut inscription" value={inscriptionStatusLabels[selectedRow.statut_inscription]} />
-              <DetailItem label="Niveau academique" value={selectedRow.utilisateur_detail?.niveau_academique_nom ?? "Non renseigne"} />
+              <DetailItem label="Niveau académique" value={selectedRow.utilisateur_detail?.niveau_academique_nom ?? "Non renseigné"} />
               <DetailItem label="Date inscription" value={formatDateTime(selectedRow.date_inscription)} />
-              <DetailItem label="Session" value={selectedRow.mentorship_period_title ?? "Non renseignee"} />
+              <DetailItem label="Période" value={selectedRow.mentorship_period_title ?? "Non renseignée"} />
               <DetailItem label="Mentor choisi" value={displayUser(selectedRow.mentor_choisi_detail)} />
               <DetailItem
                 label="Association assigne un mentor"
@@ -267,7 +271,7 @@ export function AdminInscriptions() {
               <DetailItem label="Besoin de jumelage" value={selectedRow.needs_matching ? "Oui" : "Non"} />
               <DetailItem label="Statut dossier" value={registrationStatusLabels[selectedRow.registration_status]} />
               <DetailItem
-                label="Session terminee"
+                label="Période terminée"
                 value={selectedRow.completed_session_status === "completed" ? "Oui" : "Non"}
               />
             </div>

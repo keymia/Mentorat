@@ -14,12 +14,12 @@ const highlights = [
   {
     icon: ShieldCheck,
     title: "Cadre fiable",
-    text: "Mentors inscrits, valides et suivis par l'administration.",
+    text: "Mentors inscrits, validés et suivis par l’administration.",
   },
   {
     icon: GraduationCap,
     title: "Progression claire",
-    text: "Choix du mentor selon le niveau academique superieur direct.",
+    text: "Choix du mentor selon le niveau académique supérieur direct.",
   },
   {
     icon: UsersRound,
@@ -29,7 +29,7 @@ const highlights = [
 ];
 
 const steps = [
-  "Inscription mentor ou mentore",
+  "Inscription mentor ou mentoré",
   "Filtrage automatique des mentors admissibles",
   "Validation administrative",
   "Jumelage actif et suivi des statistiques",
@@ -42,7 +42,7 @@ export default function Home() {
       <main>
         <section className="relative isolate overflow-hidden border-b border-border bg-[var(--brand-ink)] text-white">
           <video
-            className="absolute inset-0 h-full w-full object-cover"
+            className="absolute inset-0 h-full w-full object-cover brightness-[0.86] contrast-[1.18] saturate-[1.12] transition duration-500 dark:brightness-[0.42] dark:contrast-[1.32] dark:saturate-[0.88]"
             src="/videos/accueil-final.mp4"
             autoPlay
             muted
@@ -51,21 +51,20 @@ export default function Home() {
             preload="metadata"
             aria-hidden="true"
           />
-          <div className="absolute inset-0 bg-black/28 dark:bg-black/45" />
-          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(10,10,10,0.88)_0%,rgba(10,10,10,0.72)_34%,rgba(10,10,10,0.36)_68%,rgba(10,10,10,0.18)_100%)]" />
-          <div className="absolute inset-y-0 left-0 w-full max-w-4xl bg-gradient-to-r from-black/55 via-black/24 to-transparent backdrop-blur-sm" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_72%_16%,rgba(183,131,75,0.24),transparent_32%)]" />
+          <div className="absolute inset-0 bg-[linear-gradient(100deg,rgba(3,2,2,0.99)_0%,rgba(8,4,4,0.94)_30%,rgba(69,20,20,0.76)_56%,rgba(255,241,220,0.30)_82%,rgba(255,241,220,0.14)_100%)] transition-colors duration-500 dark:bg-[linear-gradient(100deg,rgba(0,0,0,0.995)_0%,rgba(0,0,0,0.96)_32%,rgba(0,0,0,0.80)_60%,rgba(0,0,0,0.56)_82%,rgba(0,0,0,0.36)_100%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_18%_45%,rgba(159,20,22,0.58),transparent_48%),radial-gradient(circle_at_78%_14%,rgba(255,246,232,0.50),transparent_36%),linear-gradient(180deg,rgba(255,255,255,0.22)_0%,rgba(255,255,255,0.03)_58%,rgba(20,10,8,0.38)_100%)] opacity-100 mix-blend-soft-light transition-opacity duration-500 dark:opacity-0" />
+          <div className="absolute inset-0 opacity-0 mix-blend-normal transition-opacity duration-500 dark:opacity-100 dark:bg-[radial-gradient(ellipse_at_18%_45%,rgba(159,20,22,0.46),transparent_48%),radial-gradient(circle_at_72%_16%,rgba(183,131,75,0.42),transparent_34%),linear-gradient(180deg,rgba(0,0,0,0.14)_0%,rgba(0,0,0,0.70)_100%)]" />
           <div className="relative mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:py-28">
             <Reveal>
               <Badge variant="bronze" className="border-white/20 bg-white/12 text-white shadow-card backdrop-blur">
                 Association of Black Aspiring Physicians
               </Badge>
-              <h1 className="mt-5 max-w-4xl text-4xl font-bold leading-tight tracking-normal text-white sm:text-6xl">
-                <span className="font-display">Mentorer, soutenir et elever la releve academique.</span>
+              <h1 className="mt-5 max-w-4xl text-4xl font-bold leading-tight tracking-normal text-white drop-shadow-[0_4px_24px_rgba(0,0,0,0.48)] sm:text-6xl">
+                <span className="font-display">Mentorer, soutenir et élever la relève académique.</span>
               </h1>
-              <p className="mt-5 max-w-2xl text-lg leading-8 text-white/86">
-                BMC Mentorat connecte mentors et mentores dans un cadre exigeant, humain et structure autour de la
-                progression academique.
+              <p className="mt-5 max-w-2xl text-lg leading-8 text-white/88 drop-shadow-[0_2px_14px_rgba(0,0,0,0.42)]">
+                BMC Mentorat relie mentors et mentorés dans un cadre exigeant, humain et structuré autour de la
+                progression académique.
               </p>
               <Suspense fallback={null}>
                 <InscriptionModalOptions variant="hero" />
@@ -123,18 +122,18 @@ export default function Home() {
               <div>
                 <div className="flex items-center gap-2 text-[var(--brand-bronze)]">
                   <HeartHandshake className="size-5" aria-hidden="true" />
-                  <span className="text-sm font-semibold uppercase tracking-[0.18em]">Mentorat academique</span>
+                  <span className="text-sm font-semibold uppercase tracking-[0.18em]">Mentorat académique</span>
                 </div>
-                <h2 className="mt-4 font-display text-3xl font-bold">Pret a rejoindre le reseau BMC ?</h2>
+                <h2 className="mt-4 font-display text-3xl font-bold">Prêt à rejoindre le réseau BMC ?</h2>
                 <p className="mt-3 max-w-2xl text-sm leading-6 text-white/75">
-                  Inscrivez-vous comme mentor ou mentore. L&apos;administration valide ensuite les profils et les jumelages.
+                  Inscrivez-vous comme mentor ou mentoré. L&apos;administration valide ensuite les profils et les jumelages.
                 </p>
               </div>
               <div className="flex flex-wrap gap-3">
                 <Button asChild variant="secondary">
                   <Link href="/equipes">
                     <BookOpenCheck aria-hidden="true" />
-                    Voir les equipes
+                    Voir les équipes
                   </Link>
                 </Button>
                 <Button asChild>

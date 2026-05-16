@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import Image from "next/image";
-import { CalendarDays, CalendarPlus, Edit3, Eye, MapPin, Power, RefreshCcw, Trash2 } from "lucide-react";
+import { CalendarDays, CalendarPlus, Edit3, Eye, MapPin, RefreshCcw, Trash2 } from "lucide-react";
 
 import {
   Evenement,
@@ -12,6 +12,7 @@ import {
   getEvenements,
   updateEvenement,
 } from "@/lib/api";
+import { HelpIconButton } from "@/components/help/HelpIconButton";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -163,11 +164,11 @@ export function AdminEvenements() {
         setEvenements((currentRows) =>
           sortEvents(currentRows.map((currentEvent) => (currentEvent.id === updated.id ? updated : currentEvent))),
         );
-        setMessage("Evenement modifie.");
+        setMessage("Evenement modifié.");
       } else {
         const created = await createEvenement(payload);
         setEvenements((currentRows) => sortEvents([...currentRows, created]));
-        setMessage("Evenement cree.");
+        setMessage("Evenement créé.");
       }
       resetForm();
       setIsFormOpen(false);
@@ -175,24 +176,6 @@ export function AdminEvenements() {
       setError(formatApiError(apiError));
     } finally {
       setIsSaving(false);
-    }
-  }
-
-  async function handleStatus(evenement: Evenement, statut: string) {
-    setActionId(evenement.id);
-    setError("");
-    setMessage("");
-
-    try {
-      const updated = await updateEvenement(evenement.id, { statut_evenement: statut });
-      setEvenements((currentRows) =>
-        currentRows.map((currentEvent) => (currentEvent.id === updated.id ? updated : currentEvent)),
-      );
-      setMessage("Statut de l'evenement mis a jour.");
-    } catch (apiError) {
-      setError(formatApiError(apiError));
-    } finally {
-      setActionId(null);
     }
   }
 
@@ -213,7 +196,7 @@ export function AdminEvenements() {
         resetForm();
         setIsFormOpen(false);
       }
-      setMessage("Evenement supprime.");
+      setMessage("Evenement supprimé.");
     } catch (apiError) {
       setError(formatApiError(apiError));
     } finally {
@@ -359,7 +342,7 @@ export function AdminEvenements() {
         <div className="mt-4 flex flex-wrap gap-2">
           <Button type="submit" disabled={isSaving}>
             <CalendarPlus aria-hidden="true" />
-            {isSaving ? "Enregistrement..." : editingId ? "Enregistrer les modifications" : "Creer l'evenement"}
+            {isSaving ? "Enregistrement..." : editingId ? "Enregistrer les modifications" : "Créer l'evenement"}
           </Button>
           <Button type="button" variant="outline" onClick={closeFormModal}>
             Annuler
@@ -373,9 +356,12 @@ export function AdminEvenements() {
     <div className="grid gap-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <h1 className="font-display text-3xl font-bold">Gestion evenements</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="font-display text-3xl font-bold">Gestion evenements</h1>
+            <HelpIconButton moduleKey="events" scope="admin" />
+          </div>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            Creez, modifiez, annulez, terminez ou supprimez les evenements du programme.
+            Créez, modifiez, annulez, terminez ou supprimez les événements du programme.
           </p>
         </div>
         <Button type="button" className="w-fit" onClick={startCreate}>
@@ -389,7 +375,7 @@ export function AdminEvenements() {
 
       <Modal
         open={isFormOpen}
-        title={editingId ? "Modifier l'evenement" : "Creer un evenement"}
+        title={editingId ? "Modifier l'evenement" : "Créer un evenement"}
         description="Renseignez les informations publiees et le statut administratif."
         onClose={closeFormModal}
       >
@@ -400,9 +386,9 @@ export function AdminEvenements() {
 
       {!isLoading ? (
         <ListTable
-          title="Liste des evenements"
+          title="Liste des événements"
           countLabel={`${evenements.length} evenement${evenements.length > 1 ? "s" : ""}`}
-          minWidth={1180}
+          minWidth={920}
           action={
           <Button type="button" onClick={() => void reloadEvenements()} variant="outline" size="sm" className="w-fit">
             <RefreshCcw aria-hidden="true" />
@@ -411,7 +397,6 @@ export function AdminEvenements() {
           }
           headers={[
             { label: "Titre" },
-            { label: "Type" },
             { label: "Date" },
             { label: "Lieu" },
             { label: "Statut" },
@@ -424,14 +409,11 @@ export function AdminEvenements() {
               <td className="px-4 py-3 font-medium text-foreground">
                 <p className="max-w-xs truncate">{evenement.titre}</p>
               </td>
-              <td className="px-4 py-3">
-                <Badge variant="bronze">{evenement.type_evenement}</Badge>
-              </td>
               <td className="px-4 py-3 text-muted-foreground">{formatDateTime(evenement)}</td>
               <td className="px-4 py-3 text-muted-foreground">
                 <span className="inline-flex items-center gap-1">
                   <MapPin className="size-3.5" aria-hidden="true" />
-                  {evenement.lieu || "Lieu non renseigne"}
+                  {evenement.lieu || "Lieu non renseigné"}
                 </span>
               </td>
               <td className="px-4 py-3">
@@ -452,34 +434,6 @@ export function AdminEvenements() {
                   <Button
                     type="button"
                     disabled={actionId === evenement.id}
-                    onClick={() => void handleStatus(evenement, "PLANIFIE")}
-                    variant="outline"
-                    size="sm"
-                  >
-                    <Power aria-hidden="true" />
-                    Planifier
-                  </Button>
-                  <Button
-                    type="button"
-                    disabled={actionId === evenement.id}
-                    onClick={() => void handleStatus(evenement, "TERMINE")}
-                    variant="outline"
-                    size="sm"
-                  >
-                    Terminer
-                  </Button>
-                  <Button
-                    type="button"
-                    disabled={actionId === evenement.id}
-                    onClick={() => void handleStatus(evenement, "ANNULE")}
-                    variant="outline"
-                    size="sm"
-                  >
-                    Annuler
-                  </Button>
-                  <Button
-                    type="button"
-                    disabled={actionId === evenement.id}
                     onClick={() => void handleDelete(evenement)}
                     variant="danger"
                     size="sm"
@@ -496,8 +450,8 @@ export function AdminEvenements() {
 
       <Modal
         open={Boolean(detailsEvent)}
-        title="Details de l'evenement"
-        description="Informations completes de l'evenement selectionne."
+        title="Détails de l’événement"
+        description="Informations complètes de l'evenement selectionne."
         className="max-w-3xl"
         onClose={() => setDetailsEvent(null)}
       >
@@ -519,10 +473,10 @@ export function AdminEvenements() {
               <DetailItem label="Titre" value={detailsEvent.titre} />
               <DetailItem label="Type" value={detailsEvent.type_evenement} />
               <DetailItem label="Date" value={formatDateTime(detailsEvent)} />
-              <DetailItem label="Lieu" value={detailsEvent.lieu || "Non renseigne"} />
+              <DetailItem label="Lieu" value={detailsEvent.lieu || "Non renseigné"} />
               <DetailItem label="Statut" value={detailsEvent.statut_evenement} />
-              <DetailItem label="Video" value={detailsEvent.video ? "Disponible" : "Non renseignee"} />
-              <DetailItem label="Description" value={detailsEvent.description || "Non renseignee"} className="md:col-span-2" />
+              <DetailItem label="Vidéo" value={detailsEvent.video ? "Disponible" : "Non renseignée"} />
+              <DetailItem label="Description" value={detailsEvent.description || "Non renseignée"} className="md:col-span-2" />
             </div>
           </div>
         ) : null}

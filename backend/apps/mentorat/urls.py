@@ -3,6 +3,8 @@ from rest_framework.routers import DefaultRouter
 
 from apps.mentorat.views import (
     AdminMentorshipOverviewView,
+    AdminMentorshipPeriodExportCsvView,
+    AdminMentorshipPeriodExportExcelView,
     AdminMentorshipProgressView,
     AdminMentorshipReportsView,
     AdminMentorshipSessionsView,
@@ -41,6 +43,16 @@ legacy_disabled = DisabledLegacyMentorshipFeatureView.as_view()
 urlpatterns = [
     path("mentorship-periods/available/", AvailableMentorshipPeriodsView.as_view(), name="available-mentorship-periods"),
     path("admin/mentorship-overview/", AdminMentorshipOverviewView.as_view(), name="admin-mentorship-overview"),
+    path(
+        "admin/mentorship-periods/<int:pk>/export/excel/",
+        AdminMentorshipPeriodExportExcelView.as_view(),
+        name="admin-mentorship-period-export-excel",
+    ),
+    path(
+        "admin/mentorship-periods/<int:pk>/export/csv/",
+        AdminMentorshipPeriodExportCsvView.as_view(),
+        name="admin-mentorship-period-export-csv",
+    ),
     path("admin/matching/", AdminMatchingView.as_view(), name="admin-matching"),
     path("admin/matching/<int:mentee_id>/details/", AdminMatchingDetailsView.as_view(), name="admin-matching-details"),
     path("admin/matching/<int:mentee_id>/reassign/", AdminMatchingReassignView.as_view(), name="admin-matching-reassign"),

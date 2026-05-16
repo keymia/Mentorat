@@ -4,7 +4,6 @@ from rest_framework import serializers
 from apps.inscriptions.models import Inscription
 from apps.mentorat.models import MentorshipAssignment, MentorshipPeriod
 from apps.mentorat.services import get_mentors_disponibles_for_niveau, validate_mentor_for_mentore_level
-from apps.parametres.models import ParametreSysteme
 from apps.users.models import NiveauAcademique, Role, Utilisateur
 from apps.users.serializers import UtilisateurLiteSerializer, validate_phone_number
 
@@ -71,7 +70,7 @@ class MentorInscriptionSerializer(serializers.Serializer):
             raise serializers.ValidationError(
                 {"niveau_academique": "Ce niveau academique n'est pas autorise pour un mentor."}
             )
-        limite_systeme = ParametreSysteme.get_int("MAX_MENTORES_PAR_MENTOR", 5)
+        limite_systeme = attrs["mentorship_period"].max_mentees_per_mentor
         attrs["capacite_mentorat"] = attrs.get("capacite_mentorat") or limite_systeme
         if attrs["capacite_mentorat"] > limite_systeme:
             raise serializers.ValidationError(

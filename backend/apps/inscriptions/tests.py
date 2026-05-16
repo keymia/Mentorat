@@ -371,6 +371,8 @@ class InscriptionMatchingApiTests(InscriptionMatchingSetupMixin, APITestCase):
         self.assertEqual(inscription.utilisateur.statut_compte, Utilisateur.StatutCompte.ACTIF)
 
     def test_mentor_inscription_accepte_absence_capacite(self):
+        self.period.max_mentees_per_mentor = 3
+        self.period.save(update_fields=["max_mentees_per_mentor", "updated_at"])
         response = self.client.post(
             "/api/inscriptions/mentor/",
             {
@@ -390,7 +392,7 @@ class InscriptionMatchingApiTests(InscriptionMatchingSetupMixin, APITestCase):
 
         self.assertEqual(response.status_code, 201)
         inscription = Inscription.objects.get(id=response.data["id"])
-        self.assertEqual(inscription.utilisateur.capacite_mentorat, 5)
+        self.assertEqual(inscription.utilisateur.capacite_mentorat, 3)
 
 
 class SessionAutoCompletionTests(InscriptionMatchingSetupMixin, APITestCase):

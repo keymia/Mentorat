@@ -11,8 +11,8 @@ export default function ContactPage() {
       <SiteHeader />
       <PageHeader
         eyebrow="Contact"
-        title="Contacter l'equipe Mentorat"
-        description="Cette page est un point d'entree simple pour les demandes liees au programme."
+        title="Contacter l’équipe Mentorat"
+        description="Cette page est un point d’entrée simple pour les demandes liées au programme."
       />
       <main className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
         <Card>

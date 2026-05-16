@@ -56,6 +56,15 @@ class AuthAndRoleRulesTests(APITestCase):
                 "est_dernier_niveau": False,
             },
         )
+        self.level_medicine, _ = NiveauAcademique.objects.update_or_create(
+            ordre_niveau=4,
+            defaults={
+                "nom": "Je suis etudiant(e) en medecine",
+                "code": "mentor_medicine",
+                "est_premier_niveau": False,
+                "est_dernier_niveau": True,
+            },
+        )
 
         self.admin_principal = Utilisateur.objects.create_user(
             email="principal@example.com",
@@ -173,6 +182,7 @@ class AuthAndRoleRulesTests(APITestCase):
             "start_date": date(2026, 3, 1).isoformat(),
             "end_date": date(2026, 5, 30).isoformat(),
             "required_sessions": 6,
+            "max_mentees_per_mentor": 7,
             "status": MentorshipPeriod.Status.ACTIVE,
         }
 
@@ -183,6 +193,7 @@ class AuthAndRoleRulesTests(APITestCase):
         self.client.force_authenticate(self.admin_principal)
         response = self.client.post("/api/mentorship-periods/", payload, format="json")
         self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["max_mentees_per_mentor"], 7)
 
     def test_admin_operationnel_ne_modifie_pas_limite_maximale_mentores(self):
         self.client.force_authenticate(self.admin_operationnel)
@@ -246,6 +257,36 @@ class AuthAndRoleRulesTests(APITestCase):
         self.assertEqual(len(response.data), 1)
         self.assertEqual(response.data[0]["nom_complet"], "Admina Operations")
 
+    def test_admin_principal_apparait_en_premiere_position_sur_a_propos(self):
+        self.admin_operationnel.can_appear_on_about_page = True
+        self.admin_operationnel.public_title = "Coordination"
+        self.admin_operationnel.public_description = "Coordination operationnelle."
+        self.admin_operationnel.approve_public_profile()
+        self.admin_operationnel.save()
+
+        self.client.force_authenticate(self.admin_principal)
+        response = self.client.patch(
+            "/api/account/me/",
+            {
+                "can_appear_on_about_page": True,
+                "public_title": "Direction du programme",
+                "public_description": "Pilotage du programme de mentorat.",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.data["can_appear_on_about_page"])
+        self.assertTrue(response.data["is_public_profile_approved"])
+        self.assertFalse(response.data["pending_public_validation"])
+
+        self.client.force_authenticate(user=None)
+        response = self.client.get("/api/public/about-team/")
+        self.assertEqual(response.status_code, 200)
+        self.assertGreaterEqual(len(response.data), 2)
+        self.assertEqual(response.data[0]["nom_complet"], "Admin Principal")
+        self.assertEqual(response.data[0]["public_title"], "Direction du programme")
+
     def test_admin_principal_peut_refuser_validation_publique_operationnelle(self):
         self.client.force_authenticate(self.admin_operationnel)
         response = self.client.patch(
@@ -279,6 +320,58 @@ class AuthAndRoleRulesTests(APITestCase):
 
         self.assertEqual(response.status_code, 400)
         self.assertIn("niveau_academique", response.data)
+
+    def test_admin_ne_peut_pas_rendre_secondaire_mentor(self):
+        self.client.force_authenticate(self.admin_principal)
+        response = self.client.patch(
+            f"/api/users/{self.mentoree.id}/",
+            {
+                "profil_mentorat": Utilisateur.ProfilMentorat.MENTOR,
+                "role": self.role_mentor.id,
+                "niveau_academique": self.level_mentoree.id,
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("niveau_academique", response.data)
+        self.assertIn("secondaire", str(response.data["niveau_academique"]).lower())
+
+    def test_admin_transforme_mentore_intermediaire_en_mentor_et_mentore(self):
+        self.client.force_authenticate(self.admin_principal)
+        utilisateur_count = Utilisateur.objects.count()
+
+        response = self.client.patch(
+            f"/api/users/{self.mentoree.id}/",
+            {
+                "profil_mentorat": Utilisateur.ProfilMentorat.MENTOR_ET_MENTORE,
+                "role": self.role_mentor.id,
+                "niveau_academique": self.level_mentor_1.id,
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.mentoree.refresh_from_db()
+        self.assertEqual(Utilisateur.objects.count(), utilisateur_count)
+        self.assertEqual(self.mentoree.profil_mentorat, Utilisateur.ProfilMentorat.MENTOR_ET_MENTORE)
+        self.assertEqual(self.mentoree.capacite_mentorat, 5)
+
+    def test_admin_ne_peut_pas_rendre_medecine_mentore(self):
+        self.client.force_authenticate(self.admin_principal)
+        response = self.client.patch(
+            f"/api/users/{self.mentor.id}/",
+            {
+                "profil_mentorat": Utilisateur.ProfilMentorat.MENTOR_ET_MENTORE,
+                "role": self.role_mentor.id,
+                "niveau_academique": self.level_medicine.id,
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("niveau_academique", response.data)
+        self.assertIn("medecine", str(response.data["niveau_academique"]).lower())
 
     def test_admin_principal_gere_admin_operationnel_et_affichage_public(self):
         self.client.force_authenticate(self.admin_principal)

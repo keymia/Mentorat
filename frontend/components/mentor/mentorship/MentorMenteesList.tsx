@@ -16,10 +16,10 @@ import { formatDate, progressStatusLabels } from "@/lib/mentorship";
 function displayName(assignment: MentorshipAssignment) {
   const user = assignment.mentoree_detail;
   if (!user) {
-    return "Mentore non renseigne";
+    return "Mentoré non renseigné";
   }
   const name = `${user.prenom ?? ""} ${user.nom ?? ""}`.trim();
-  return name || "Mentore non renseigne";
+  return name || "Mentoré non renseigné";
 }
 
 export function MentorMenteesList() {
@@ -59,18 +59,18 @@ export function MentorMenteesList() {
   }
 
   if (assignments.length === 0) {
-    return <EmptyState icon={UserRoundCheck} title="Aucun mentore actif pour le moment." />;
+    return <EmptyState icon={UserRoundCheck} title="Aucun mentoré actif pour le moment." />;
   }
 
   return (
     <ListTable
-      title="Liste des mentores"
-      countLabel={`${assignments.length} mentore${assignments.length > 1 ? "s" : ""}`}
+      title="Liste des mentorés"
+      countLabel={`${assignments.length} mentoré${assignments.length > 1 ? "s" : ""}`}
       minWidth={1040}
       headers={[
-        { label: "Mentore" },
-        { label: "Periode" },
-        { label: "Seances" },
+        { label: "Mentoré" },
+        { label: "Période" },
+        { label: "Séances" },
         { label: "Avancement" },
         { label: "Statut" },
         { label: "Actions", className: "text-right" },
@@ -81,7 +81,7 @@ export function MentorMenteesList() {
           <td className="px-4 py-3">
             <p className="font-medium text-foreground">{displayName(assignment)}</p>
             <p className="mt-1 text-xs text-muted-foreground">
-              {assignment.mentoree_detail?.niveau_academique_nom ?? "Niveau non renseigne"}
+              {assignment.mentoree_detail?.niveau_academique_nom ?? "Niveau non renseigné"}
             </p>
           </td>
           <td className="px-4 py-3 text-muted-foreground">
@@ -91,7 +91,7 @@ export function MentorMenteesList() {
             </p>
           </td>
           <td className="px-4 py-3 text-muted-foreground">
-            <p>{assignment.completed_sessions_count}/{assignment.required_sessions ?? 0} realisees</p>
+            <p>{assignment.completed_sessions_count}/{assignment.required_sessions ?? 0} réalisées</p>
             <p className="mt-1 text-xs">{assignment.remaining_sessions_count} restantes</p>
           </td>
           <td className="px-4 py-3 font-medium text-foreground">{assignment.progress_percentage}%</td>

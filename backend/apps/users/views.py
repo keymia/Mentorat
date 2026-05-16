@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.core.mail import send_mail
+from django.db.models import Case, IntegerField, Q, Value, When
 from django.shortcuts import get_object_or_404
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -10,7 +11,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from apps.mentorat.services import get_mentors_disponibles_for_niveau
+from apps.mentorat.services import get_current_or_latest_period, get_mentors_disponibles_for_niveau
 from apps.mentorat.permissions import IsMentorUser
 from apps.parametres.models import ParametreSysteme
 from apps.users.models import LoginVerificationCode, NiveauAcademique, Role, Utilisateur
@@ -276,7 +277,8 @@ class MentorRegistrationConfigView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        max_mentees = ParametreSysteme.get_int("MAX_MENTORES_PAR_MENTOR", 5)
+        period = get_current_or_latest_period()
+        max_mentees = period.max_mentees_per_mentor if period else ParametreSysteme.get_int("MAX_MENTORES_PAR_MENTOR", 5)
         return Response(
             {
                 "max_mentees_per_mentor": max_mentees,
@@ -378,15 +380,27 @@ class PublicAboutTeamView(APIView):
         admins = (
             Utilisateur.objects.select_related("role")
             .filter(
-                role__nom=Role.Nom.ADMIN_OPERATIONNEL,
                 statut_compte=Utilisateur.StatutCompte.ACTIF,
                 is_active=True,
                 can_appear_on_about_page=True,
-                is_public_profile_approved=True,
-                pending_public_validation=False,
+            )
+            .filter(
+                Q(role__nom=Role.Nom.ADMIN_PRINCIPAL)
+                | Q(
+                    role__nom=Role.Nom.ADMIN_OPERATIONNEL,
+                    is_public_profile_approved=True,
+                    pending_public_validation=False,
+                )
             )
             .exclude(public_title="")
-            .order_by("nom", "prenom")
+            .annotate(
+                public_role_order=Case(
+                    When(role__nom=Role.Nom.ADMIN_PRINCIPAL, then=Value(0)),
+                    default=Value(1),
+                    output_field=IntegerField(),
+                )
+            )
+            .order_by("public_role_order", "nom", "prenom")
         )
         return Response(PublicAboutTeamMemberSerializer(admins, many=True, context={"request": request}).data)
 

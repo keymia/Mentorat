@@ -199,6 +199,7 @@ export type AccountProfile = {
   statut_compte: string;
   date_creation: string;
   profile_photo_url: string | null;
+  can_appear_on_about_page: boolean;
   public_title: string;
   public_description: string;
   public_photo: string | null;
@@ -281,6 +282,7 @@ export type MentorshipPeriod = {
   start_date: string;
   end_date: string;
   required_sessions: number;
+  max_mentees_per_mentor: number;
   status: MentorshipPeriodStatus;
   assignments_count?: number;
   sessions_count?: number;
@@ -520,6 +522,50 @@ export async function apiFetch<T>(path: string, options: ApiOptions = {}): Promi
   }
 
   return payload as T;
+}
+
+function filenameFromContentDisposition(disposition: string | null, fallback: string) {
+  if (!disposition) {
+    return fallback;
+  }
+  const utf8Match = disposition.match(/filename\*=UTF-8''([^;]+)/i);
+  if (utf8Match?.[1]) {
+    return decodeURIComponent(utf8Match[1].trim());
+  }
+  const asciiMatch = disposition.match(/filename="?([^";]+)"?/i);
+  return asciiMatch?.[1]?.trim() || fallback;
+}
+
+export async function apiDownload(path: string, fallbackFilename: string): Promise<{ blob: Blob; filename: string }> {
+  const headers = new Headers();
+  const token = getBrowserToken();
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
+
+  const response = await fetch(toApiUrl(path), {
+    headers,
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    const payload = await readPayload(response);
+    if (
+      response.status === 401 &&
+      payload &&
+      typeof payload === "object" &&
+      "code" in payload &&
+      (payload as { code: unknown }).code === "token_not_valid"
+    ) {
+      clearBrowserAuth();
+    }
+    throw new ApiError(errorMessage(payload), response.status, payload);
+  }
+
+  return {
+    blob: await response.blob(),
+    filename: filenameFromContentDisposition(response.headers.get("Content-Disposition"), fallbackFilename),
+  };
 }
 
 export function formatApiError(error: unknown) {
@@ -839,7 +885,10 @@ export function getAvailableMentorshipPeriods() {
 }
 
 export function createMentorshipPeriod(
-  payload: Pick<MentorshipPeriod, "title" | "description" | "start_date" | "end_date" | "required_sessions" | "status">,
+  payload: Pick<
+    MentorshipPeriod,
+    "title" | "description" | "start_date" | "end_date" | "required_sessions" | "max_mentees_per_mentor" | "status"
+  >,
 ) {
   return apiFetch<MentorshipPeriod>("/mentorship-periods/", {
     method: "POST",
@@ -858,6 +907,10 @@ export function deleteMentorshipPeriod(id: number) {
   return apiFetch<null>(`/mentorship-periods/${id}/`, {
     method: "DELETE",
   });
+}
+
+export function exportMentorshipPeriod(id: number, format: "excel" | "csv") {
+  return apiDownload(`/admin/mentorship-periods/${id}/export/${format}/`, `periode_${id}.${format === "excel" ? "xlsx" : "csv"}`);
 }
 
 export function completeAdminSession(id: number) {

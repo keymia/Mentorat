@@ -40,22 +40,22 @@ function validateSessionForm(formData: FormData, assignment?: MentorshipAssignme
   const summary = formString(formData, "summary").trim();
 
   if (!assignment) {
-    return "Le mentore est obligatoire.";
+    return "Le mentoré est obligatoire.";
   }
   if (!sessionNumber) {
-    return "Le numero de seance est obligatoire.";
+    return "Le numéro de séance est obligatoire.";
   }
   if (!scheduledDate) {
     return "La date est obligatoire.";
   }
   if (startTime && endTime && startTime >= endTime) {
-    return "L'heure de debut doit etre avant l'heure de fin.";
+    return "L’heure de début doit être avant l’heure de fin.";
   }
   if (!summary) {
-    return "L'objet de la seance est obligatoire.";
+    return "L'objet de la séance est obligatoire.";
   }
   if (assignment.required_sessions && sessionNumber > assignment.required_sessions) {
-    return "Le numero de seance depasse le nombre de seances prevues.";
+    return "Le numéro de séance dépasse le nombre de séances prévues.";
   }
   return "";
 }
@@ -144,7 +144,7 @@ export function MentorSessionsList() {
       formElement.reset();
       setSelectedAssignmentId("");
       setIsCreateOpen(false);
-      setMessage("Seance creee.");
+      setMessage("Séance créée.");
       await loadData();
     } catch (apiError) {
       setFormError(formatApiError(apiError));
@@ -179,7 +179,7 @@ export function MentorSessionsList() {
         mentor_comment: formString(formData, "mentor_comment"),
       });
       setEditSession(null);
-      setMessage("Seance modifiee.");
+      setMessage("Séance modifiée.");
       await loadData();
     } catch (apiError) {
       setFormError(formatApiError(apiError));
@@ -204,7 +204,7 @@ export function MentorSessionsList() {
     return (
       <form onSubmit={handleCreateSubmit} className="grid gap-4 md:grid-cols-2">
         <label className="md:col-span-2">
-          Mentore
+          Mentoré
           <select
             name="assignment"
             className="field"
@@ -212,16 +212,16 @@ export function MentorSessionsList() {
             onChange={(event) => setSelectedAssignmentId(event.target.value)}
             required
           >
-            <option value="">Choisir un mentore</option>
+            <option value="">Choisir un mentoré</option>
             {assignments.map((assignment) => (
               <option key={assignment.id} value={assignment.id}>
-                {displayUser(assignment.mentoree_detail)} - {assignment.period_detail?.title ?? "Periode active"}
+                {displayUser(assignment.mentoree_detail)} - {assignment.period_detail?.title ?? "Période active"}
               </option>
             ))}
           </select>
         </label>
         <label>
-          Numero de seance
+          Numéro de séance
           <Input name="session_number" type="number" min={1} max={selectedAssignment?.required_sessions} required />
         </label>
         <label>
@@ -229,7 +229,7 @@ export function MentorSessionsList() {
           <Input name="scheduled_date" type="date" required />
         </label>
         <label>
-          Heure de debut
+          Heure de début
           <Input name="start_time" type="time" />
         </label>
         <label>
@@ -237,13 +237,13 @@ export function MentorSessionsList() {
           <Input name="end_time" type="time" />
         </label>
         <label className="md:col-span-2">
-          Objet de la seance
+          Objet de la séance
           <Textarea name="summary" required />
         </label>
         {formError ? <Alert variant="error" className="md:col-span-2">{formError}</Alert> : null}
         <Button type="submit" className="w-fit" disabled={isSaving}>
           <CalendarPlus aria-hidden="true" />
-          {isSaving ? "Creation..." : "Creer la seance"}
+          {isSaving ? "Création..." : "Créer la séance"}
         </Button>
       </form>
     );
@@ -253,7 +253,7 @@ export function MentorSessionsList() {
     return (
       <form onSubmit={handleEditSubmit} className="grid gap-4 md:grid-cols-2">
         <label>
-          Numero de seance
+          Numéro de séance
           <Input name="session_number" type="number" min={1} defaultValue={session.session_number} required />
         </label>
         <label>
@@ -261,7 +261,7 @@ export function MentorSessionsList() {
           <Input name="scheduled_date" type="date" defaultValue={session.scheduled_date} required />
         </label>
         <label>
-          Heure de debut
+          Heure de début
           <Input name="start_time" type="time" defaultValue={normalizeTime(session.start_time)} />
         </label>
         <label>
@@ -279,7 +279,7 @@ export function MentorSessionsList() {
           </select>
         </label>
         <label className="md:col-span-2">
-          Objet de la seance
+          Objet de la séance
           <Textarea name="summary" defaultValue={session.summary} required />
         </label>
         <label className="md:col-span-2">
@@ -307,12 +307,12 @@ export function MentorSessionsList() {
     <div className="grid gap-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-lg font-semibold">Liste des seances</h2>
-          <p className="text-sm text-muted-foreground">{sessions.length} seance{sessions.length > 1 ? "s" : ""} au total.</p>
+          <h2 className="text-lg font-semibold">Liste des séances</h2>
+          <p className="text-sm text-muted-foreground">{sessions.length} séance{sessions.length > 1 ? "s" : ""} au total.</p>
         </div>
         <Button type="button" onClick={openCreateModal} disabled={assignments.length === 0}>
           <CalendarPlus aria-hidden="true" />
-          Creer une seance
+          Créer une séance
         </Button>
       </div>
 
@@ -320,23 +320,23 @@ export function MentorSessionsList() {
 
       <Modal
         open={isCreateOpen}
-        title="Creer une seance"
-        description="Selectionnez le mentore puis indiquez la date, l'horaire et l'objet."
+        title="Créer une séance"
+        description="Sélectionnez le mentoré puis indiquez la date, l’horaire et l’objet."
         onClose={() => setIsCreateOpen(false)}
       >
         {renderCreateForm()}
       </Modal>
 
-      <Modal open={Boolean(editSession)} title="Modifier la seance" onClose={() => setEditSession(null)}>
+      <Modal open={Boolean(editSession)} title="Modifier la séance" onClose={() => setEditSession(null)}>
         {editSession ? renderEditForm(editSession) : null}
       </Modal>
 
-      <Modal open={Boolean(detailSession)} title="Details de la seance" onClose={() => setDetailSession(null)}>
+      <Modal open={Boolean(detailSession)} title="Détails de la séance" onClose={() => setDetailSession(null)}>
         {detailSession ? (
           <div className="grid gap-4 text-sm">
             <div className="grid gap-3 rounded-lg border border-border bg-muted/25 p-4 sm:grid-cols-2">
               <p>
-                <span className="block text-muted-foreground">Mentore</span>
+                <span className="block text-muted-foreground">Mentoré</span>
                 <span className="font-semibold">{displayUser(detailSession.mentoree_detail)}</span>
               </p>
               <p>
@@ -350,14 +350,14 @@ export function MentorSessionsList() {
               <p>
                 <span className="block text-muted-foreground">Horaire</span>
                 <span className="font-semibold">
-                  {normalizeTime(detailSession.start_time) || "Non renseigne"}
+                  {normalizeTime(detailSession.start_time) || "Non renseigné"}
                   {detailSession.end_time ? ` - ${normalizeTime(detailSession.end_time)}` : ""}
                 </span>
               </p>
             </div>
             <div>
               <p className="font-semibold">Objet</p>
-              <p className="mt-1 text-muted-foreground">{detailSession.summary || "Non renseigne"}</p>
+              <p className="mt-1 text-muted-foreground">{detailSession.summary || "Non renseigné"}</p>
             </div>
             <div>
               <p className="font-semibold">Commentaire</p>
@@ -368,15 +368,15 @@ export function MentorSessionsList() {
       </Modal>
 
       {sessions.length === 0 ? (
-        <EmptyState icon={CalendarClock} title="Aucune seance programmee." />
+        <EmptyState icon={CalendarClock} title="Aucune séance programmée." />
       ) : (
         <ListTable
-          title="Liste des seances"
-          countLabel={`${sessions.length} seance${sessions.length > 1 ? "s" : ""}`}
+          title="Liste des séances"
+          countLabel={`${sessions.length} séance${sessions.length > 1 ? "s" : ""}`}
           minWidth={1080}
           headers={[
-            { label: "Mentore" },
-            { label: "Seance" },
+            { label: "Mentoré" },
+            { label: "Séance" },
             { label: "Objet" },
             { label: "Progression" },
             { label: "Statut" },
@@ -390,21 +390,21 @@ export function MentorSessionsList() {
                 <td className="px-4 py-3">
                   <p className="font-medium text-foreground">{displayUser(session.mentoree_detail ?? assignment?.mentoree_detail)}</p>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    {session.period_detail?.title ?? assignment?.period_detail?.title ?? "Periode active"}
+                    {session.period_detail?.title ?? assignment?.period_detail?.title ?? "Période active"}
                   </p>
                 </td>
                 <td className="px-4 py-3 text-muted-foreground">
-                  <p className="font-medium text-foreground">Seance {session.session_number}</p>
+                  <p className="font-medium text-foreground">Séance {session.session_number}</p>
                   <p className="mt-1 text-xs">
-                    {formatDate(session.scheduled_date)} | {normalizeTime(session.start_time) || "Heure non renseignee"}
+                    {formatDate(session.scheduled_date)} | {normalizeTime(session.start_time) || "Heure non renseignée"}
                     {session.end_time ? ` - ${normalizeTime(session.end_time)}` : ""}
                   </p>
                 </td>
                 <td className="px-4 py-3 text-muted-foreground">
-                  <p className="line-clamp-2 max-w-sm">{session.summary || "Non renseigne"}</p>
+                  <p className="line-clamp-2 max-w-sm">{session.summary || "Non renseigné"}</p>
                 </td>
                 <td className="px-4 py-3 text-muted-foreground">
-                  {assignment?.completed_sessions_count ?? 0}/{assignment?.required_sessions ?? 0} realisees
+                  {assignment?.completed_sessions_count ?? 0}/{assignment?.required_sessions ?? 0} réalisées
                 </td>
                 <td className="px-4 py-3">
                   <Badge variant={session.status === "completed" ? "success" : "outline"}>
@@ -415,7 +415,7 @@ export function MentorSessionsList() {
                   <div className="flex flex-wrap justify-end gap-2">
                     <Button type="button" variant="outline" size="sm" onClick={() => setDetailSession(session)}>
                       <Eye aria-hidden="true" />
-                      Details
+                      Détails
                     </Button>
                     <Button type="button" variant="outline" size="sm" onClick={() => openEditModal(session)}>
                       <Pencil aria-hidden="true" />

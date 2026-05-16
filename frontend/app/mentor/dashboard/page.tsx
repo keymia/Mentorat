@@ -10,12 +10,13 @@ export default function MentorDashboardPage() {
     <div className="grid gap-6">
       <MentorPageHeader
         title="Tableau de bord"
-        description="Affectations, seances et suivis actifs."
+        description="Affectations, séances et suivis actifs."
+        helpModuleKey="mentor_dashboard"
         actions={
           <Button asChild variant="outline">
             <Link href="/mentor/parametres">
               <Settings aria-hidden="true" />
-              Parametres
+              Paramètres
             </Link>
           </Button>
         }
