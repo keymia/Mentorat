@@ -10,7 +10,7 @@ function accountTypeLabel(user: UtilisateurDetail | null) {
     return "Administrateur principal";
   }
   if (user?.role_nom === "ADMIN_OPERATIONNEL") {
-    return "Administrateur operationnel";
+    return "Administrateur opérationnel";
   }
   return "Administration";
 }

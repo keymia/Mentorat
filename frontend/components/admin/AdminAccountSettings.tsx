@@ -21,6 +21,7 @@ import {
 type Draft = {
   prenom: string;
   nom: string;
+  can_appear_on_about_page: boolean;
   public_title: string;
   public_description: string;
 };
@@ -29,13 +30,14 @@ function buildDraft(profile: AccountProfile): Draft {
   return {
     prenom: profile.prenom ?? "",
     nom: profile.nom ?? "",
+    can_appear_on_about_page: Boolean(profile.can_appear_on_about_page),
     public_title: profile.public_title ?? "",
     public_description: profile.public_description ?? "",
   };
 }
 
 function fullName(profile: AccountProfile) {
-  return `${profile.prenom ?? ""} ${profile.nom ?? ""}`.trim() || "Non renseigne";
+  return `${profile.prenom ?? ""} ${profile.nom ?? ""}`.trim() || "Non renseigné";
 }
 
 function accountType(profile: AccountProfile) {
@@ -46,7 +48,7 @@ function accountType(profile: AccountProfile) {
     return "Administrateur principal";
   }
   if (profile.role_nom === "ADMIN_OPERATIONNEL") {
-    return "Administrateur operationnel";
+    return "Administrateur opérationnel";
   }
   return "Administration";
 }
@@ -59,17 +61,23 @@ function publicStatusLabel(profile: AccountProfile | null) {
     return "En attente";
   }
   if (profile.is_public_profile_approved) {
-    return "Valide";
+    return "Validé";
   }
   if (profile.public_profile_status === "REFUSE") {
-    return "Refuse";
+    return "Refusé";
   }
   return "Non soumis";
 }
 
 export function AdminAccountSettings() {
   const [profile, setProfile] = useState<AccountProfile | null>(null);
-  const [draft, setDraft] = useState<Draft>({ prenom: "", nom: "", public_title: "", public_description: "" });
+  const [draft, setDraft] = useState<Draft>({
+    prenom: "",
+    nom: "",
+    can_appear_on_about_page: false,
+    public_title: "",
+    public_description: "",
+  });
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [passwordError, setPasswordError] = useState("");
@@ -81,6 +89,7 @@ export function AdminAccountSettings() {
   const [isUpdateOpen, setIsUpdateOpen] = useState(false);
 
   const isOperationalAdmin = profile?.role_nom === "ADMIN_OPERATIONNEL";
+  const canEditPublicProfile = profile?.role_nom === "ADMIN_PRINCIPAL" || isOperationalAdmin;
   const photoUrl = profile?.public_photo_url || profile?.profile_photo_url || "";
 
   useEffect(() => {
@@ -134,7 +143,8 @@ export function AdminAccountSettings() {
     formData.append("prenom", draft.prenom);
     formData.append("nom", draft.nom);
 
-    if (isOperationalAdmin) {
+    if (canEditPublicProfile) {
+      formData.append("can_appear_on_about_page", String(draft.can_appear_on_about_page));
       formData.append("public_title", draft.public_title);
       formData.append("public_description", draft.public_description);
       const photo = new FormData(form).get("public_photo");
@@ -149,8 +159,8 @@ export function AdminAccountSettings() {
       setDraft(buildDraft(updated));
       setMessage(
         isOperationalAdmin
-          ? "Informations enregistrees. Les informations publiques modifiees sont en attente de validation."
-          : "Informations personnelles mises a jour.",
+          ? "Informations enregistrées. Les informations publiques modifiées sont en attente de validation."
+          : "Informations personnelles et profil public mis à jour.",
       );
       setIsUpdateOpen(false);
       form.reset();
@@ -174,7 +184,7 @@ export function AdminAccountSettings() {
         String(formData.get("ancien_mot_de_passe") ?? ""),
         String(formData.get("mot_de_passe") ?? ""),
       );
-      setPasswordMessage("Mot de passe mis a jour.");
+      setPasswordMessage("Mot de passe mis à jour.");
       form.reset();
     } catch (apiError) {
       setPasswordError(formatApiError(apiError));
@@ -196,7 +206,7 @@ export function AdminAccountSettings() {
       <div>
         <h1 className="font-display text-3xl font-bold">Mon compte</h1>
         <p className="mt-2 text-sm leading-6 text-muted-foreground">
-          Consultez et mettez a jour uniquement les informations personnelles autorisees.
+          Consultez et mettez à jour uniquement les informations personnelles autorisées.
         </p>
       </div>
 
@@ -226,11 +236,11 @@ export function AdminAccountSettings() {
             <div className="flex flex-wrap justify-end gap-2">
               <Button type="button" variant="ghost" size="sm" onClick={() => setIsDetailsOpen(true)}>
                 <Eye aria-hidden="true" />
-                Detail
+                Détail
               </Button>
               <Button type="button" variant="outline" size="sm" onClick={openUpdateModal}>
                 <Pencil aria-hidden="true" />
-                Mettre a jour
+                Mettre à jour
               </Button>
             </div>
           </td>
@@ -239,8 +249,8 @@ export function AdminAccountSettings() {
 
       <Modal
         open={isDetailsOpen}
-        title="Detail du compte"
-        description="Informations completes visibles pour votre compte."
+        title="Détail du compte"
+        description="Informations complètes visibles pour votre compte."
         className="max-w-3xl"
         onClose={() => setIsDetailsOpen(false)}
       >
@@ -256,15 +266,18 @@ export function AdminAccountSettings() {
             />
           ) : null}
           <div className="grid gap-3 rounded-lg border border-border bg-muted/30 p-4 md:grid-cols-2">
-            <DetailItem label="Prenom" value={profile.prenom || "Non renseigne"} />
-            <DetailItem label="Nom" value={profile.nom || "Non renseigne"} />
+            <DetailItem label="Prénom" value={profile.prenom || "Non renseigné"} />
+            <DetailItem label="Nom" value={profile.nom || "Non renseigné"} />
             <DetailItem label="Email" value={profile.email} />
             <DetailItem label="Type de compte" value={accountType(profile)} />
-            <DetailItem label="Statut du compte" value={profile.statut_compte || "Non renseigne"} />
+            <DetailItem label="Statut du compte" value={profile.statut_compte || "Non renseigné"} />
             <DetailItem
-              label="Date de creation"
-              value={profile.date_creation ? new Date(profile.date_creation).toLocaleDateString("fr-CA") : "Non renseignee"}
+              label="Date de création"
+              value={profile.date_creation ? new Date(profile.date_creation).toLocaleDateString("fr-CA") : "Non renseignée"}
             />
+            {canEditPublicProfile ? (
+              <DetailItem label="Affichage À propos" value={profile.can_appear_on_about_page ? "Visible" : "Masqué"} />
+            ) : null}
             {profile.public_title ? <DetailItem label="Titre public" value={profile.public_title} /> : null}
             {profile.public_description ? (
               <DetailItem label="Description publique" value={profile.public_description} className="md:col-span-2" />
@@ -278,15 +291,15 @@ export function AdminAccountSettings() {
 
       <Modal
         open={isUpdateOpen}
-        title="Mettre a jour le compte"
-        description="Seules les informations personnelles autorisees sont modifiables."
+        title="Mettre à jour le compte"
+        description="Seules les informations personnelles autorisées sont modifiables."
         className="max-w-4xl"
         onClose={() => setIsUpdateOpen(false)}
       >
         <div className="grid gap-5">
           <form onSubmit={handleProfileSubmit} className="grid gap-4 md:grid-cols-2">
             <label>
-              Prenom
+              Prénom
               <input
                 className="field"
                 required
@@ -303,16 +316,30 @@ export function AdminAccountSettings() {
                 onChange={(event) => setDraft({ ...draft, nom: event.target.value })}
               />
             </label>
-            {isOperationalAdmin ? (
+            {canEditPublicProfile ? (
               <>
                 <label>
-                  Photo de profil publique
+                  Afficher sur la page À propos
+                  <select
+                    className="field"
+                    value={draft.can_appear_on_about_page ? "true" : "false"}
+                    onChange={(event) =>
+                      setDraft({ ...draft, can_appear_on_about_page: event.target.value === "true" })
+                    }
+                  >
+                    <option value="false">Non</option>
+                    <option value="true">Oui</option>
+                  </select>
+                </label>
+                <label>
+                  Photo publique
                   <input name="public_photo" className="field" type="file" accept="image/*" />
                 </label>
                 <label>
                   Titre public
                   <input
                     className="field"
+                    required={draft.can_appear_on_about_page}
                     value={draft.public_title}
                     onChange={(event) => setDraft({ ...draft, public_title: event.target.value })}
                   />
@@ -349,7 +376,7 @@ export function AdminAccountSettings() {
             </label>
             <div className="md:col-span-2">
               <Button type="submit" variant="outline" disabled={isPasswordSaving}>
-                {isPasswordSaving ? "Mise a jour..." : "Mettre a jour le mot de passe"}
+                {isPasswordSaving ? "Mise à jour..." : "Mettre à jour le mot de passe"}
               </Button>
             </div>
           </form>

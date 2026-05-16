@@ -3,9 +3,9 @@ import Link from "next/link";
 import { BrandMark } from "@/components/layout/BrandMark";
 
 const footerLinks = [
-  { href: "/equipes", label: "Equipes" },
+  { href: "/equipes", label: "Équipes" },
   { href: "/inscriptions", label: "Inscriptions" },
-  { href: "/evenements", label: "Evenements" },
+  { href: "/evenements", label: "Événements" },
   { href: "/partenaires", label: "Partenaires" },
   { href: "/contact", label: "Contact" },
 ];
@@ -17,7 +17,7 @@ export function SiteFooter() {
         <div className="max-w-xl">
           <BrandMark href="/" />
           <p className="mt-4 text-sm leading-6 text-muted-foreground">
-            Une plateforme de mentorat academique inspiree par l&apos;excellence, le soutien et la communaute.
+            Une plateforme de mentorat académique inspirée par l&apos;excellence, le soutien et la communauté.
           </p>
         </div>
         <nav className="flex flex-wrap gap-x-5 gap-y-2 text-sm font-medium text-muted-foreground">

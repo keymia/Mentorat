@@ -1,4 +1,5 @@
 from django.db import transaction
+from django.http import HttpResponse
 from django.db.models import Count, Exists, OuterRef, Q
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -15,7 +16,15 @@ from apps.mentorat.models import (
     Mentorat,
     MentorshipAssignment,
     MentorshipPeriod,
+    MentorshipPeriodExportLog,
     MentorshipSession,
+)
+from apps.mentorat.exports import (
+    CSV_CONTENT_TYPE,
+    EXCEL_CONTENT_TYPE,
+    build_csv_export,
+    build_excel_export,
+    get_export_filename,
 )
 from apps.mentorat.permissions import IsMentorUser
 from apps.mentorat.serializers import (
@@ -397,6 +406,42 @@ class AdminMentorshipReportsView(APIView):
                 "results": rows,
             }
         )
+
+
+class AdminMentorshipPeriodExportExcelView(APIView):
+    permission_classes = [IsAdminPrincipal]
+
+    def get(self, request, pk: int):
+        period = get_object_or_404(MentorshipPeriod, pk=pk)
+        filename = get_export_filename(period, "xlsx")
+        payload = build_excel_export(period)
+        MentorshipPeriodExportLog.objects.create(
+            period=period,
+            exported_by=request.user,
+            format=MentorshipPeriodExportLog.Format.EXCEL,
+            file_name=filename,
+        )
+        response = HttpResponse(payload, content_type=EXCEL_CONTENT_TYPE)
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        return response
+
+
+class AdminMentorshipPeriodExportCsvView(APIView):
+    permission_classes = [IsAdminPrincipal]
+
+    def get(self, request, pk: int):
+        period = get_object_or_404(MentorshipPeriod, pk=pk)
+        filename = get_export_filename(period, "csv")
+        payload = build_csv_export(period)
+        MentorshipPeriodExportLog.objects.create(
+            period=period,
+            exported_by=request.user,
+            format=MentorshipPeriodExportLog.Format.CSV,
+            file_name=filename,
+        )
+        response = HttpResponse(payload, content_type=CSV_CONTENT_TYPE)
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        return response
 
 
 class AdminMatchingView(APIView):

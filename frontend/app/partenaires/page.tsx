@@ -23,14 +23,14 @@ export default async function PartenairesPage() {
       <PageHeader
         eyebrow="Partenaires"
         title="Partenaires actifs"
-        description="Seuls les partenaires actifs sont affiches sur le site public."
+        description="Seuls les partenaires actifs sont affichés sur le site public."
       />
       <main className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
         {partenaires.length === 0 ? (
           <EmptyState
             icon={Handshake}
             title="Aucun partenaire actif"
-            description="Aucun partenaire actif a afficher pour le moment."
+            description="Aucun partenaire actif à afficher pour le moment."
           />
         ) : (
           <div className="grid gap-4 md:grid-cols-3">

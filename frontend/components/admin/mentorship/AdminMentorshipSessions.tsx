@@ -3,6 +3,7 @@
 import { CalendarClock, Eye } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import { HelpIconButton } from "@/components/help/HelpIconButton";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -90,9 +91,12 @@ export function AdminMentorshipSessions({
     <div className="grid gap-5">
       {showHeader ? (
         <div>
-          <h1 className="font-display text-3xl font-bold">Seances de mentorat</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="font-display text-3xl font-bold">Séances de mentorat</h1>
+            <HelpIconButton moduleKey="sessions" scope="admin" />
+          </div>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            Consultez les seances programmees, realisees, reportees ou annulees.
+            Consultez les séances programmées, réalisées, reportées ou annulées.
           </p>
         </div>
       ) : null}
@@ -103,7 +107,7 @@ export function AdminMentorshipSessions({
       <Card>
         <CardContent className="grid gap-4 p-5 md:grid-cols-2 xl:grid-cols-4">
           <label>
-            Periode
+            Période
             <select className="field" value={localFilters.period} onChange={(event) => setLocalFilters({ ...localFilters, period: event.target.value })}>
               <option value="">Toutes</option>
               {periods.map((period) => (
@@ -125,7 +129,7 @@ export function AdminMentorshipSessions({
             </select>
           </label>
           <label>
-            Mentore
+            Mentoré
             <select className="field" value={localFilters.mentoree} onChange={(event) => setLocalFilters({ ...localFilters, mentoree: event.target.value })}>
               <option value="">Tous</option>
               {mentees.map((mentee) => (
@@ -154,27 +158,27 @@ export function AdminMentorshipSessions({
 
       {!isLoading ? (
         <ListTable
-          title="Liste des seances"
-          countLabel={`${sessions.length} seance${sessions.length > 1 ? "s" : ""}`}
+          title="Liste des séances"
+          countLabel={`${sessions.length} séance${sessions.length > 1 ? "s" : ""}`}
           minWidth={1080}
           headers={[
-            { label: "Numero" },
+            { label: "Numéro" },
             { label: "Date" },
             { label: "Heure" },
             { label: "Mentor" },
-            { label: "Mentore" },
+            { label: "Mentoré" },
             { label: "Objet" },
             { label: "Statut" },
             { label: "Actions", className: "text-right" },
           ]}
-          emptyState={sessions.length === 0 ? <EmptyState icon={CalendarClock} title="Aucune seance a afficher." /> : null}
+          emptyState={sessions.length === 0 ? <EmptyState icon={CalendarClock} title="Aucune séance à afficher." /> : null}
         >
           {sessions.map((session) => (
             <tr key={session.id} className="align-top">
               <td className="px-4 py-3">
                 <div className="flex items-center gap-2">
                   <CalendarClock className="size-4 text-muted-foreground" aria-hidden="true" />
-                  <p className="font-medium text-foreground">Seance {session.session_number}</p>
+                  <p className="font-medium text-foreground">Séance {session.session_number}</p>
                 </div>
               </td>
               <td className="px-4 py-3 text-muted-foreground">{formatDate(session.scheduled_date)}</td>
@@ -185,7 +189,7 @@ export function AdminMentorshipSessions({
               <td className="px-4 py-3 text-muted-foreground">{displayUser(session.mentor_detail)}</td>
               <td className="px-4 py-3 text-muted-foreground">{displayUser(session.mentoree_detail)}</td>
               <td className="px-4 py-3 text-muted-foreground">
-                <p className="line-clamp-1 max-w-xs">{session.summary || "Non renseigne"}</p>
+                <p className="line-clamp-1 max-w-xs">{session.summary || "Non renseigné"}</p>
               </td>
               <td className="px-4 py-3">
                 <Badge variant={session.status === "completed" ? "success" : "outline"}>
@@ -195,7 +199,7 @@ export function AdminMentorshipSessions({
               <td className="px-4 py-3 text-right">
                 <Button type="button" variant="ghost" size="sm" onClick={() => setDetailsSession(session)}>
                   <Eye aria-hidden="true" />
-                  Details
+                  Détails
                 </Button>
               </td>
             </tr>
@@ -205,14 +209,14 @@ export function AdminMentorshipSessions({
 
       <Modal
         open={Boolean(detailsSession)}
-        title="Details de la seance"
-        description="Informations completes de la seance selectionnee."
+        title="Détails de la séance"
+        description="Informations complètes de la séance sélectionnée."
         className="max-w-3xl"
         onClose={() => setDetailsSession(null)}
       >
         {detailsSession ? (
           <div className="grid gap-3 rounded-lg border border-border bg-muted/30 p-4 md:grid-cols-2">
-            <DetailItem label="Numero" value={`Seance ${detailsSession.session_number}`} />
+            <DetailItem label="Numéro" value={`Séance ${detailsSession.session_number}`} />
             <DetailItem label="Statut" value={sessionStatusLabels[detailsSession.status]} />
             <DetailItem label="Date" value={formatDate(detailsSession.scheduled_date)} />
             <DetailItem
@@ -220,9 +224,9 @@ export function AdminMentorshipSessions({
               value={`${normalizeTime(detailsSession.start_time)}${detailsSession.end_time ? ` - ${normalizeTime(detailsSession.end_time)}` : ""}`}
             />
             <DetailItem label="Mentor" value={displayUser(detailsSession.mentor_detail)} />
-            <DetailItem label="Mentore" value={displayUser(detailsSession.mentoree_detail)} />
-            <DetailItem label="Objet" value={detailsSession.summary || "Non renseigne"} className="md:col-span-2" />
-            <DetailItem label="Commentaire mentor" value={detailsSession.mentor_comment || "Non renseigne"} className="md:col-span-2" />
+            <DetailItem label="Mentoré" value={displayUser(detailsSession.mentoree_detail)} />
+            <DetailItem label="Objet" value={detailsSession.summary || "Non renseigné"} className="md:col-span-2" />
+            <DetailItem label="Commentaire mentor" value={detailsSession.mentor_comment || "Non renseigné"} className="md:col-span-2" />
           </div>
         ) : null}
       </Modal>

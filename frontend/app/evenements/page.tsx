@@ -9,7 +9,7 @@ import { Evenement, getPublicEvenements } from "@/lib/api";
 import Image from "next/image";
 
 function formatDateTime(evenement: Evenement) {
-  return `${evenement.date_evenement} a ${evenement.heure_evenement?.slice(0, 5) ?? ""}`;
+  return `${evenement.date_evenement} à ${evenement.heure_evenement?.slice(0, 5) ?? ""}`;
 }
 
 function googleMapsUrl(address: string) {
@@ -28,15 +28,15 @@ export default async function EvenementsPage() {
     <div className="min-h-screen bg-background">
       <SiteHeader />
       <PageHeader
-        eyebrow="Evenements"
-        title="Evenements du programme"
-        description="Cette page publique est prete a recevoir les ateliers, conferences et activites de reseautage exposes par l'API."
+        eyebrow="Événements"
+        title="Événements du programme"
+        description="Cette page publique est prête à présenter les ateliers, conférences et activités de réseautage publiés par l’API."
       />
       <main className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
         {evenements.length === 0 ? (
           <EmptyState
             icon={CalendarDays}
-            title="Aucun evenement planifie"
+            title="Aucun événement planifié"
             description="Les evenements seront listes ici lorsque l'administration les publiera avec le statut PLANIFIE."
           />
         ) : (
@@ -75,7 +75,7 @@ export default async function EvenementsPage() {
                         {evenement.lieu}
                       </a>
                     ) : (
-                      <p className="mt-1 text-sm text-muted-foreground">Lieu a confirmer</p>
+                      <p className="mt-1 text-sm text-muted-foreground">Lieu à confirmer</p>
                     )}
                   </div>
                   <p className="leading-7 text-muted-foreground">

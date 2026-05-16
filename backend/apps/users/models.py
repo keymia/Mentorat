@@ -261,16 +261,30 @@ class Utilisateur(AbstractBaseUser, PermissionsMixin):
     def niveau_autorise_pour_mentore(niveau: NiveauAcademique | None) -> bool:
         return bool(niveau and niveau.ordre_niveau in MENTOREE_ACADEMIC_LEVEL_ORDERS)
 
-    def capacite_effective(self) -> int:
-        from apps.parametres.models import ParametreSysteme
+    def capacite_effective(self, period=None) -> int:
+        if period is not None and getattr(period, "max_mentees_per_mentor", None):
+            limite_systeme = max(int(period.max_mentees_per_mentor), 1)
+        else:
+            from apps.parametres.models import ParametreSysteme
 
-        limite_systeme = ParametreSysteme.get_int("MAX_MENTORES_PAR_MENTOR", 5)
-        return min(self.capacite_mentorat, limite_systeme)
+            limite_systeme = ParametreSysteme.get_int("MAX_MENTORES_PAR_MENTOR", 5)
+        capacite_personnelle = self.capacite_mentorat or limite_systeme
+        return min(capacite_personnelle, limite_systeme)
 
-    def capacite_restante(self) -> int:
+    def capacite_restante(self, period=None) -> int:
         if not self.est_mentor:
             return 0
-        return max(self.capacite_effective() - self.nombre_mentores_actuels, 0)
+        if period is not None:
+            from apps.mentorat.models import MentorshipAssignment
+
+            active_count = MentorshipAssignment.objects.filter(
+                mentor=self,
+                period=period,
+                status=MentorshipAssignment.Status.ACTIVE,
+            ).count()
+        else:
+            active_count = self.nombre_mentores_actuels
+        return max(self.capacite_effective(period) - active_count, 0)
 
     def clean(self):
         super().clean()
@@ -299,28 +313,24 @@ class Utilisateur(AbstractBaseUser, PermissionsMixin):
         if self.profil_inclut_mentor(self.profil_mentorat) and not self.niveau_autorise_pour_mentor(
             self.niveau_academique
         ):
-            raise ValidationError(
-                {"niveau_academique": "Ce niveau academique n'est pas autorise pour un mentor."}
+            message = (
+                "Impossible de rendre mentor une personne au secondaire."
+                if self.niveau_academique.est_premier_niveau or self.niveau_academique.ordre_niveau == 1
+                else "Ce niveau academique n'est pas autorise pour un mentor."
             )
-        if self.profil_inclut_mentor(self.profil_mentorat):
-            from apps.parametres.models import ParametreSysteme
-
-            limite_systeme = ParametreSysteme.get_int("MAX_MENTORES_PAR_MENTOR", 5)
-            if self.capacite_mentorat > limite_systeme:
-                raise ValidationError(
-                    {
-                        "capacite_mentorat": (
-                            f"La capacite ne peut pas depasser le maximum autorise de "
-                            f"{limite_systeme} mentores."
-                        )
-                    }
-                )
-
+            raise ValidationError(
+                {"niveau_academique": message}
+            )
         if self.profil_inclut_mentore(self.profil_mentorat) and not self.niveau_autorise_pour_mentore(
             self.niveau_academique
         ):
+            message = (
+                "Impossible de rendre mentore une personne en medecine."
+                if self.niveau_academique.est_dernier_niveau or self.niveau_academique.ordre_niveau == 4
+                else "Ce niveau academique n'est pas autorise pour un mentore."
+            )
             raise ValidationError(
-                {"niveau_academique": "Ce niveau academique n'est pas autorise pour un mentore."}
+                {"niveau_academique": message}
             )
 
         if self.wants_to_appear_on_team_page:

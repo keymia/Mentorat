@@ -3,7 +3,6 @@ import re
 from django.contrib.auth import authenticate
 from rest_framework import serializers
 
-from apps.parametres.models import ParametreSysteme
 from apps.users.models import LoginVerificationCode, NiveauAcademique, Role, Utilisateur
 
 PHONE_PATTERN = re.compile(r"^[0-9+()\s-]*$")
@@ -27,12 +26,22 @@ def validate_level_for_profile(niveau: NiveauAcademique | None, profil: str | No
     if not niveau or not profil:
         return
     if Utilisateur.profil_inclut_mentor(profil) and not Utilisateur.niveau_autorise_pour_mentor(niveau):
+        message = (
+            "Impossible de rendre mentor une personne au secondaire."
+            if niveau.est_premier_niveau or niveau.ordre_niveau == 1
+            else "Ce niveau academique n'est pas autorise pour un mentor."
+        )
         raise serializers.ValidationError(
-            {"niveau_academique": "Ce niveau academique n'est pas autorise pour un mentor."}
+            {"niveau_academique": message}
         )
     if Utilisateur.profil_inclut_mentore(profil) and not Utilisateur.niveau_autorise_pour_mentore(niveau):
+        message = (
+            "Impossible de rendre mentore une personne en medecine."
+            if niveau.est_dernier_niveau or niveau.ordre_niveau == 4
+            else "Ce niveau academique n'est pas autorise pour un mentore."
+        )
         raise serializers.ValidationError(
-            {"niveau_academique": "Ce niveau academique n'est pas autorise pour un mentore."}
+            {"niveau_academique": message}
         )
 
 
@@ -188,19 +197,11 @@ class UtilisateurSerializer(serializers.ModelSerializer):
                 {"team_display_order": "L'ordre d'affichage doit etre superieur a 0."}
             )
         if Utilisateur.profil_inclut_mentor(profil):
-            limite_systeme = ParametreSysteme.get_int("MAX_MENTORES_PAR_MENTOR", 5)
             if not self.instance and "capacite_mentorat" not in attrs:
-                attrs["capacite_mentorat"] = limite_systeme
+                attrs["capacite_mentorat"] = 5
             capacite = attrs.get("capacite_mentorat", getattr(self.instance, "capacite_mentorat", 0))
-            if capacite > limite_systeme:
-                raise serializers.ValidationError(
-                    {
-                        "capacite_mentorat": (
-                            f"La capacite ne peut pas depasser le maximum autorise de "
-                            f"{limite_systeme} mentores."
-                        )
-                    }
-                )
+            if capacite <= 0:
+                attrs["capacite_mentorat"] = 5
         return attrs
 
     def create(self, validated_data):
@@ -294,6 +295,14 @@ class MentorDisponibleSerializer(UtilisateurLiteSerializer):
         fields = UtilisateurLiteSerializer.Meta.fields + ["disponibilite", "objectifs"]
 
     def get_capacite_restante(self, obj: Utilisateur) -> int:
+        request = self.context.get("request")
+        period_id = request.query_params.get("period_id") if request else None
+        if period_id:
+            from apps.mentorat.models import MentorshipPeriod
+
+            period = MentorshipPeriod.objects.filter(pk=period_id).first()
+            if period:
+                return obj.capacite_restante(period)
         return obj.capacite_restante()
 
 
@@ -646,6 +655,7 @@ class AdminOwnAccountSerializer(serializers.ModelSerializer):
             "statut_compte",
             "date_creation",
             "profile_photo_url",
+            "can_appear_on_about_page",
             "public_title",
             "public_description",
             "public_photo",
@@ -676,16 +686,46 @@ class AdminOwnAccountSerializer(serializers.ModelSerializer):
     def get_public_photo_url(self, obj: Utilisateur) -> str | None:
         return file_url(obj, "public_photo", self.context.get("request"))
 
+    def validate(self, attrs):
+        wants_public = attrs.get(
+            "can_appear_on_about_page",
+            getattr(self.instance, "can_appear_on_about_page", False),
+        )
+        public_title = attrs.get("public_title", getattr(self.instance, "public_title", ""))
+        if wants_public and not public_title.strip():
+            raise serializers.ValidationError(
+                {"public_title": "Le titre public est obligatoire pour apparaitre sur la page A propos."}
+            )
+        return attrs
+
     def update(self, instance, validated_data):
         review_fields = {"prenom", "nom", "public_title", "public_description", "public_photo"}
+        visibility_changed = "can_appear_on_about_page" in validated_data
         public_info_changed = False
         for field, value in validated_data.items():
             if field in review_fields and (field == "public_photo" or getattr(instance, field) != value):
                 public_info_changed = True
             setattr(instance, field, value)
 
-        if instance.est_admin_operationnel and public_info_changed:
-            instance.mark_public_profile_pending()
+        if visibility_changed or public_info_changed:
+            if instance.est_admin_principal:
+                if instance.can_appear_on_about_page:
+                    instance.approve_public_profile()
+                else:
+                    instance.pending_public_validation = False
+                    instance.is_public_profile_approved = False
+                    instance.public_profile_status = Utilisateur.StatutProfilPublic.NON_SOUMIS
+            elif instance.est_admin_operationnel:
+                if visibility_changed and not instance.can_appear_on_about_page:
+                    instance.pending_public_validation = False
+                    instance.is_public_profile_approved = False
+                    instance.public_profile_status = Utilisateur.StatutProfilPublic.NON_SOUMIS
+                elif public_info_changed or instance.can_appear_on_about_page:
+                    instance.mark_public_profile_pending()
+                else:
+                    instance.pending_public_validation = False
+                    instance.is_public_profile_approved = False
+                    instance.public_profile_status = Utilisateur.StatutProfilPublic.NON_SOUMIS
 
         instance.save()
         return instance

@@ -28,15 +28,15 @@ const options = [
     type: "mentor" as const,
     icon: HeartHandshake,
     title: "Formulaire mentor",
-    text: "Pour les etudiants admissibles qui souhaitent accompagner.",
+    text: "Pour les étudiants admissibles qui souhaitent accompagner.",
     action: "Ouvrir le formulaire mentor",
   },
   {
     type: "mentore" as const,
     icon: GraduationCap,
-    title: "Formulaire mentore",
-    text: "Pour choisir un mentor du niveau academique superieur direct.",
-    action: "Ouvrir le formulaire mentore",
+    title: "Formulaire mentoré",
+    text: "Pour choisir un mentor du niveau académique supérieur direct.",
+    action: "Ouvrir le formulaire mentoré",
   },
 ];
 
@@ -104,7 +104,7 @@ export function InscriptionModalOptions({ variant = "cards" }: InscriptionModalO
       <Modal
         open={activeForm === "mentor"}
         title="Inscription mentor"
-        description="Indiquez votre niveau academique et vos informations de profil."
+        description="Indiquez votre niveau académique et vos informations de profil."
         className="max-w-4xl"
         onClose={closeForm}
       >
@@ -113,7 +113,7 @@ export function InscriptionModalOptions({ variant = "cards" }: InscriptionModalO
 
       <Modal
         open={activeForm === "mentore"}
-        title="Inscription mentore"
+        title="Inscription mentoré"
         description="Choisissez la periode, votre niveau et un mentor disponible."
         className="max-w-4xl"
         onClose={closeForm}

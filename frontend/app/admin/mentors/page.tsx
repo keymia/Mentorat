@@ -6,13 +6,14 @@ export default function AdminMentorsPage() {
     <AdminShell>
       <AdminUsersList
         title="Gestion mentors"
-        description="Liste lisible des mentors et des profils mentor et mentore."
+        description="Liste lisible des mentors et des profils mentor et mentoré."
         endpoint="/mentors/"
-        emptyMessage="Aucun mentor a afficher pour le moment."
+        emptyMessage="Aucun mentor à afficher pour le moment."
         defaultRoleName="MENTOR"
         defaultProfile="MENTOR"
         profileOptions={["MENTOR", "MENTOR_ET_MENTORE"]}
-        createButtonLabel="Creer un mentor"
+        createButtonLabel="Créer un mentor"
+        helpModuleKey="mentors"
       />
     </AdminShell>
   );

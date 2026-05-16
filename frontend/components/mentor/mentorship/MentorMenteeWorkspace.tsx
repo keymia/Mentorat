@@ -36,7 +36,7 @@ function nullableTime(value: string) {
 
 function displayName(user: MentorMenteeDetail["mentee"]) {
   const name = `${user.prenom ?? ""} ${user.nom ?? ""}`.trim();
-  return name || "Mentore non renseigne";
+  return name || "Mentoré non renseigné";
 }
 
 export function MentorMenteeWorkspace({ menteeId }: { menteeId: number }) {
@@ -103,7 +103,7 @@ export function MentorMenteeWorkspace({ menteeId }: { menteeId: number }) {
       });
       formElement.reset();
       setIsCreateSessionOpen(false);
-      setMessage("Seance programmee.");
+      setMessage("Séance programmée.");
       await loadDetail();
     } catch (apiError) {
       setError(formatApiError(apiError));
@@ -148,7 +148,7 @@ export function MentorMenteeWorkspace({ menteeId }: { menteeId: number }) {
           <Input name="scheduled_date" type="date" required />
         </label>
         <label>
-          Debut
+          Début
           <Input name="start_time" type="time" />
         </label>
         <label>
@@ -156,7 +156,7 @@ export function MentorMenteeWorkspace({ menteeId }: { menteeId: number }) {
           <Input name="end_time" type="time" />
         </label>
         <label className="md:col-span-2">
-          Resume
+          Résumé
           <Textarea name="summary" />
         </label>
         <label className="md:col-span-2">
@@ -165,7 +165,7 @@ export function MentorMenteeWorkspace({ menteeId }: { menteeId: number }) {
         </label>
         <Button type="submit" className="w-fit">
           <CalendarPlus aria-hidden="true" />
-          Creer la seance
+          Créer la séance
         </Button>
       </form>
     );
@@ -186,8 +186,8 @@ export function MentorMenteeWorkspace({ menteeId }: { menteeId: number }) {
 
       <Modal
         open={isCreateSessionOpen}
-        title="Creer une seance"
-        description="Planifiez la date, l'horaire et les premiers commentaires de suivi."
+        title="Créer une séance"
+        description="Planifiez la date, l’horaire et les premiers commentaires de suivi."
         onClose={closeCreateSessionModal}
       >
         {renderCreateSessionForm()}
@@ -195,15 +195,15 @@ export function MentorMenteeWorkspace({ menteeId }: { menteeId: number }) {
 
       <Modal
         open={Boolean(selectedFollowUpSession)}
-        title={selectedFollowUpSession ? `Suivi - Seance ${selectedFollowUpSession.session_number}` : "Suivi de seance"}
-        description="Informations de la seance et details du suivi lorsque la rencontre est realisee."
+        title={selectedFollowUpSession ? `Suivi - Séance ${selectedFollowUpSession.session_number}` : "Suivi de séance"}
+        description="Informations de la séance et détails du suivi lorsque la rencontre est réalisée."
         onClose={() => setSelectedFollowUpSession(null)}
       >
         {selectedFollowUpSession ? (
           <div className="grid gap-5">
             <div className="grid gap-3 rounded-lg border border-border bg-muted/25 p-4 text-sm md:grid-cols-2">
               <p>
-                <span className="block text-muted-foreground">Statut de la seance</span>
+                <span className="block text-muted-foreground">Statut de la séance</span>
                 <span className="font-semibold text-foreground">{sessionStatusLabels[selectedFollowUpSession.status]}</span>
               </p>
               <p>
@@ -211,20 +211,20 @@ export function MentorMenteeWorkspace({ menteeId }: { menteeId: number }) {
                 <span className="font-semibold text-foreground">{formatDate(selectedFollowUpSession.scheduled_date)}</span>
               </p>
               <p>
-                <span className="block text-muted-foreground">Heure de debut</span>
+                <span className="block text-muted-foreground">Heure de début</span>
                 <span className="font-semibold text-foreground">
-                  {normalizeTime(selectedFollowUpSession.start_time) || "Non renseignee"}
+                  {normalizeTime(selectedFollowUpSession.start_time) || "Non renseignée"}
                 </span>
               </p>
               <p>
                 <span className="block text-muted-foreground">Heure de fin</span>
                 <span className="font-semibold text-foreground">
-                  {normalizeTime(selectedFollowUpSession.end_time) || "Non renseignee"}
+                  {normalizeTime(selectedFollowUpSession.end_time) || "Non renseignée"}
                 </span>
               </p>
               <p className="md:col-span-2">
-                <span className="block text-muted-foreground">Resume de seance</span>
-                <span className="font-semibold text-foreground">{selectedFollowUpSession.summary || "Non renseigne"}</span>
+                <span className="block text-muted-foreground">Résumé de séance</span>
+                <span className="font-semibold text-foreground">{selectedFollowUpSession.summary || "Non renseigné"}</span>
               </p>
               <p className="md:col-span-2">
                 <span className="block text-muted-foreground">Commentaires du mentor</span>
@@ -235,7 +235,7 @@ export function MentorMenteeWorkspace({ menteeId }: { menteeId: number }) {
             {selectedFollowUpSession.status === "completed" ? (
               <div className="grid gap-3 rounded-lg border border-border bg-card p-4 text-sm md:grid-cols-2">
                 <p>
-                  <span className="block text-muted-foreground">Appreciation</span>
+                  <span className="block text-muted-foreground">Appréciation</span>
                   <span className="font-semibold text-foreground">{progressStatusLabels[progressStatus]}</span>
                 </p>
                 <p>
@@ -244,24 +244,24 @@ export function MentorMenteeWorkspace({ menteeId }: { menteeId: number }) {
                 </p>
                 <p className="md:col-span-2">
                   <span className="block text-muted-foreground">Observations</span>
-                  <span className="font-semibold text-foreground">{progress?.achievements || "Non renseignees"}</span>
+                  <span className="font-semibold text-foreground">{progress?.achievements || "Non renseignées"}</span>
                 </p>
                 <p className="md:col-span-2">
-                  <span className="block text-muted-foreground">Difficultes</span>
-                  <span className="font-semibold text-foreground">{progress?.difficulties || "Non renseignees"}</span>
+                  <span className="block text-muted-foreground">Difficultés</span>
+                  <span className="font-semibold text-foreground">{progress?.difficulties || "Non renseignées"}</span>
                 </p>
                 <p className="md:col-span-2">
                   <span className="block text-muted-foreground">Recommandations</span>
-                  <span className="font-semibold text-foreground">{progress?.recommendations || "Non renseignees"}</span>
+                  <span className="font-semibold text-foreground">{progress?.recommendations || "Non renseignées"}</span>
                 </p>
                 <p className="md:col-span-2">
-                  <span className="block text-muted-foreground">Avis general</span>
-                  <span className="font-semibold text-foreground">{progress?.mentor_opinion || "Non renseigne"}</span>
+                  <span className="block text-muted-foreground">Avis général</span>
+                  <span className="font-semibold text-foreground">{progress?.mentor_opinion || "Non renseigné"}</span>
                 </p>
               </div>
             ) : (
               <Alert>
-                Le suivi detaille sera disponible lorsque cette seance sera marquee comme realisee.
+                Le suivi détaillé sera disponible lorsque cette séance sera marquée comme réalisée.
               </Alert>
             )}
           </div>
@@ -277,16 +277,16 @@ export function MentorMenteeWorkspace({ menteeId }: { menteeId: number }) {
             <div className="grid gap-2 text-sm sm:grid-cols-2">
               <p>
                 <span className="block text-muted-foreground">Niveau</span>
-                <span className="font-semibold text-foreground">{detail.mentee.niveau_academique_nom ?? "Non renseigne"}</span>
+                <span className="font-semibold text-foreground">{detail.mentee.niveau_academique_nom ?? "Non renseigné"}</span>
               </p>
               <p>
                 <span className="block text-muted-foreground">Statut global</span>
                 <span className="font-semibold text-foreground">{progressStatusLabels[progressStatus]}</span>
               </p>
               <p className="sm:col-span-2">
-                <span className="block text-muted-foreground">Periode active</span>
+                <span className="block text-muted-foreground">Période active</span>
                 <span className="font-semibold text-foreground">
-                  {assignment.period_detail?.title ?? "Periode"} | {formatDate(assignment.period_detail?.start_date)} -{" "}
+                  {assignment.period_detail?.title ?? "Période"} | {formatDate(assignment.period_detail?.start_date)} -{" "}
                   {formatDate(assignment.period_detail?.end_date)}
                 </span>
               </p>
@@ -295,15 +295,15 @@ export function MentorMenteeWorkspace({ menteeId }: { menteeId: number }) {
           <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-5 xl:text-right">
             <p>
               <span className="block font-semibold text-foreground">{assignment.required_sessions ?? 0}</span>
-              Prevues
+              Prévues
             </p>
             <p>
               <span className="block font-semibold text-foreground">{assignment.scheduled_sessions_count}</span>
-              Programmees
+              Programmées
             </p>
             <p>
               <span className="block font-semibold text-foreground">{assignment.completed_sessions_count}</span>
-              Realisees
+              Réalisées
             </p>
             <p>
               <span className="block font-semibold text-foreground">{assignment.remaining_sessions_count}</span>
@@ -317,40 +317,40 @@ export function MentorMenteeWorkspace({ menteeId }: { menteeId: number }) {
           <div className="flex xl:justify-end">
             <Button type="button" className="w-fit" onClick={openCreateSessionModal}>
               <CalendarPlus aria-hidden="true" />
-              Creer une seance
+              Créer une séance
             </Button>
           </div>
         </CardContent>
       </Card>
 
       <ListTable
-        title="Seances"
-        countLabel="Liste des rencontres, statuts, resumes et commentaires."
+        title="Séances"
+        countLabel="Liste des rencontres, statuts, résumés et commentaires."
         minWidth={980}
         headers={[
-          { label: "Seance" },
-          { label: "Resume" },
+          { label: "Séance" },
+          { label: "Résumé" },
           { label: "Commentaire" },
           { label: "Statut" },
           { label: "Actions", className: "text-right" },
         ]}
         emptyState={
           detail.sessions.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Aucune seance programmee pour ce mentore.</p>
+            <p className="text-sm text-muted-foreground">Aucune séance programmée pour ce mentoré.</p>
           ) : null
         }
       >
         {detail.sessions.map((session) => (
           <tr key={session.id} className="align-top">
             <td className="px-4 py-3">
-              <p className="font-medium text-foreground">Seance {session.session_number}</p>
+              <p className="font-medium text-foreground">Séance {session.session_number}</p>
               <p className="mt-1 text-xs text-muted-foreground">
-                {formatDate(session.scheduled_date)} | {normalizeTime(session.start_time) || "Heure non renseignee"}
+                {formatDate(session.scheduled_date)} | {normalizeTime(session.start_time) || "Heure non renseignée"}
                 {session.end_time ? ` - ${normalizeTime(session.end_time)}` : ""}
               </p>
             </td>
             <td className="px-4 py-3 text-muted-foreground">
-              <p className="line-clamp-2 max-w-sm">{session.summary || "Non renseigne"}</p>
+              <p className="line-clamp-2 max-w-sm">{session.summary || "Non renseigné"}</p>
             </td>
             <td className="px-4 py-3 text-muted-foreground">
               <p className="line-clamp-2 max-w-sm">{session.mentor_comment || "Aucun commentaire"}</p>

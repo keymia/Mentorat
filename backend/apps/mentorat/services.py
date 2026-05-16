@@ -142,7 +142,7 @@ def mentor_has_capacity_for_period(
     if mentore and active_assignments.filter(mentoree=mentore).exists():
         return True
 
-    return active_assignments.count() < mentor.capacite_effective()
+    return active_assignments.count() < mentor.capacite_effective(period)
 
 
 def get_mentors_disponibles_for_niveau(niveau_id, period_id=None):

@@ -47,13 +47,13 @@ function normalizeSection(value: string | null): SettingsSection {
 
 function formatValue(value?: string | number | null) {
   if (value === undefined || value === null || value === "") {
-    return "Non renseigne";
+    return "Non renseigné";
   }
   return String(value);
 }
 
 function formatFullName(user: UtilisateurDetail) {
-  return `${user.prenom ?? ""} ${user.nom ?? ""}`.trim() || "Non renseigne";
+  return `${user.prenom ?? ""} ${user.nom ?? ""}`.trim() || "Non renseigné";
 }
 
 function isPeriodExpired(period?: MentorshipPeriod) {
@@ -133,10 +133,10 @@ export function MentorSettingsPanel() {
 
   const teamProfileRows = useMemo(
     () => [
-      { label: "Niveau academique", value: formatValue(mentorProfile?.niveau_academique_nom ?? user?.niveau_academique_nom) },
+      { label: "Niveau académique", value: formatValue(mentorProfile?.niveau_academique_nom ?? user?.niveau_academique_nom) },
       { label: "Domaine ou specialite", value: formatValue(mentorProfile?.domaine_specialite) },
-      { label: "Photo", value: mentorProfile?.profile_photo_url ? "Photo enregistree" : "Non renseignee" },
-      { label: "Affichage Equipes", value: mentorProfile?.wants_to_appear_on_team_page ? "Accepte" : "Non accepte" },
+      { label: "Photo", value: mentorProfile?.profile_photo_url ? "Photo enregistree" : "Non renseignée" },
+      { label: "Affichage Équipes", value: mentorProfile?.wants_to_appear_on_team_page ? "Accepte" : "Non accepte" },
       { label: "Validation admin", value: mentorProfile?.is_team_approved ? "Valide" : "En attente" },
       { label: "Mini bio", value: formatValue(mentorProfile?.mini_bio) },
     ],
@@ -160,7 +160,7 @@ export function MentorSettingsPanel() {
     setSessionMessage("");
     setSessionError("");
     if (!renewalPeriodId) {
-      setSessionError("Selectionnez une session.");
+      setSessionError("Sélectionnez une session.");
       return;
     }
     const period = periods.find((item) => String(item.id) === renewalPeriodId);
@@ -202,7 +202,7 @@ export function MentorSettingsPanel() {
         prenom: formString(formData, "prenom"),
       });
       setUser(updatedUser);
-      setProfileMessage("Informations personnelles mises a jour.");
+      setProfileMessage("Informations personnelles mises à jour.");
       setIsAccountUpdateOpen(false);
     } catch (apiError) {
       setProfileError(formatApiError(apiError));
@@ -223,7 +223,7 @@ export function MentorSettingsPanel() {
         String(formData.get("ancien_mot_de_passe") ?? ""),
         String(formData.get("mot_de_passe") ?? ""),
       );
-      setPasswordMessage("Mot de passe mis a jour.");
+      setPasswordMessage("Mot de passe mis à jour.");
       form.reset();
     } catch (apiError) {
       setPasswordError(formatApiError(apiError));
@@ -246,12 +246,12 @@ export function MentorSettingsPanel() {
     setPublicProfileError("");
 
     if (!mentorProfile?.niveau_academique && !user?.niveau_academique) {
-      setPublicProfileError("Le niveau academique du compte mentor est obligatoire.");
+      setPublicProfileError("Le niveau académique du compte mentor est obligatoire.");
       return;
     }
     if (!domaineSpecialite || !miniBio || (!hasSelectedPhoto && !hasStoredPhoto) || !wantsPublic) {
       setPublicProfileError(
-        "Tous les champs sont obligatoires : domaine, photo, mini bio et accord d'apparition sur la page Equipes.",
+        "Tous les champs sont obligatoires : domaine, photo, mini bio et accord d'apparition sur la page Équipes.",
       );
       return;
     }
@@ -267,7 +267,7 @@ export function MentorSettingsPanel() {
       const updatedProfile = await updateMentorProfile(formData);
       setMentorProfile(updatedProfile);
       setUser((currentUser) => (currentUser ? { ...currentUser, ...updatedProfile } : updatedProfile));
-      setProfileMessage("Profil public mis a jour.");
+      setProfileMessage("Profil public mis à jour.");
       setSelectedPhotoName("");
     } catch (apiError) {
       setPublicProfileError(formatApiError(apiError));
@@ -293,7 +293,7 @@ export function MentorSettingsPanel() {
       <Modal
         open={isAccountDetailsOpen}
         title="Detail du compte"
-        description="Informations completes visibles pour votre compte mentor."
+        description="Informations complètes visibles pour votre compte mentor."
         className="max-w-3xl"
         onClose={() => setIsAccountDetailsOpen(false)}
       >
@@ -309,14 +309,14 @@ export function MentorSettingsPanel() {
             />
           ) : null}
           <div className="grid gap-3 rounded-lg border border-border bg-muted/30 p-4 md:grid-cols-2">
-            <DetailItem label="Prenom" value={user.prenom || "Non renseigne"} />
-            <DetailItem label="Nom" value={user.nom || "Non renseigne"} />
+            <DetailItem label="Prenom" value={user.prenom || "Non renseigné"} />
+            <DetailItem label="Nom" value={user.nom || "Non renseigné"} />
             <DetailItem label="Email" value={user.email} />
             <DetailItem label="Type de compte" value={accountType} />
             <DetailItem label="Statut du compte" value={formatValue(user.statut_compte)} />
             <DetailItem
-              label="Date de creation"
-              value={user.date_creation ? new Date(user.date_creation).toLocaleDateString("fr-CA") : "Non renseignee"}
+              label="Date de création"
+              value={user.date_creation ? new Date(user.date_creation).toLocaleDateString("fr-CA") : "Non renseignée"}
             />
             {mentorProfile?.domaine_specialite ? (
               <DetailItem label="Titre public" value={mentorProfile.domaine_specialite} />
@@ -330,8 +330,8 @@ export function MentorSettingsPanel() {
 
       <Modal
         open={isAccountUpdateOpen}
-        title="Mettre a jour le compte"
-        description="Seules les informations personnelles autorisees sont modifiables."
+        title="Mettre à jour le compte"
+        description="Seules les informations personnelles autorisées sont modifiables."
         className="max-w-4xl"
         onClose={() => setIsAccountUpdateOpen(false)}
       >
@@ -367,7 +367,7 @@ export function MentorSettingsPanel() {
             </label>
             <div className="md:col-span-2">
               <Button type="submit" variant="outline" disabled={isPasswordSaving}>
-                {isPasswordSaving ? "Mise a jour..." : "Mettre a jour le mot de passe"}
+                {isPasswordSaving ? "Mise à jour..." : "Mettre à jour le mot de passe"}
               </Button>
             </div>
           </form>
@@ -379,7 +379,7 @@ export function MentorSettingsPanel() {
           <div>
             <h1 className="font-display text-3xl font-bold">Mon compte</h1>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              Consultez et mettez a jour uniquement les informations personnelles autorisees.
+              Consultez et mettez à jour uniquement les informations personnelles autorisées.
             </p>
           </div>
           {profileMessage ? <Alert variant="success">{profileMessage}</Alert> : null}
@@ -408,11 +408,11 @@ export function MentorSettingsPanel() {
                 <div className="flex flex-wrap justify-end gap-2">
                   <Button type="button" variant="ghost" size="sm" onClick={() => setIsAccountDetailsOpen(true)}>
                     <Eye aria-hidden="true" />
-                    Detail
+                    Détail
                   </Button>
                   <Button type="button" variant="outline" size="sm" onClick={openAccountUpdateModal}>
                     <Pencil aria-hidden="true" />
-                    Mettre a jour
+                    Mettre à jour
                   </Button>
                 </div>
               </td>
@@ -424,9 +424,9 @@ export function MentorSettingsPanel() {
       {section === "profile" ? (
         <Card>
           <CardHeader>
-            <CardTitle>Profil Equipes</CardTitle>
+            <CardTitle>Profil Équipes</CardTitle>
             <CardDescription>
-              Completez les informations qui seront visibles sur la page Equipes apres validation de l&apos;administration.
+              Complétez les informations qui seront visibles sur la page Équipes après validation de l&apos;administration.
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4">
@@ -452,28 +452,28 @@ export function MentorSettingsPanel() {
               onClick={() => setIsTeamProfileExpanded((current) => !current)}
             >
               {isTeamProfileExpanded ? <ChevronUp aria-hidden="true" /> : <ChevronDown aria-hidden="true" />}
-              {isTeamProfileExpanded ? "Reduire" : "Voir plus et modifier"}
+              {isTeamProfileExpanded ? "Réduire" : "Voir plus et modifier"}
             </Button>
             {isTeamProfileExpanded ? (
               <form onSubmit={handlePublicProfileSubmit} className="grid gap-4 border-t border-border pt-4 md:grid-cols-2">
                 <div className="grid gap-2 text-sm">
-                  <span className="font-medium text-foreground">Niveau academique</span>
-                  <Input value={mentorProfile?.niveau_academique_nom ?? user.niveau_academique_nom ?? "Non renseigne"} readOnly />
+                  <span className="font-medium text-foreground">Niveau académique</span>
+                  <Input value={mentorProfile?.niveau_academique_nom ?? user.niveau_academique_nom ?? "Non renseigné"} readOnly />
                   <span className="text-xs text-muted-foreground">Ce niveau vient de votre compte mentor.</span>
                 </div>
                 <label>
-                  Domaine ou specialite
+                  Domaine ou spécialité
                   <Input name="domaine_specialite" defaultValue={mentorProfile?.domaine_specialite ?? ""} required />
                 </label>
                 <div className="grid gap-3 md:col-span-2">
-                  <span className="text-sm font-medium text-foreground">Photo a afficher sur le site</span>
+                  <span className="text-sm font-medium text-foreground">Photo à afficher sur le site</span>
                   <div className="flex flex-col gap-3 rounded-lg border border-border bg-muted/30 p-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="grid gap-1 text-sm">
                       <span className="font-semibold text-foreground">
-                        {selectedPhotoName || (mentorProfile?.profile_photo_url ? "Photo deja enregistree" : "Aucune photo choisie")}
+                        {selectedPhotoName || (mentorProfile?.profile_photo_url ? "Photo déjà enregistrée" : "Aucune photo choisie")}
                       </span>
                       <span className="text-xs text-muted-foreground">
-                        Formats images acceptes. Cette photo apparaitra apres validation de l&apos;administration.
+                        Formats d’image acceptés. Cette photo apparaîtra après validation de l&apos;administration.
                       </span>
                     </div>
                     <input
@@ -500,7 +500,7 @@ export function MentorSettingsPanel() {
                     name="mini_bio"
                     rows={5}
                     defaultValue={mentorProfile?.mini_bio ?? ""}
-                    placeholder="Presentez brievement votre parcours, votre niveau d'etude, votre domaine, votre engagement et votre motivation."
+                    placeholder="Présentez brièvement votre parcours, votre niveau d’étude, votre domaine, votre engagement et votre motivation."
                     required
                   />
                 </label>
@@ -512,7 +512,7 @@ export function MentorSettingsPanel() {
                     required
                     className="mt-1"
                   />
-                  <span>J&apos;accepte d&apos;apparaitre sur la page Equipes.</span>
+                  <span>J&apos;accepte d&apos;apparaître sur la page Équipes.</span>
                 </label>
                 <Button type="submit" className="w-fit" disabled={isPublicProfileSaving}>
                   <Save aria-hidden="true" />
@@ -529,20 +529,20 @@ export function MentorSettingsPanel() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <CalendarClock className="size-5 text-primary" aria-hidden="true" />
-              Session de mentorat
+              Période de mentorat
             </CardTitle>
             <CardDescription>
-              Consultez la session actuelle et choisissez une nouvelle session uniquement lorsque la session en cours est expiree.
+              Consultez la période actuelle et choisissez une nouvelle période uniquement lorsque la période en cours est expirée.
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-5">
             {assignments.length === 0 ? (
-              <Alert>Aucune session de mentorat n&apos;est associee a votre compte pour le moment.</Alert>
+              <Alert>Aucune période de mentorat n&apos;est associée à votre compte pour le moment.</Alert>
             ) : (
               <>
                 <form onSubmit={handleContinueSubmit} className="grid gap-4 md:grid-cols-[1fr_auto] md:items-end">
                   <label>
-                    Session a choisir
+                    Période à choisir
                     <select
                       className="field"
                       value={renewalPeriodId}
@@ -554,7 +554,7 @@ export function MentorSettingsPanel() {
                       disabled={expiredAssignments.length === 0 || renewalPeriods.length === 0}
                       required
                     >
-                      <option value="">Choisir une session</option>
+                      <option value="">Choisir une période</option>
                       {renewalPeriods.map((period) => (
                         <option key={period.id} value={period.id}>
                           {period.title}

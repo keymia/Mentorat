@@ -87,7 +87,7 @@ export function AdminLoginForm() {
       {challenge ? (
         <>
           <div className="rounded border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
-            Un code temporaire a ete envoye a {challenge.email}. Il expire dans{" "}
+            Un code temporaire a été envoyé à {challenge.email}. Il expire dans{" "}
             {challenge.expires_in_minutes} minutes.
           </div>
           <label>
@@ -117,7 +117,7 @@ export function AdminLoginForm() {
         </>
       )}
       <Button type="submit" disabled={isSubmitting}>
-        {isSubmitting ? "Connexion..." : challenge ? "Verifier le code" : "Connexion"}
+        {isSubmitting ? "Connexion..." : challenge ? "Vérifier le code" : "Connexion"}
       </Button>
       {challenge ? (
         <Button

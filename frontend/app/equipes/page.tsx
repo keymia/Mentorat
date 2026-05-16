@@ -20,9 +20,9 @@ export default async function EquipesPage() {
     <div className="min-h-screen bg-background">
       <SiteHeader />
       <PageHeader
-        eyebrow="Equipes"
-        title="Les mentors qui accompagnent la releve"
-        description="Chaque profil affiche ici a ete complete par le mentor, accepte pour diffusion publique et valide par l'administration."
+        eyebrow="Équipes"
+        title="Les mentors qui accompagnent la relève"
+        description="Chaque profil affiché ici a été complété par le mentor, accepté pour diffusion publique et validé par l’administration."
       />
       <main className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
         {members.length === 0 ? (
@@ -32,7 +32,7 @@ export default async function EquipesPage() {
               <div>
                 <h2 className="text-xl font-semibold">Aucun mentor public pour le moment.</h2>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Les profils seront ajoutes apres accord des mentors et validation administrative.
+                  Les profils seront ajoutés après accord des mentors et validation administrative.
                 </p>
               </div>
             </CardContent>

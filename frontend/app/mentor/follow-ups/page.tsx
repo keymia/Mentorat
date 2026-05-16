@@ -6,7 +6,8 @@ export default function MentorFollowUpsPage() {
     <div className="grid gap-6">
       <MentorPageHeader
         title="Suivis"
-        description="Mettez a jour les seances realisees, l'appreciation et l'avancement des mentores."
+        description="Mettez à jour les séances réalisées, l'appréciation et l'avancement des mentorés."
+        helpModuleKey="mentor_followups"
       />
       <MentorFollowUpsPanel />
     </div>

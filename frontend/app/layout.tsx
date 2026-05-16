@@ -87,7 +87,7 @@ const languageInitScript = `
 
 export const metadata: Metadata = {
   title: "BMC Mentorat",
-  description: "Plateforme de mentorat academique BMC.",
+  description: "Plateforme de mentorat académique BMC.",
 };
 
 export default function RootLayout({

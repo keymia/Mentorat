@@ -276,6 +276,7 @@ class MentorshipPeriodSerializer(CleanModelSerializer):
             "start_date",
             "end_date",
             "required_sessions",
+            "max_mentees_per_mentor",
             "status",
             "auto_completed_at",
             "assignments_count",
@@ -295,6 +296,10 @@ class MentorshipPeriodSerializer(CleanModelSerializer):
             required_sessions=attrs.get(
                 "required_sessions",
                 getattr(self.instance, "required_sessions", None),
+            ),
+            max_mentees_per_mentor=attrs.get(
+                "max_mentees_per_mentor",
+                getattr(self.instance, "max_mentees_per_mentor", 5),
             ),
             status=attrs.get("status", getattr(self.instance, "status", MentorshipPeriod.Status.DRAFT)),
         )

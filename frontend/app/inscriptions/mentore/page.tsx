@@ -9,9 +9,9 @@ export default function MentoreInscriptionPage() {
     <div className="min-h-screen bg-background">
       <SiteHeader />
       <PageHeader
-        eyebrow="Inscription mentore"
+        eyebrow="Inscription mentoré"
         title="Choisir un mentor admissible"
-        description="Apres le choix du niveau academique, la liste affiche uniquement les mentors actifs du niveau superieur direct avec une capacite disponible."
+        description="Après le choix du niveau académique, la liste affiche uniquement les mentors actifs du niveau supérieur direct ayant une capacité disponible."
       />
       <main className="mx-auto max-w-4xl px-4 py-12 sm:px-6">
         <Card>

@@ -3,6 +3,7 @@
 import { BarChart3, CalendarClock, TrendingUp } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
+import { HelpIconButton } from "@/components/help/HelpIconButton";
 import { Alert } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -22,7 +23,7 @@ import { AdminMentorshipSessions } from "./AdminMentorshipSessions";
 
 const sections = [
   { href: "#suivis", label: "Suivis", icon: TrendingUp },
-  { href: "#seances", label: "Seances", icon: CalendarClock },
+  { href: "#seances", label: "Séances", icon: CalendarClock },
   { href: "#rapports", label: "Rapports", icon: BarChart3 },
 ];
 
@@ -115,9 +116,12 @@ export function AdminMentorshipFollowUpCenter() {
     <div className="grid gap-8">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <h1 className="font-display text-3xl font-bold">Suivis mentorat</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="font-display text-3xl font-bold">Suivis mentorat</h1>
+            <HelpIconButton moduleKey="admin_followups" scope="admin" />
+          </div>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            Centralisez les suivis, les seances et les rapports de mentorat.
+            Centralisez les suivis, les séances et les rapports de mentorat.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -157,7 +161,7 @@ export function AdminMentorshipFollowUpCenter() {
                 </select>
               </label>
               <label>
-                Mentore
+                Mentoré
                 <select
                   className="field"
                   value={filters.mentoree}
@@ -168,8 +172,8 @@ export function AdminMentorshipFollowUpCenter() {
                     {isLoadingMentees
                       ? "Chargement..."
                       : filters.mentor
-                        ? "Tous ses mentores"
-                        : "Choisir un mentor d'abord"}
+                        ? "Tous ses mentorés"
+                        : "Choisir un mentor d’abord"}
                   </option>
                   {mentees.map((mentee) => (
                     <option key={mentee.id} value={mentee.id}>
@@ -187,9 +191,9 @@ export function AdminMentorshipFollowUpCenter() {
         <>
           <section id="suivis" className="scroll-mt-6">
             <div className="mb-4">
-              <h2 className="text-xl font-semibold">Suivis des mentores</h2>
+              <h2 className="text-xl font-semibold">Suivis des mentorés</h2>
               <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                Avis, difficultes, progres observes et recommandations.
+                Avis, difficultés, progrès observés et recommandations.
               </p>
             </div>
             <AdminMentorshipProgress showHeader={false} showFilters={false} filters={sharedFilters} />
@@ -197,9 +201,9 @@ export function AdminMentorshipFollowUpCenter() {
 
           <section id="seances" className="scroll-mt-6">
             <div className="mb-4">
-              <h2 className="text-xl font-semibold">Seances de mentorat</h2>
+              <h2 className="text-xl font-semibold">Séances de mentorat</h2>
               <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                Seances programmees, realisees, reportees ou annulees.
+                Séances programmées, réalisées, reportées ou annulées.
               </p>
             </div>
             <AdminMentorshipSessions showHeader={false} showFilters={false} filters={sharedFilters} />
@@ -209,7 +213,7 @@ export function AdminMentorshipFollowUpCenter() {
             <div className="mb-4">
               <h2 className="text-xl font-semibold">Rapports mentorat</h2>
               <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                Seances manquantes, affectations actives et alertes de progression.
+                Séances manquantes, affectations actives et alertes de progression.
               </p>
             </div>
             <AdminMentorshipReports showHeader={false} showFilters={false} filters={sharedFilters} />

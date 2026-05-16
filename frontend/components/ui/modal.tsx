@@ -13,10 +13,11 @@ type ModalProps = {
   description?: string;
   children: ReactNode;
   className?: string;
+  closeLabel?: string;
   onClose: () => void;
 };
 
-export function Modal({ open, title, description, children, className, onClose }: ModalProps) {
+export function Modal({ open, title, description, children, className, closeLabel = "Fermer", onClose }: ModalProps) {
   useEffect(() => {
     if (!open) {
       return;
@@ -47,7 +48,7 @@ export function Modal({ open, title, description, children, className, onClose }
     <div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-black/45 p-4 backdrop-blur-sm">
       <button
         type="button"
-        aria-label="Fermer"
+        aria-label={closeLabel}
         className="absolute inset-0 cursor-default"
         onClick={onClose}
       />
@@ -69,7 +70,7 @@ export function Modal({ open, title, description, children, className, onClose }
               <p className="mt-1 text-sm leading-6 text-muted-foreground">{description}</p>
             ) : null}
           </div>
-          <Button type="button" variant="ghost" size="icon" aria-label="Fermer" onClick={onClose}>
+          <Button type="button" variant="ghost" size="icon" aria-label={closeLabel} onClick={onClose}>
             <X aria-hidden="true" />
           </Button>
         </div>

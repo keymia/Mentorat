@@ -214,6 +214,7 @@ class MentorshipPeriod(models.Model):
     start_date = models.DateField()
     end_date = models.DateField()
     required_sessions = models.PositiveSmallIntegerField()
+    max_mentees_per_mentor = models.PositiveSmallIntegerField(default=5)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.DRAFT)
     auto_completed_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -234,10 +235,45 @@ class MentorshipPeriod(models.Model):
             raise ValidationError({"end_date": "La date de fin doit etre posterieure a la date de debut."})
         if self.required_sessions is not None and self.required_sessions <= 0:
             raise ValidationError({"required_sessions": "Le nombre de seances obligatoires doit etre superieur a 0."})
+        if self.max_mentees_per_mentor is not None and self.max_mentees_per_mentor <= 0:
+            raise ValidationError(
+                {"max_mentees_per_mentor": "Le nombre maximal de mentores par mentor doit etre superieur a 0."}
+            )
 
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
+
+
+class MentorshipPeriodExportLog(models.Model):
+    class Format(models.TextChoices):
+        EXCEL = "xlsx", "Excel"
+        CSV = "csv", "CSV"
+
+    period = models.ForeignKey(
+        MentorshipPeriod,
+        on_delete=models.CASCADE,
+        related_name="export_logs",
+    )
+    exported_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        related_name="mentorship_period_exports",
+        null=True,
+        blank=True,
+    )
+    format = models.CharField(max_length=10, choices=Format.choices)
+    file_name = models.CharField(max_length=255)
+    exported_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-exported_at"]
+        indexes = [
+            models.Index(fields=["period", "format", "exported_at"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.period} - {self.get_format_display()} - {self.exported_at:%Y-%m-%d}"
 
 
 class MentorshipAssignment(models.Model):
@@ -335,7 +371,7 @@ class MentorshipAssignment(models.Model):
                 .exclude(pk=self.pk)
                 .count()
             )
-            if active_count >= self.mentor.capacite_effective():
+            if active_count >= self.mentor.capacite_effective(self.period):
                 raise ValidationError({"mentor": "Le mentor a atteint sa capacite maximale."})
 
     def save(self, *args, **kwargs):

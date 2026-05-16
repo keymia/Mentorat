@@ -67,7 +67,7 @@ export function MentorProgressOverview() {
   }
 
   if (rows.length === 0) {
-    return <EmptyState icon={TrendingUp} title="Aucun suivi a afficher." />;
+    return <EmptyState icon={TrendingUp} title="Aucun suivi à afficher." />;
   }
 
   return (
@@ -76,7 +76,7 @@ export function MentorProgressOverview() {
       countLabel={`${rows.length} suivi${rows.length > 1 ? "s" : ""}`}
       minWidth={920}
       headers={[
-        { label: "Mentore" },
+        { label: "Mentoré" },
         { label: "Progression" },
         { label: "Avis" },
         { label: "Statut" },
@@ -86,7 +86,7 @@ export function MentorProgressOverview() {
       {rows.map(({ assignment, progress }) => (
         <tr key={assignment.id} className="align-top">
           <td className="px-4 py-3 font-medium text-foreground">{displayUser(assignment.mentoree_detail)}</td>
-          <td className="px-4 py-3 text-muted-foreground">{progress.progress_percentage ?? "Non renseignee"}%</td>
+          <td className="px-4 py-3 text-muted-foreground">{progress.progress_percentage ?? "Non renseignée"}%</td>
           <td className="px-4 py-3 text-muted-foreground">
             <p className="line-clamp-2 max-w-sm">{progress.mentor_opinion || "Aucun avis general"}</p>
           </td>
@@ -97,7 +97,7 @@ export function MentorProgressOverview() {
           </td>
           <td className="px-4 py-3 text-right">
             <Button asChild variant="outline" size="sm">
-              <Link href={`/mentor/mentees/${assignment.mentoree}`}>Mettre a jour</Link>
+              <Link href={`/mentor/mentees/${assignment.mentoree}`}>Mettre à jour</Link>
             </Button>
           </td>
         </tr>

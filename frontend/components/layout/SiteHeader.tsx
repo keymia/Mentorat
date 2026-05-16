@@ -12,10 +12,10 @@ import { cn } from "@/lib/utils";
 
 const publicLinks = [
   { href: "/", label: "Accueil" },
-  { href: "/about", label: "A propos" },
-  { href: "/equipes", label: "Equipes" },
+  { href: "/about", label: "À propos" },
+  { href: "/equipes", label: "Équipes" },
   { href: "/inscriptions", label: "Inscriptions" },
-  { href: "/evenements", label: "Evenements" },
+  { href: "/evenements", label: "Événements" },
   { href: "/partenaires", label: "Partenaires" },
   { href: "/contact", label: "Contact" },
 ];

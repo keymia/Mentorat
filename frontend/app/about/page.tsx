@@ -12,17 +12,17 @@ const pillars = [
   {
     icon: HeartHandshake,
     title: "Accompagnement",
-    text: "Chaque mentore avance avec un mentor du niveau academique superieur direct.",
+    text: "Chaque mentoré progresse avec un mentor du niveau académique supérieur direct.",
   },
   {
     icon: Scale,
     title: "Equite",
-    text: "Les capacites de mentorat sont controlees pour proteger la qualite de l'accompagnement.",
+    text: "Les capacités de mentorat sont contrôlées afin de préserver la qualité de l’accompagnement.",
   },
   {
     icon: ShieldCheck,
     title: "Gouvernance",
-    text: "Les inscriptions et jumelages restent valides par l'administration.",
+    text: "Les inscriptions et les jumelages restent validés par l’administration.",
   },
   {
     icon: UsersRound,
@@ -50,9 +50,9 @@ export default async function AboutPage() {
     <div className="min-h-screen bg-background">
       <SiteHeader />
       <PageHeader
-        eyebrow="A propos"
-        title="Un cadre de mentorat academique simple a administrer"
-        description="Mentorat connecte les etudiants selon une progression academique claire, avec validation administrative et suivi des capacites."
+        eyebrow="À propos"
+        title="Un cadre de mentorat académique simple à administrer"
+        description="Mentorat relie les étudiants selon une progression académique claire, avec validation administrative et suivi des capacités."
       />
       <main className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
         <div className="grid gap-4 md:grid-cols-2">

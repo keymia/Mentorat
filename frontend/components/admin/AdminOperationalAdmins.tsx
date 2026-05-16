@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { CheckCircle2, Eye, Pencil, Plus, Trash2, UserCog, XCircle } from "lucide-react";
 
 import { PhoneInput } from "@/components/forms/PhoneInput";
+import { HelpIconButton } from "@/components/help/HelpIconButton";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -183,10 +184,10 @@ export function AdminOperationalAdmins() {
     try {
       if (editingId) {
         await updateOperationalAdmin(editingId, payload);
-        setMessage("Administrateur operationnel mis a jour.");
+        setMessage("Administrateur opérationnel mis à jour.");
       } else {
         await createOperationalAdmin(payload);
-        setMessage("Administrateur operationnel cree.");
+        setMessage("Administrateur opérationnel créé.");
       }
       closeModal();
       await loadRows();
@@ -202,7 +203,7 @@ export function AdminOperationalAdmins() {
     setMessage("");
     try {
       await deleteOperationalAdmin(admin.id);
-      setMessage("Administrateur operationnel supprime.");
+      setMessage("Administrateur opérationnel supprimé.");
       await loadRows();
     } catch (apiError) {
       setError(formatApiError(apiError));
@@ -216,7 +217,7 @@ export function AdminOperationalAdmins() {
       const updated = await approveOperationalAdminPublicProfile(admin.id);
       setRows((currentRows) => currentRows.map((row) => (row.id === updated.id ? updated : row)));
       setDetailsAdmin((current) => (current?.id === updated.id ? updated : current));
-      setMessage(`Profil public approuve pour ${fullName(updated)}.`);
+      setMessage(`Profil public approuvé pour ${fullName(updated)}.`);
     } catch (apiError) {
       setError(formatApiError(apiError));
     }
@@ -229,7 +230,7 @@ export function AdminOperationalAdmins() {
       const updated = await rejectOperationalAdminPublicProfile(admin.id);
       setRows((currentRows) => currentRows.map((row) => (row.id === updated.id ? updated : row)));
       setDetailsAdmin((current) => (current?.id === updated.id ? updated : current));
-      setMessage(`Profil public refuse pour ${fullName(updated)}.`);
+      setMessage(`Profil public refusé pour ${fullName(updated)}.`);
     } catch (apiError) {
       setError(formatApiError(apiError));
     }
@@ -241,14 +242,17 @@ export function AdminOperationalAdmins() {
     <div className="grid gap-5">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <h1 className="font-display text-3xl font-bold">Administrateurs operationnels</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="font-display text-3xl font-bold">Administrateurs opérationnels</h1>
+            <HelpIconButton moduleKey="operational_admins" scope="admin" />
+          </div>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            Seul l&apos;administrateur principal peut creer, modifier, desactiver ou supprimer ces comptes.
+            Seul l&apos;administrateur principal peut créer, modifier, désactiver ou supprimer ces comptes.
           </p>
         </div>
         <Button type="button" className="w-fit" onClick={openCreate}>
           <Plus aria-hidden="true" />
-          Creer un administrateur
+          Créer un administrateur
         </Button>
       </div>
 
@@ -280,14 +284,14 @@ export function AdminOperationalAdmins() {
               </td>
               <td className="px-4 py-3 text-sm text-muted-foreground">
                 <p>{fullName(admin)}</p>
-                <p>{admin.public_title || "Titre non renseigne"}</p>
+                <p>{admin.public_title || "Titre non renseigné"}</p>
               </td>
               <td className="px-4 py-3">{publicValidationBadge(admin)}</td>
               <td className="px-4 py-3">
                 <div className="flex flex-wrap justify-end gap-2">
                   <Button type="button" variant="ghost" size="sm" onClick={() => setDetailsAdmin(admin)}>
                     <Eye aria-hidden="true" />
-                    Details
+                    Détails
                   </Button>
                   <Button type="button" variant="secondary" size="sm" onClick={() => void handleApprovePublicProfile(admin)}>
                     <CheckCircle2 aria-hidden="true" />
@@ -312,14 +316,14 @@ export function AdminOperationalAdmins() {
           headers={[
             { label: "Nom" },
             { label: "Email" },
-            { label: "Telephone" },
+            { label: "Téléphone" },
             { label: "Titre public" },
             { label: "Statut" },
             { label: "Affichage public" },
             { label: "Validation publique" },
             { label: "Actions", className: "text-right" },
           ]}
-          emptyState={rows.length === 0 ? <EmptyState icon={UserCog} title="Aucun administrateur operationnel." /> : null}
+          emptyState={rows.length === 0 ? <EmptyState icon={UserCog} title="Aucun administrateur opérationnel." /> : null}
         >
           {rows.map((admin) => (
             <tr key={admin.id} className="align-top">
@@ -327,22 +331,22 @@ export function AdminOperationalAdmins() {
                 <p className="font-medium text-foreground">{fullName(admin)}</p>
               </td>
               <td className="px-4 py-3 text-muted-foreground">{admin.email}</td>
-              <td className="px-4 py-3 text-muted-foreground">{admin.telephone || "Non renseigne"}</td>
+              <td className="px-4 py-3 text-muted-foreground">{admin.telephone || "Non renseigné"}</td>
               <td className="px-4 py-3 text-muted-foreground">
-                {admin.public_title || "Non renseigne"}
+                {admin.public_title || "Non renseigné"}
               </td>
               <td className="px-4 py-3">
                 <Badge variant={admin.statut_compte === "ACTIF" ? "success" : "outline"}>{admin.statut_compte}</Badge>
               </td>
               <td className="px-4 py-3">
-                {admin.can_appear_on_about_page ? <Badge variant="bronze">Visible a propos</Badge> : <Badge variant="outline">Masque</Badge>}
+                {admin.can_appear_on_about_page ? <Badge variant="bronze">Visible sur À propos</Badge> : <Badge variant="outline">Masqué</Badge>}
               </td>
               <td className="px-4 py-3">{publicValidationBadge(admin)}</td>
               <td className="px-4 py-3">
                 <div className="flex flex-wrap justify-end gap-2">
                   <Button type="button" variant="ghost" size="sm" onClick={() => setDetailsAdmin(admin)}>
                     <Eye aria-hidden="true" />
-                    Details
+                    Détails
                   </Button>
                   <Button type="button" variant="outline" size="sm" onClick={() => openEdit(admin)}>
                     <Pencil aria-hidden="true" />
@@ -361,14 +365,14 @@ export function AdminOperationalAdmins() {
 
       <Modal
         open={isOpen}
-        title={editingId ? "Modifier l'administrateur" : "Creer un administrateur operationnel"}
-        description="Renseignez le compte et son affichage public sur la page A propos."
+        title={editingId ? "Modifier l’administrateur" : "Créer un administrateur opérationnel"}
+        description="Renseignez le compte et son affichage public sur la page À propos."
         className="max-w-4xl"
         onClose={closeModal}
       >
         <form onSubmit={handleSubmit} className="grid gap-4 md:grid-cols-2">
           <label>
-            Prenom
+            Prénom
             <input className="field" required value={draft.prenom} onChange={(event) => setDraft({ ...draft, prenom: event.target.value })} />
           </label>
           <label>
@@ -391,7 +395,7 @@ export function AdminOperationalAdmins() {
             />
           </label>
           <label>
-            Telephone
+            Téléphone
             <PhoneInput
               className="field"
               value={draft.telephone}
@@ -399,7 +403,7 @@ export function AdminOperationalAdmins() {
             />
           </label>
           <label>
-            Region
+            Région
             <input className="field" value={draft.region} onChange={(event) => setDraft({ ...draft, region: event.target.value })} />
           </label>
           <label>
@@ -419,7 +423,7 @@ export function AdminOperationalAdmins() {
               checked={draft.can_appear_on_about_page}
               onChange={(event) => setDraft({ ...draft, can_appear_on_about_page: event.target.checked })}
             />
-            <span>Afficher sur la page A propos</span>
+            <span>Afficher sur la page À propos</span>
           </label>
           <label>
             Titre public
@@ -443,7 +447,7 @@ export function AdminOperationalAdmins() {
           <div className="flex flex-wrap gap-2 md:col-span-2">
             <Button type="submit" disabled={isSaving}>
               <Plus aria-hidden="true" />
-              {isSaving ? "Enregistrement..." : editingId ? "Enregistrer" : "Creer"}
+              {isSaving ? "Enregistrement..." : editingId ? "Enregistrer" : "Créer"}
             </Button>
             <Button type="button" variant="outline" onClick={closeModal}>
               Annuler
@@ -454,7 +458,7 @@ export function AdminOperationalAdmins() {
 
       <Modal
         open={Boolean(detailsAdmin)}
-        title="Details de l'administrateur"
+        title="Détails de l’administrateur"
         description="Informations du compte et affichage public."
         className="max-w-3xl"
         onClose={() => setDetailsAdmin(null)}
@@ -464,25 +468,25 @@ export function AdminOperationalAdmins() {
             <div className="grid gap-3 rounded-lg border border-border bg-muted/30 p-4 md:grid-cols-2">
               <DetailItem label="Nom complet" value={fullName(detailsAdmin)} />
               <DetailItem label="Email" value={detailsAdmin.email} />
-              <DetailItem label="Telephone" value={detailsAdmin.telephone || "Non renseigne"} />
-              <DetailItem label="Region" value={detailsAdmin.region || "Non renseignee"} />
+              <DetailItem label="Téléphone" value={detailsAdmin.telephone || "Non renseigné"} />
+              <DetailItem label="Région" value={detailsAdmin.region || "Non renseignée"} />
               <DetailItem label="Statut du compte" value={detailsAdmin.statut_compte} />
-              <DetailItem label="Acces actif" value={detailsAdmin.is_active ? "Oui" : "Non"} />
-              <DetailItem label="Affichage A propos" value={detailsAdmin.can_appear_on_about_page ? "Visible" : "Masque"} />
+              <DetailItem label="Accès actif" value={detailsAdmin.is_active ? "Oui" : "Non"} />
+              <DetailItem label="Affichage À propos" value={detailsAdmin.can_appear_on_about_page ? "Visible" : "Masqué"} />
               <DetailItem label="Validation publique" value={publicValidationLabel(detailsAdmin)} />
             </div>
             <div className="grid gap-3 md:grid-cols-2">
               <div className="rounded-lg border border-border p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Anciennes informations validees</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Anciennes informations validées</p>
                 <DetailItem label="Nom public" value={approvedFullName(detailsAdmin)} className="mt-3" />
                 <DetailItem label="Titre public" value={detailsAdmin.approved_public_title || "Non valide"} className="mt-3" />
-                <DetailItem label="Description publique" value={detailsAdmin.approved_public_description || "Non validee"} className="mt-3" />
+                <DetailItem label="Description publique" value={detailsAdmin.approved_public_description || "Non validée"} className="mt-3" />
               </div>
               <div className="rounded-lg border border-border p-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Nouvelles informations</p>
                 <DetailItem label="Nom public" value={fullName(detailsAdmin)} className="mt-3" />
-                <DetailItem label="Titre public" value={detailsAdmin.public_title || "Non renseigne"} className="mt-3" />
-                <DetailItem label="Description publique" value={detailsAdmin.public_description || "Non renseignee"} className="mt-3" />
+                <DetailItem label="Titre public" value={detailsAdmin.public_title || "Non renseigné"} className="mt-3" />
+                <DetailItem label="Description publique" value={detailsAdmin.public_description || "Non renseignée"} className="mt-3" />
               </div>
             </div>
             {detailsAdmin.pending_public_validation ? (

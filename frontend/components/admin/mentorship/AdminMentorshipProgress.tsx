@@ -88,9 +88,9 @@ export function AdminMentorshipProgress({
     <div className="grid gap-5">
       {showHeader ? (
         <div>
-          <h1 className="font-display text-3xl font-bold">Suivis des mentores</h1>
+          <h1 className="font-display text-3xl font-bold">Suivis des mentorés</h1>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            Consultez les avis, difficultes, progres observes et recommandations.
+            Consultez les avis, difficultés, progrès observés et recommandations.
           </p>
         </div>
       ) : null}
@@ -101,7 +101,7 @@ export function AdminMentorshipProgress({
       <Card>
         <CardContent className="grid gap-4 p-5 md:grid-cols-2 xl:grid-cols-4">
           <label>
-            Periode
+            Période
             <select className="field" value={localFilters.period} onChange={(event) => setLocalFilters({ ...localFilters, period: event.target.value })}>
               <option value="">Toutes</option>
               {periods.map((period) => (
@@ -123,7 +123,7 @@ export function AdminMentorshipProgress({
             </select>
           </label>
           <label>
-            Mentore
+            Mentoré
             <select className="field" value={localFilters.mentoree} onChange={(event) => setLocalFilters({ ...localFilters, mentoree: event.target.value })}>
               <option value="">Tous</option>
               {mentees.map((mentee) => (
@@ -160,14 +160,14 @@ export function AdminMentorshipProgress({
           countLabel={`${progressRows.length} suivi${progressRows.length > 1 ? "s" : ""}`}
           minWidth={1120}
           headers={[
-            { label: "Mentore" },
+            { label: "Mentoré" },
             { label: "Mentor" },
             { label: "Statut" },
             { label: "Pourcentage" },
-            { label: "Mise a jour" },
+            { label: "Mise à jour" },
             { label: "Actions", className: "text-right" },
           ]}
-          emptyState={progressRows.length === 0 ? <EmptyState icon={TrendingUp} title="Aucun suivi a afficher." /> : null}
+          emptyState={progressRows.length === 0 ? <EmptyState icon={TrendingUp} title="Aucun suivi à afficher." /> : null}
         >
           {progressRows.map((progress) => (
             <tr key={progress.id} className="align-top">
@@ -183,12 +183,12 @@ export function AdminMentorshipProgress({
                   {progressStatusLabels[progress.progress_status]}
                 </Badge>
               </td>
-              <td className="px-4 py-3 text-muted-foreground">{progress.progress_percentage ?? "Non renseignee"}%</td>
+              <td className="px-4 py-3 text-muted-foreground">{progress.progress_percentage ?? "Non renseignée"}%</td>
               <td className="px-4 py-3 text-muted-foreground">{formatDateTime(progress.updated_at)}</td>
               <td className="px-4 py-3 text-right">
                 <Button type="button" variant="ghost" size="sm" onClick={() => setDetailsProgress(progress)}>
                   <Eye aria-hidden="true" />
-                  Details
+                  Détails
                 </Button>
               </td>
             </tr>
@@ -198,21 +198,21 @@ export function AdminMentorshipProgress({
 
       <Modal
         open={Boolean(detailsProgress)}
-        title="Details du suivi"
-        description="Synthese complete du suivi selectionne."
+        title="Détails du suivi"
+        description="Synthèse complète du suivi sélectionné."
         className="max-w-3xl"
         onClose={() => setDetailsProgress(null)}
       >
         {detailsProgress ? (
           <div className="grid gap-3 rounded-lg border border-border bg-muted/30 p-4 md:grid-cols-2">
-            <DetailItem label="Mentore" value={displayUser(detailsProgress.mentoree_detail)} />
+            <DetailItem label="Mentoré" value={displayUser(detailsProgress.mentoree_detail)} />
             <DetailItem label="Mentor" value={displayUser(detailsProgress.mentor_detail)} />
             <DetailItem label="Statut" value={progressStatusLabels[detailsProgress.progress_status]} />
-            <DetailItem label="Pourcentage" value={`${detailsProgress.progress_percentage ?? "Non renseigne"}%`} />
-            <DetailItem label="Progres" value={detailsProgress.achievements || "Non renseigne"} className="md:col-span-2" />
-            <DetailItem label="Difficultes" value={detailsProgress.difficulties || "Non renseigne"} className="md:col-span-2" />
-            <DetailItem label="Recommandations" value={detailsProgress.recommendations || "Non renseigne"} className="md:col-span-2" />
-            <DetailItem label="Avis du mentor" value={detailsProgress.mentor_opinion || "Non renseigne"} className="md:col-span-2" />
+            <DetailItem label="Pourcentage" value={`${detailsProgress.progress_percentage ?? "Non renseigné"}%`} />
+            <DetailItem label="Progrès" value={detailsProgress.achievements || "Non renseigné"} className="md:col-span-2" />
+            <DetailItem label="Difficultés" value={detailsProgress.difficulties || "Non renseigné"} className="md:col-span-2" />
+            <DetailItem label="Recommandations" value={detailsProgress.recommendations || "Non renseigné"} className="md:col-span-2" />
+            <DetailItem label="Avis du mentor" value={detailsProgress.mentor_opinion || "Non renseigné"} className="md:col-span-2" />
           </div>
         ) : null}
       </Modal>

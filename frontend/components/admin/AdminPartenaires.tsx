@@ -12,6 +12,7 @@ import {
   getAdminPartenaires,
   updatePartenaire,
 } from "@/lib/api";
+import { HelpIconButton } from "@/components/help/HelpIconButton";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -69,6 +70,13 @@ function buildFormData(state: PartnerFormState, file: File | null) {
     formData.append("logo", file);
   }
   return formData;
+}
+
+function formatDate(value: string) {
+  if (!value) {
+    return "Non renseignée";
+  }
+  return new Date(value).toLocaleDateString("fr-CA");
 }
 
 export function AdminPartenaires() {
@@ -139,11 +147,11 @@ export function AdminPartenaires() {
         setPartenaires((currentRows) =>
           currentRows.map((partenaire) => (partenaire.id === updated.id ? updated : partenaire)),
         );
-        setMessage("Partenaire modifie.");
+        setMessage("Partenaire modifié.");
       } else {
         const created = await createPartenaire(payload);
         setPartenaires((currentRows) => [...currentRows, created].sort((a, b) => a.ordre_affichage - b.ordre_affichage));
-        setMessage("Partenaire cree.");
+        setMessage("Partenaire créé.");
       }
       resetForm();
       setIsFormOpen(false);
@@ -192,7 +200,7 @@ export function AdminPartenaires() {
         resetForm();
         setIsFormOpen(false);
       }
-      setMessage("Partenaire supprime.");
+      setMessage("Partenaire supprimé.");
     } catch (apiError) {
       setError(formatApiError(apiError));
     } finally {
@@ -309,7 +317,7 @@ export function AdminPartenaires() {
         <div className="mt-4 flex flex-wrap gap-2">
           <Button type="submit" disabled={isSaving}>
             <Handshake aria-hidden="true" />
-            {isSaving ? "Enregistrement..." : editingId ? "Enregistrer les modifications" : "Creer le partenaire"}
+            {isSaving ? "Enregistrement..." : editingId ? "Enregistrer les modifications" : "Créer le partenaire"}
           </Button>
           <Button type="button" variant="outline" onClick={closeFormModal}>
             Annuler
@@ -323,9 +331,12 @@ export function AdminPartenaires() {
     <div className="grid gap-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <h1 className="font-display text-3xl font-bold">Gestion partenaires</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="font-display text-3xl font-bold">Gestion partenaires</h1>
+            <HelpIconButton moduleKey="partners" scope="admin" />
+          </div>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            Creez, modifiez, activez, desactivez ou supprimez les partenaires affiches sur le site public.
+            Créez, modifiez, activez, désactivez ou supprimez les partenaires affichés sur le site public.
           </p>
         </div>
         <Button type="button" className="w-fit" onClick={startCreate}>
@@ -339,7 +350,7 @@ export function AdminPartenaires() {
 
       <Modal
         open={isFormOpen}
-        title={editingId ? "Modifier le partenaire" : "Creer un partenaire"}
+        title={editingId ? "Modifier le partenaire" : "Créer un partenaire"}
         description="Renseignez les informations publiques et l'ordre d'affichage."
         onClose={closeFormModal}
       >
@@ -352,7 +363,7 @@ export function AdminPartenaires() {
         <ListTable
           title="Liste des partenaires"
           countLabel={`${partenaires.length} partenaire${partenaires.length > 1 ? "s" : ""}`}
-          minWidth={1120}
+          minWidth={960}
           action={
           <Button type="button" onClick={() => void reloadPartenaires()} variant="outline" size="sm" className="w-fit">
             <RefreshCcw aria-hidden="true" />
@@ -360,11 +371,10 @@ export function AdminPartenaires() {
           </Button>
           }
           headers={[
-            { label: "Nom" },
+            { label: "Partenaire" },
             { label: "Type" },
-            { label: "Site" },
-            { label: "Ordre" },
             { label: "Statut" },
+            { label: "Date" },
             { label: "Actions", className: "text-right" },
           ]}
           emptyState={partenaires.length === 0 ? <EmptyState icon={Handshake} title="Aucun partenaire pour le moment." /> : null}
@@ -377,25 +387,10 @@ export function AdminPartenaires() {
               <td className="px-4 py-3">
                 <Badge variant="bronze">{partenaire.type_partenaire}</Badge>
               </td>
-              <td className="px-4 py-3 text-muted-foreground">
-                {partenaire.site_web ? (
-                  <a
-                    href={partenaire.site_web}
-                    className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    <ExternalLink className="size-3.5" aria-hidden="true" />
-                    Ouvrir
-                  </a>
-                ) : (
-                  "Non renseigne"
-                )}
-              </td>
-              <td className="px-4 py-3 text-muted-foreground">{partenaire.ordre_affichage}</td>
               <td className="px-4 py-3">
                 <Badge variant={partenaire.statut === "ACTIF" ? "success" : "outline"}>{partenaire.statut}</Badge>
               </td>
+              <td className="px-4 py-3 text-muted-foreground">{formatDate(partenaire.date_ajout)}</td>
               <td className="px-4 py-3">
                 <div className="flex flex-wrap justify-end gap-2">
                   <Button type="button" onClick={() => setDetailsPartner(partenaire)} variant="ghost" size="sm">
@@ -416,16 +411,6 @@ export function AdminPartenaires() {
                     <Power aria-hidden="true" />
                     {partenaire.statut === "ACTIF" ? "Desactiver" : "Activer"}
                   </Button>
-                  <Button
-                    type="button"
-                    disabled={actionId === partenaire.id}
-                    onClick={() => void handleDelete(partenaire)}
-                    variant="danger"
-                    size="sm"
-                  >
-                    <Trash2 aria-hidden="true" />
-                    Supprimer
-                  </Button>
                 </div>
               </td>
             </tr>
@@ -435,8 +420,8 @@ export function AdminPartenaires() {
 
       <Modal
         open={Boolean(detailsPartner)}
-        title="Details du partenaire"
-        description="Informations completes du partenaire selectionne."
+        title="Détails du partenaire"
+        description="Informations complètes du partenaire selectionne."
         className="max-w-3xl"
         onClose={() => setDetailsPartner(null)}
       >
@@ -468,8 +453,28 @@ export function AdminPartenaires() {
               <DetailItem label="Type" value={detailsPartner.type_partenaire} />
               <DetailItem label="Ordre" value={String(detailsPartner.ordre_affichage)} />
               <DetailItem label="Statut" value={detailsPartner.statut} />
-              <DetailItem label="Site web" value={detailsPartner.site_web || "Non renseigne"} />
-              <DetailItem label="Description" value={detailsPartner.description || "Non renseignee"} className="md:col-span-2" />
+              <DetailItem label="Site web" value={detailsPartner.site_web || "Non renseigné"} />
+              <DetailItem label="Date d'ajout" value={formatDate(detailsPartner.date_ajout)} />
+              <DetailItem label="Description" value={detailsPartner.description || "Non renseignée"} className="md:col-span-2" />
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {detailsPartner.site_web ? (
+                <Button type="button" variant="outline" asChild>
+                  <a href={detailsPartner.site_web} target="_blank" rel="noreferrer">
+                    <ExternalLink aria-hidden="true" />
+                    Site web
+                  </a>
+                </Button>
+              ) : null}
+              <Button
+                type="button"
+                disabled={actionId === detailsPartner.id}
+                onClick={() => void handleDelete(detailsPartner)}
+                variant="danger"
+              >
+                <Trash2 aria-hidden="true" />
+                Supprimer
+              </Button>
             </div>
           </div>
         ) : null}

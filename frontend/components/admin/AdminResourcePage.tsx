@@ -59,12 +59,12 @@ export function AdminResourcePage({ title, description, endpoint }: AdminResourc
       {error ? <p className="notice error">{error}</p> : null}
       {!isLoading && !error ? (
         <ListTable
-          title="Liste des donnees"
+          title="Liste des données"
           countLabel={`${rows.length} element${rows.length > 1 ? "s" : ""}`}
           minWidth={880}
           headers={[
             { label: "Element" },
-            { label: "Donnees" },
+            { label: "Données" },
           ]}
           emptyState={rows.length === 0 ? <EmptyState icon={FileText} title="Aucune donnee pour le moment." /> : null}
         >

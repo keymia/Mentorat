@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Eye, Pencil, Save, UsersRound } from "lucide-react";
 import Image from "next/image";
 
+import { HelpIconButton } from "@/components/help/HelpIconButton";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -119,7 +120,7 @@ export function AdminTeamMembers() {
           team_display_order: String(updated.team_display_order ?? 0),
         },
       }));
-      setMessage(`Affichage public mis a jour pour ${row.nom_complet}.`);
+      setMessage(`Affichage public mis à jour pour ${row.nom_complet}.`);
       if (closeAfterSave) {
         setEditingRow(null);
       }
@@ -191,7 +192,10 @@ export function AdminTeamMembers() {
   return (
     <div className="grid gap-5">
       <div>
-        <h1 className="font-display text-3xl font-bold">Gestion des equipes</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="font-display text-3xl font-bold">Gestion des equipes</h1>
+          <HelpIconButton moduleKey="teams" scope="admin" />
+        </div>
         <p className="mt-2 text-sm leading-6 text-muted-foreground">
           Validez les mentors qui ont accepte d&apos;apparaitre publiquement et definissez leur ordre d&apos;affichage.
         </p>
@@ -212,7 +216,7 @@ export function AdminTeamMembers() {
           <div className="grid gap-4">
             {pendingRows.length > 0 ? (
               <ListTable
-                title="Demandes a traiter"
+                title="Demandes à traiter"
                 countLabel={`${pendingRows.length} demande${pendingRows.length > 1 ? "s" : ""}`}
                 minWidth={1080}
                 headers={[
@@ -235,8 +239,8 @@ export function AdminTeamMembers() {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">{row.email}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{row.niveau_academique_nom || "Non renseigne"}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{row.domaine_specialite || "Non renseigne"}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{row.niveau_academique_nom || "Non renseigné"}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{row.domaine_specialite || "Non renseigné"}</td>
                     <td className="px-4 py-3">
                       <Badge variant="outline">En attente</Badge>
                     </td>
@@ -259,7 +263,7 @@ export function AdminTeamMembers() {
 
             {approvedRows.length > 0 ? (
               <ListTable
-                title="Mentors affiches"
+                title="Mentors affichés"
                 countLabel={`${approvedRows.length} mentor${approvedRows.length > 1 ? "s" : ""}`}
                 minWidth={980}
                 headers={[
@@ -283,8 +287,8 @@ export function AdminTeamMembers() {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">{row.email}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{row.niveau_academique_nom || "Non renseigne"}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{row.domaine_specialite || "Non renseigne"}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{row.niveau_academique_nom || "Non renseigné"}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{row.domaine_specialite || "Non renseigné"}</td>
                     <td className="px-4 py-3 text-muted-foreground">{row.team_display_order || 0}</td>
                     <td className="px-4 py-3">
                       <Badge variant="success">Valide</Badge>
@@ -309,7 +313,7 @@ export function AdminTeamMembers() {
             {pendingRows.length === 0 && approvedRows.length === 0 ? (
               <Card>
                 <CardContent className="p-5">
-                  <EmptyState icon={UsersRound} title="Aucune demande d'affichage a traiter." />
+                  <EmptyState icon={UsersRound} title="Aucune demande d'affichage à traiter." />
                 </CardContent>
               </Card>
             ) : null}
@@ -319,8 +323,8 @@ export function AdminTeamMembers() {
 
       <Modal
         open={Boolean(detailsRow)}
-        title={detailsRow?.nom_complet ?? "Details du mentor"}
-        description="Informations du profil public Equipes."
+        title={detailsRow?.nom_complet ?? "Détails du mentor"}
+        description="Informations du profil public Équipes."
         onClose={() => setDetailsRow(null)}
       >
         {detailsRow ? (
@@ -340,7 +344,7 @@ export function AdminTeamMembers() {
               </div>
             </div>
             <div className="rounded-lg border border-border p-4">
-              <p className="text-sm leading-6 text-muted-foreground">{detailsRow.mini_bio || "Mini bio non renseignee."}</p>
+              <p className="text-sm leading-6 text-muted-foreground">{detailsRow.mini_bio || "Mini bio non renseignée."}</p>
             </div>
           </div>
         ) : null}
@@ -349,7 +353,7 @@ export function AdminTeamMembers() {
       <Modal
         open={Boolean(editingRow)}
         title={editingRow ? `Modifier ${editingRow.nom_complet}` : "Modifier l'affichage"}
-        description="Mettez a jour la validation publique et l'ordre d'affichage."
+        description="Mettez à jour la validation publique et l'ordre d'affichage."
         onClose={() => setEditingRow(null)}
       >
         {editingRow ? editForm(editingRow, true) : null}

@@ -3,9 +3,11 @@
 import {
   BarChart3,
   CalendarDays,
+  CalendarClock,
   ChevronDown,
   ChevronRight,
   Handshake,
+  HelpCircle,
   AlertTriangle,
   Mail,
   Settings,
@@ -22,19 +24,22 @@ import { cn } from "@/lib/utils";
 
 const mentorshipPeriodKey = "MENTORSHIP_PERIODS";
 const accountSettingsKey = "ACCOUNT";
+const legacyMaxMenteesKey = "MAX_MENTORES_PAR_MENTOR";
 
 const adminLinks = [
   { href: "/admin/dashboard", label: "Dashboard", icon: BarChart3 },
   { href: "/admin/inscriptions", label: "Inscriptions", icon: UserRoundCheck },
   { href: "/admin/mentors", label: "Mentors", icon: UsersRound },
-  { href: "/admin/mentores", label: "Mentores", icon: UserRoundCheck },
-  { href: "/admin/equipes", label: "Equipes", icon: UsersRound },
+  { href: "/admin/mentores", label: "Mentorés", icon: UserRoundCheck },
+  { href: "/admin/equipes", label: "Équipes", icon: UsersRound },
   { href: "/admin/jumelages", label: "Jumelages", icon: Handshake },
+  { href: "/admin/mentorship/sessions", label: "Séances", icon: CalendarClock },
   { href: "/admin/mentorship/progress", label: "Suivis", icon: UserRoundCheck },
-  { href: "/admin/evenements", label: "Evenements", icon: CalendarDays },
+  { href: "/admin/evenements", label: "Événements", icon: CalendarDays },
   { href: "/admin/partenaires", label: "Partenaires", icon: Handshake },
   { href: "/admin/emails", label: "Emails", icon: Mail },
   { href: "/admin/administrateurs", label: "Administrateurs", icon: UserCog },
+  { href: "/admin/help", label: "Aide", icon: HelpCircle },
 ];
 
 function parameterHref(key: string) {
@@ -51,7 +56,7 @@ export function AdminSidebarNav() {
   const [isOpenByUser, setIsOpenByUser] = useState(false);
   const isOpen = pathname === "/admin/parametres" || isOpenByUser;
   const isAdminPrincipal = currentUser?.role_nom === "ADMIN_PRINCIPAL";
-  const selectedParamKey = isAdminPrincipal ? selectedParam ?? mentorshipPeriodKey : accountSettingsKey;
+  const selectedParamKey = selectedParam ?? accountSettingsKey;
 
   useEffect(() => {
     let isMounted = true;
@@ -86,6 +91,9 @@ export function AdminSidebarNav() {
   const visibleAdminLinks = useMemo(
     () =>
       adminLinks.filter((link) => {
+        if ("principalOnly" in link && link.principalOnly) {
+          return currentUser?.role_nom === "ADMIN_PRINCIPAL";
+        }
         if (link.href === "/admin/administrateurs") {
           return currentUser?.role_nom === "ADMIN_PRINCIPAL";
         }
@@ -119,10 +127,10 @@ export function AdminSidebarNav() {
             {
               href: parameterHref(mentorshipPeriodKey),
               key: mentorshipPeriodKey,
-              label: "Periode de mentorat",
+              label: "Période de mentorat",
             },
             ...parametres
-              .filter((parametre) => parametre.cle !== mentorshipPeriodKey)
+              .filter((parametre) => ![mentorshipPeriodKey, legacyMaxMenteesKey].includes(parametre.cle))
               .map((parametre) => ({
                 href: parameterHref(parametre.cle),
                 key: parametre.cle,
@@ -146,14 +154,14 @@ export function AdminSidebarNav() {
           <div className="flex items-start gap-2">
             <AlertTriangle className="mt-0.5 size-4" aria-hidden="true" />
             <p className="text-xs leading-5">
-              Attention : la session se termine bientot. Pensez a creer une nouvelle session.
+              Attention : la période de mentorat se termine bientôt. Pensez à créer une nouvelle période.
             </p>
           </div>
           <Link
             href={parameterHref(mentorshipPeriodKey)}
             className="mt-3 inline-flex rounded-lg bg-white/15 px-3 py-1.5 text-xs font-semibold text-white hover:bg-white/25"
           >
-            Creer une session
+            Créer une période
           </Link>
         </div>
       ) : null}
@@ -191,7 +199,7 @@ export function AdminSidebarNav() {
         aria-expanded={isOpen}
       >
         <Settings className="size-4" aria-hidden="true" />
-        <span className="flex-1">Parametres</span>
+        <span className="flex-1">Paramètres</span>
         {isAdminPrincipal && alerts?.session_ending_soon ? (
           <span className="rounded-full bg-amber-400 px-2 py-0.5 text-[11px] font-bold text-black">
             !

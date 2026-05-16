@@ -87,7 +87,7 @@ export function MentorForm() {
       setStatus({
         type: "success",
         message:
-          "Inscription mentor reussie. Votre demande a ete enregistree et sera traitee selon le processus prevu. Redirection dans 2 secondes...",
+          "Inscription mentor réussie. Votre demande a été enregistrée et sera traitée selon le processus prévu. Redirection dans 2 secondes...",
       });
       redirectTimerRef.current = setTimeout(() => {
         router.push("/inscriptions");
@@ -130,7 +130,7 @@ export function MentorForm() {
           <input name="region" className="field" />
         </label>
         <label>
-          Niveau academique
+          Niveau académique
           <select name="niveau_academique" required className="field" defaultValue="">
             <option value="" disabled>
               Choisir un niveau
@@ -162,7 +162,7 @@ export function MentorForm() {
           name="mini_bio"
           rows={5}
           className="field"
-          placeholder="Neter Elysabeth, etudiante en 3e annee du baccalaureat en sciences de la sante a l'Universite d'Ottawa et presidente de l'Association des jeunes scientifiques d'Ottawa, se distingue par son engagement a faire rayonner la releve scientifique francophone."
+          placeholder="Neter Elysabeth, étudiante en 3e année du baccalauréat en sciences de la santé à l’Université d’Ottawa et présidente de l’Association des jeunes scientifiques d’Ottawa, se distingue par son engagement à faire rayonner la relève scientifique francophone."
         />
         <span className="mt-2 block text-xs leading-5 text-muted-foreground">
           Presentez brievement votre parcours, votre niveau d&apos;etude, votre domaine, votre engagement et votre motivation.

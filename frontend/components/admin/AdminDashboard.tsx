@@ -59,15 +59,15 @@ export function AdminDashboard() {
       value: stats.total_mentors,
       icon: UsersRound,
       tone: "red" as const,
-      helper: "Profils mentors et mentor+mentore actifs.",
+      helper: "Profils mentors et mentor+mentoré actifs.",
     },
     {
       key: "total_mentores",
-      label: "Mentores",
+      label: "Mentorés",
       value: stats.total_mentores,
       icon: UserRoundCheck,
       tone: "bronze" as const,
-      helper: "Profils mentores suivis dans la plateforme.",
+      helper: "Profils mentorés suivis dans la plateforme.",
     },
     {
       key: "inscriptions_en_attente",
@@ -75,7 +75,7 @@ export function AdminDashboard() {
       value: stats.inscriptions_en_attente,
       icon: Loader2,
       tone: "dark" as const,
-      helper: "Inscriptions a valider ou refuser.",
+      helper: "Inscriptions à valider ou refuser.",
     },
     {
       key: "jumelages_actifs",
@@ -91,7 +91,7 @@ export function AdminDashboard() {
       value: stats.mentors_disponibles,
       icon: TrendingUp,
       tone: "bronze" as const,
-      helper: "Mentors avec une capacite restante.",
+      helper: "Mentors avec une capacité restante.",
     },
     {
       key: "mentors_satures",
@@ -99,15 +99,15 @@ export function AdminDashboard() {
       value: stats.mentors_satures,
       icon: ShieldAlert,
       tone: "dark" as const,
-      helper: "Mentors ayant atteint leur capacite.",
+      helper: "Mentors ayant atteint leur capacité.",
     },
     {
       key: "evenements_a_venir",
-      label: "Evenements a venir",
+      label: "Événements à venir",
       value: stats.evenements_a_venir,
       icon: CalendarDays,
       tone: "red" as const,
-      helper: "Evenements planifies dans le programme.",
+      helper: "Événements planifies dans le programme.",
     },
     {
       key: "partenaires_actifs",
@@ -173,8 +173,8 @@ export function AdminDashboard() {
           </CardHeader>
           <CardContent className="grid gap-3 text-sm text-white/75">
             <p>{stats.inscriptions_en_attente} inscription(s) attendent une decision administrative.</p>
-            <p>{stats.mentors_disponibles} mentor(s) peuvent encore accepter des mentores.</p>
-            <p>{stats.evenements_a_venir} evenement(s) planifie(s) sont visibles ou a venir.</p>
+            <p>{stats.mentors_disponibles} mentor(s) peuvent encore accepter des mentorés.</p>
+            <p>{stats.evenements_a_venir} événement(s) planifié(s) sont visibles ou à venir.</p>
           </CardContent>
         </Card>
       </div>
