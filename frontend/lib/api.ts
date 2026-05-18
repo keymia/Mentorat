@@ -96,6 +96,7 @@ export type UtilisateurDetail = MentorDisponible & {
   is_active?: boolean;
   date_creation?: string;
   can_appear_on_about_page?: boolean;
+  public_appellation?: string;
   public_title?: string;
   public_description?: string;
   public_photo?: string | null;
@@ -118,6 +119,7 @@ export type UtilisateurPayload = {
   is_team_approved?: boolean;
   team_display_order?: number;
   can_appear_on_about_page?: boolean;
+  public_appellation?: string;
   public_title?: string;
   public_description?: string;
   public_photo?: File | string | null;
@@ -154,6 +156,8 @@ export type PublicAboutTeamMember = {
   nom: string;
   prenom: string;
   nom_complet: string;
+  public_appellation: string;
+  public_display_name: string;
   role_label: string;
   public_title: string;
   public_description: string;
@@ -173,6 +177,7 @@ export type OperationalAdmin = {
   role?: number;
   role_nom?: string;
   can_appear_on_about_page: boolean;
+  public_appellation: string;
   public_title: string;
   public_description: string;
   public_photo: string | null;
@@ -181,6 +186,7 @@ export type OperationalAdmin = {
   pending_public_validation: boolean;
   public_profile_status: "NON_SOUMIS" | "EN_ATTENTE" | "VALIDE" | "REFUSE";
   public_profile_updated_at: string | null;
+  approved_public_appellation: string;
   approved_public_prenom: string;
   approved_public_nom: string;
   approved_public_title: string;
@@ -200,6 +206,7 @@ export type AccountProfile = {
   date_creation: string;
   profile_photo_url: string | null;
   can_appear_on_about_page: boolean;
+  public_appellation: string;
   public_title: string;
   public_description: string;
   public_photo: string | null;

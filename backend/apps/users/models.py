@@ -102,6 +102,14 @@ class Utilisateur(AbstractBaseUser, PermissionsMixin):
         VALIDE = "VALIDE", "Valide"
         REFUSE = "REFUSE", "Refuse"
 
+    class AppellationPublique(models.TextChoices):
+        DR = "Dr", "Dr"
+        DRE = "Dre", "Dre"
+        MONSIEUR = "M.", "M."
+        MADAME = "Mme", "Mme"
+        PROFESSEUR = "Pr", "Pr"
+        PROFESSEURE = "Pre", "Pre"
+
     nom = models.CharField(max_length=150)
     prenom = models.CharField(max_length=150)
     email = models.EmailField(unique=True)
@@ -117,6 +125,11 @@ class Utilisateur(AbstractBaseUser, PermissionsMixin):
     is_team_approved = models.BooleanField(default=False)
     team_display_order = models.PositiveSmallIntegerField(default=0)
     can_appear_on_about_page = models.BooleanField(default=False)
+    public_appellation = models.CharField(
+        max_length=10,
+        choices=AppellationPublique.choices,
+        blank=True,
+    )
     public_title = models.CharField(max_length=120, blank=True)
     public_description = models.TextField(blank=True)
     public_photo = models.ImageField(upload_to="admin_profiles/", blank=True, null=True)
@@ -127,6 +140,11 @@ class Utilisateur(AbstractBaseUser, PermissionsMixin):
         max_length=20,
         choices=StatutProfilPublic.choices,
         default=StatutProfilPublic.NON_SOUMIS,
+    )
+    approved_public_appellation = models.CharField(
+        max_length=10,
+        choices=AppellationPublique.choices,
+        blank=True,
     )
     approved_public_prenom = models.CharField(max_length=150, blank=True)
     approved_public_nom = models.CharField(max_length=150, blank=True)
@@ -211,6 +229,7 @@ class Utilisateur(AbstractBaseUser, PermissionsMixin):
         return self.est_administrateur or self.est_mentor
 
     def snapshot_public_profile(self):
+        self.approved_public_appellation = self.public_appellation
         self.approved_public_prenom = self.prenom
         self.approved_public_nom = self.nom
         self.approved_public_title = self.public_title

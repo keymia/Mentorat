@@ -34,8 +34,7 @@ const pillars = [
 function AdminTeamCard({ member }: { member: PublicAboutTeamMember }) {
   return (
     <PublicProfileCard
-      name={member.nom_complet}
-      title={member.public_title}
+      name={member.public_display_name || member.nom_complet}
       description={member.public_description}
       imageUrl={member.public_photo_url}
       minHeightClassName="min-h-[360px]"

@@ -45,6 +45,11 @@ def validate_level_for_profile(niveau: NiveauAcademique | None, profil: str | No
         )
 
 
+def format_public_identity(appellation: str, prenom: str, nom: str, title: str) -> str:
+    identity = " ".join(part for part in [appellation, prenom, nom] if part).strip()
+    return f"{identity}, {title}".strip(", ") if title else identity
+
+
 class RoleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Role
@@ -86,6 +91,7 @@ class UtilisateurLiteSerializer(serializers.ModelSerializer):
             "is_team_approved",
             "team_display_order",
             "can_appear_on_about_page",
+            "public_appellation",
             "public_title",
             "public_description",
             "public_photo",
@@ -142,6 +148,7 @@ class UtilisateurSerializer(serializers.ModelSerializer):
             "is_team_approved",
             "team_display_order",
             "can_appear_on_about_page",
+            "public_appellation",
             "public_title",
             "public_description",
             "public_photo",
@@ -482,6 +489,7 @@ class OperationalAdminSerializer(serializers.ModelSerializer):
             "role",
             "role_nom",
             "can_appear_on_about_page",
+            "public_appellation",
             "public_title",
             "public_description",
             "public_photo",
@@ -490,6 +498,7 @@ class OperationalAdminSerializer(serializers.ModelSerializer):
             "pending_public_validation",
             "public_profile_status",
             "public_profile_updated_at",
+            "approved_public_appellation",
             "approved_public_prenom",
             "approved_public_nom",
             "approved_public_title",
@@ -508,6 +517,7 @@ class OperationalAdminSerializer(serializers.ModelSerializer):
             "pending_public_validation",
             "public_profile_status",
             "public_profile_updated_at",
+            "approved_public_appellation",
             "approved_public_prenom",
             "approved_public_nom",
             "approved_public_title",
@@ -558,6 +568,7 @@ class OperationalAdminSerializer(serializers.ModelSerializer):
             admin.approve_public_profile()
             admin.save(
                 update_fields=[
+                    "approved_public_appellation",
                     "approved_public_prenom",
                     "approved_public_nom",
                     "approved_public_title",
@@ -575,7 +586,14 @@ class OperationalAdminSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         password = validated_data.pop("mot_de_passe", None)
         public_fields_touched = bool(
-            {"prenom", "nom", "public_title", "public_description", "public_photo"}.intersection(validated_data.keys())
+            {
+                "public_appellation",
+                "prenom",
+                "nom",
+                "public_title",
+                "public_description",
+                "public_photo",
+            }.intersection(validated_data.keys())
         )
         if "statut_compte" in validated_data:
             validated_data = self.sync_active_status(validated_data)
@@ -598,6 +616,8 @@ class PublicAboutTeamMemberSerializer(serializers.ModelSerializer):
     nom = serializers.SerializerMethodField()
     prenom = serializers.SerializerMethodField()
     nom_complet = serializers.SerializerMethodField()
+    public_appellation = serializers.SerializerMethodField()
+    public_display_name = serializers.SerializerMethodField()
     role_label = serializers.CharField(source="role.get_nom_display", read_only=True)
     public_title = serializers.SerializerMethodField()
     public_description = serializers.SerializerMethodField()
@@ -610,6 +630,8 @@ class PublicAboutTeamMemberSerializer(serializers.ModelSerializer):
             "nom",
             "prenom",
             "nom_complet",
+            "public_appellation",
+            "public_display_name",
             "role_label",
             "public_title",
             "public_description",
@@ -624,6 +646,17 @@ class PublicAboutTeamMemberSerializer(serializers.ModelSerializer):
 
     def get_nom_complet(self, obj: Utilisateur) -> str:
         return f"{self.get_prenom(obj)} {self.get_nom(obj)}".strip()
+
+    def get_public_appellation(self, obj: Utilisateur) -> str:
+        return obj.approved_public_appellation or obj.public_appellation
+
+    def get_public_display_name(self, obj: Utilisateur) -> str:
+        return format_public_identity(
+            self.get_public_appellation(obj),
+            self.get_prenom(obj),
+            self.get_nom(obj),
+            self.get_public_title(obj),
+        )
 
     def get_public_title(self, obj: Utilisateur) -> str:
         return obj.approved_public_title or obj.public_title
@@ -656,6 +689,7 @@ class AdminOwnAccountSerializer(serializers.ModelSerializer):
             "date_creation",
             "profile_photo_url",
             "can_appear_on_about_page",
+            "public_appellation",
             "public_title",
             "public_description",
             "public_photo",
@@ -699,7 +733,14 @@ class AdminOwnAccountSerializer(serializers.ModelSerializer):
         return attrs
 
     def update(self, instance, validated_data):
-        review_fields = {"prenom", "nom", "public_title", "public_description", "public_photo"}
+        review_fields = {
+            "public_appellation",
+            "prenom",
+            "nom",
+            "public_title",
+            "public_description",
+            "public_photo",
+        }
         visibility_changed = "can_appear_on_about_page" in validated_data
         public_info_changed = False
         for field, value in validated_data.items():

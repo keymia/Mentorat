@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useState } from "react";
 import Image from "next/image";
 import { Eye, Pencil, Save } from "lucide-react";
 
+import { PublicTitleMultiSelect } from "@/components/admin/PublicTitleMultiSelect";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,21 +18,34 @@ import {
   updateAccountMe,
   updateOwnPassword,
 } from "@/lib/api";
+import {
+  PUBLIC_APPELLATIONS,
+  formatAdminPublicIdentity,
+  resolvePublicTitles,
+  splitPublicTitles,
+  type PublicAppellation,
+  type PublicTitleOption,
+} from "@/lib/publicAdminProfile";
 
 type Draft = {
   prenom: string;
   nom: string;
   can_appear_on_about_page: boolean;
-  public_title: string;
+  public_appellation: PublicAppellation;
+  public_title_choices: PublicTitleOption[];
+  custom_public_title: string;
   public_description: string;
 };
 
 function buildDraft(profile: AccountProfile): Draft {
+  const publicTitle = splitPublicTitles(profile.public_title);
   return {
     prenom: profile.prenom ?? "",
     nom: profile.nom ?? "",
     can_appear_on_about_page: Boolean(profile.can_appear_on_about_page),
-    public_title: profile.public_title ?? "",
+    public_appellation: (profile.public_appellation ?? "") as PublicAppellation,
+    public_title_choices: publicTitle.publicTitleChoices,
+    custom_public_title: publicTitle.customPublicTitle,
     public_description: profile.public_description ?? "",
   };
 }
@@ -75,7 +89,9 @@ export function AdminAccountSettings() {
     prenom: "",
     nom: "",
     can_appear_on_about_page: false,
-    public_title: "",
+    public_appellation: "",
+    public_title_choices: [],
+    custom_public_title: "",
     public_description: "",
   });
   const [error, setError] = useState("");
@@ -144,8 +160,15 @@ export function AdminAccountSettings() {
     formData.append("nom", draft.nom);
 
     if (canEditPublicProfile) {
+      const publicTitle = resolvePublicTitles(draft.public_title_choices, draft.custom_public_title);
+      if (draft.can_appear_on_about_page && !publicTitle) {
+        setError("Sélectionnez au moins un titre ou diplôme pour l’affichage public.");
+        setIsSaving(false);
+        return;
+      }
       formData.append("can_appear_on_about_page", String(draft.can_appear_on_about_page));
-      formData.append("public_title", draft.public_title);
+      formData.append("public_appellation", draft.public_appellation);
+      formData.append("public_title", publicTitle);
       formData.append("public_description", draft.public_description);
       const photo = new FormData(form).get("public_photo");
       if (photo instanceof File && photo.size > 0) {
@@ -278,7 +301,20 @@ export function AdminAccountSettings() {
             {canEditPublicProfile ? (
               <DetailItem label="Affichage À propos" value={profile.can_appear_on_about_page ? "Visible" : "Masqué"} />
             ) : null}
-            {profile.public_title ? <DetailItem label="Titre public" value={profile.public_title} /> : null}
+            {canEditPublicProfile ? (
+              <DetailItem
+                label="Identité publique"
+                value={formatAdminPublicIdentity({
+                  appellation: profile.public_appellation,
+                  prenom: profile.prenom,
+                  nom: profile.nom,
+                  title: profile.public_title,
+                })}
+                className="md:col-span-2"
+              />
+            ) : null}
+            {profile.public_appellation ? <DetailItem label="Appellation" value={profile.public_appellation} /> : null}
+            {profile.public_title ? <DetailItem label="Titre / diplôme" value={profile.public_title} /> : null}
             {profile.public_description ? (
               <DetailItem label="Description publique" value={profile.public_description} className="md:col-span-2" />
             ) : null}
@@ -298,6 +334,25 @@ export function AdminAccountSettings() {
       >
         <div className="grid gap-5">
           <form onSubmit={handleProfileSubmit} className="grid gap-4 md:grid-cols-2">
+            {canEditPublicProfile ? (
+              <label>
+                Appellation
+                <select
+                  className="field"
+                  value={draft.public_appellation}
+                  onChange={(event) =>
+                    setDraft({ ...draft, public_appellation: event.target.value as PublicAppellation })
+                  }
+                >
+                  <option value="">Sélectionnez une appellation</option>
+                  {PUBLIC_APPELLATIONS.map((appellation) => (
+                    <option key={appellation} value={appellation}>
+                      {appellation}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
             <label>
               Prénom
               <input
@@ -318,6 +373,23 @@ export function AdminAccountSettings() {
             </label>
             {canEditPublicProfile ? (
               <>
+                <div className="md:col-span-2">
+                  <PublicTitleMultiSelect
+                    selectedTitles={draft.public_title_choices}
+                    customTitle={draft.custom_public_title}
+                    required={draft.can_appear_on_about_page}
+                    onSelectedTitlesChange={(titles) =>
+                      setDraft((currentDraft) => ({
+                        ...currentDraft,
+                        public_title_choices: titles,
+                        custom_public_title: titles.includes("Autre") ? currentDraft.custom_public_title : "",
+                      }))
+                    }
+                    onCustomTitleChange={(title) =>
+                      setDraft((currentDraft) => ({ ...currentDraft, custom_public_title: title }))
+                    }
+                  />
+                </div>
                 <label>
                   Afficher sur la page À propos
                   <select
@@ -334,15 +406,6 @@ export function AdminAccountSettings() {
                 <label>
                   Photo publique
                   <input name="public_photo" className="field" type="file" accept="image/*" />
-                </label>
-                <label>
-                  Titre public
-                  <input
-                    className="field"
-                    required={draft.can_appear_on_about_page}
-                    value={draft.public_title}
-                    onChange={(event) => setDraft({ ...draft, public_title: event.target.value })}
-                  />
                 </label>
                 <label className="md:col-span-2">
                   Description publique
