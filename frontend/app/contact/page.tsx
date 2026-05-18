@@ -1,14 +1,11 @@
 import { Mail, MapPin } from "lucide-react";
 
-import { SiteFooter } from "@/components/layout/SiteFooter";
 import { PageHeader } from "@/components/PageHeader";
-import { SiteHeader } from "@/components/SiteHeader";
 import { Card, CardContent } from "@/components/ui/card";
 
 export default function ContactPage() {
   return (
-    <div className="min-h-screen bg-background">
-      <SiteHeader />
+    <>
       <PageHeader
         eyebrow="Contact"
         title="Contacter l’équipe Mentorat"
@@ -38,7 +35,6 @@ export default function ContactPage() {
           </CardContent>
         </Card>
       </main>
-      <SiteFooter />
-    </div>
+    </>
   );
 }

@@ -1,9 +1,7 @@
 import { HeartHandshake, Scale, ShieldCheck, UsersRound } from "lucide-react";
 
-import { SiteFooter } from "@/components/layout/SiteFooter";
 import { PageHeader } from "@/components/PageHeader";
 import { PublicProfileCard } from "@/components/public/PublicProfileCard";
-import { SiteHeader } from "@/components/SiteHeader";
 import { Card, CardContent } from "@/components/ui/card";
 import { getPublicAboutTeam } from "@/lib/api";
 import type { PublicAboutTeamMember } from "@/lib/api";
@@ -47,8 +45,7 @@ export default async function AboutPage() {
   const adminTeam = await getPublicAboutTeam().catch(() => []);
 
   return (
-    <div className="min-h-screen bg-background">
-      <SiteHeader />
+    <>
       <PageHeader
         eyebrow="À propos"
         title="Un cadre de mentorat académique simple à administrer"
@@ -86,7 +83,6 @@ export default async function AboutPage() {
           </section>
         ) : null}
       </main>
-      <SiteFooter />
-    </div>
+    </>
   );
 }

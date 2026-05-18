@@ -5,6 +5,7 @@ import { Settings } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
 import { AdminAccountSettings } from "@/components/admin/AdminAccountSettings";
+import { useHydrated } from "@/components/layout/useHydrated";
 import { AdminMentorshipPeriods } from "@/components/admin/mentorship/AdminMentorshipPeriods";
 import { HelpIconButton } from "@/components/help/HelpIconButton";
 import { Alert } from "@/components/ui/alert";
@@ -38,6 +39,7 @@ function buildDrafts(rows: ParametreSysteme[]) {
 
 export function AdminParametres() {
   const searchParams = useSearchParams();
+  const isHydrated = useHydrated();
   const requestedKey = searchParams.get("param");
   const [rows, setRows] = useState<ParametreSysteme[]>([]);
   const [drafts, setDrafts] = useState<Drafts>({});
@@ -47,6 +49,7 @@ export function AdminParametres() {
   const [isLoading, setIsLoading] = useState(true);
   const [savingId, setSavingId] = useState<number | null>(null);
   const [currentUser, setCurrentUser] = useState<UtilisateurDetail | null>(null);
+  const translationGuardProps = !isHydrated ? { "data-no-translate": true } : {};
 
   useEffect(() => {
     let isMounted = true;
@@ -137,23 +140,39 @@ export function AdminParametres() {
     : "Ajustez la valeur et la description du paramètre sélectionné.";
 
   if (isLoading) {
-    return <Skeleton className="h-56" />;
+    return (
+      <div className="contents" {...translationGuardProps}>
+        <Skeleton className="h-56" />
+      </div>
+    );
   }
 
   if (error && !currentUser) {
-    return <Alert variant="error">{error}</Alert>;
+    return (
+      <div className="contents" {...translationGuardProps}>
+        <Alert variant="error">{error}</Alert>
+      </div>
+    );
   }
 
   if (!isAdminPrincipal) {
-    return <AdminAccountSettings />;
+    return (
+      <div className="contents" {...translationGuardProps}>
+        <AdminAccountSettings />
+      </div>
+    );
   }
 
   if (selectedKey === "ACCOUNT") {
-    return <AdminAccountSettings />;
+    return (
+      <div className="contents" {...translationGuardProps}>
+        <AdminAccountSettings />
+      </div>
+    );
   }
 
   return (
-    <div className="grid gap-5">
+    <div className="grid gap-5" {...translationGuardProps}>
       <div>
         <div className="flex items-center gap-2">
           <h1 className="font-display text-3xl font-bold">{pageTitle}</h1>

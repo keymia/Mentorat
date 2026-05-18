@@ -4,6 +4,7 @@ import { ArrowRight, GraduationCap, HeartHandshake } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
+import { useHydrated } from "@/components/layout/useHydrated";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Modal } from "@/components/ui/modal";
@@ -44,7 +45,9 @@ export function InscriptionModalOptions({ variant = "cards" }: InscriptionModalO
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const isHydrated = useHydrated();
   const activeForm = parseFormType(searchParams.get("form"));
+  const translationGuardProps = !isHydrated ? { "data-no-translate": true } : {};
 
   function updateFormInUrl(form: FormType | null) {
     const params = new URLSearchParams(searchParams.toString());
@@ -66,7 +69,7 @@ export function InscriptionModalOptions({ variant = "cards" }: InscriptionModalO
   }
 
   return (
-    <>
+    <div className="contents" {...translationGuardProps}>
       {variant === "hero" ? (
         <div className="mt-8 flex flex-wrap gap-3">
           <Button asChild size="lg">
@@ -120,6 +123,6 @@ export function InscriptionModalOptions({ variant = "cards" }: InscriptionModalO
       >
         <MentoreForm />
       </Modal>
-    </>
+    </div>
   );
 }

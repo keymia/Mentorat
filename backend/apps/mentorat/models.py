@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Q
 from django.utils import timezone
 
@@ -455,7 +455,25 @@ class MentorshipSession(models.Model):
         if self.session_number and self.session_number > period.required_sessions:
             raise ValidationError({"session_number": "Le numero de seance depasse le nombre prevu pour la periode."})
 
+    def next_session_number(self) -> int:
+        max_number = (
+            self.__class__.objects.filter(assignment_id=self.assignment_id)
+            .exclude(pk=self.pk)
+            .aggregate(max_number=models.Max("session_number"))
+            .get("max_number")
+            or 0
+        )
+        return max_number + 1
+
     def save(self, *args, **kwargs):
+        if self.assignment_id and not self.session_number:
+            with transaction.atomic():
+                MentorshipAssignment.objects.select_for_update().filter(pk=self.assignment_id).exists()
+                self.session_number = self.next_session_number()
+                self.full_clean()
+                super().save(*args, **kwargs)
+                return
+
         self.full_clean()
         super().save(*args, **kwargs)
 

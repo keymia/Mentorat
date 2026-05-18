@@ -1,7 +1,5 @@
 import { CalendarDays, MapPin, Video } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
-import { SiteHeader } from "@/components/SiteHeader";
-import { SiteFooter } from "@/components/layout/SiteFooter";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -25,8 +23,7 @@ export default async function EvenementsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <SiteHeader />
+    <>
       <PageHeader
         eyebrow="Événements"
         title="Événements du programme"
@@ -96,7 +93,6 @@ export default async function EvenementsPage() {
           </div>
         )}
       </main>
-      <SiteFooter />
-    </div>
+    </>
   );
 }

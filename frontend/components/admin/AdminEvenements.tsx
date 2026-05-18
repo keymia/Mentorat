@@ -16,10 +16,13 @@ import { HelpIconButton } from "@/components/help/HelpIconButton";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ListTable } from "@/components/ui/list-table";
 import { Modal } from "@/components/ui/modal";
+import { PaginationControls } from "@/components/ui/pagination-controls";
 import { Skeleton } from "@/components/ui/skeleton";
+import { usePagination } from "@/hooks/usePagination";
 
 const eventTypes = [
   { value: "ATELIER", label: "Atelier" },
@@ -79,6 +82,8 @@ export function AdminEvenements() {
   const [actionId, setActionId] = useState<number | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [detailsEvent, setDetailsEvent] = useState<Evenement | null>(null);
+  const [eventToDelete, setEventToDelete] = useState<Evenement | null>(null);
+  const { page, setPage, pageCount, visibleItems: visibleEvenements } = usePagination(evenements, 10);
 
   useEffect(() => {
     let isMounted = true;
@@ -180,11 +185,6 @@ export function AdminEvenements() {
   }
 
   async function handleDelete(evenement: Evenement) {
-    const confirmed = window.confirm(`Supprimer ${evenement.titre} ?`);
-    if (!confirmed) {
-      return;
-    }
-
     setActionId(evenement.id);
     setError("");
     setMessage("");
@@ -196,6 +196,8 @@ export function AdminEvenements() {
         resetForm();
         setIsFormOpen(false);
       }
+      setDetailsEvent((current) => (current?.id === evenement.id ? null : current));
+      setEventToDelete(null);
       setMessage("Evenement supprimé.");
     } catch (apiError) {
       setError(formatApiError(apiError));
@@ -389,6 +391,7 @@ export function AdminEvenements() {
           title="Liste des événements"
           countLabel={`${evenements.length} evenement${evenements.length > 1 ? "s" : ""}`}
           minWidth={920}
+          footer={<PaginationControls page={page} pageCount={pageCount} onPageChange={setPage} />}
           action={
           <Button type="button" onClick={() => void reloadEvenements()} variant="outline" size="sm" className="w-fit">
             <RefreshCcw aria-hidden="true" />
@@ -404,7 +407,7 @@ export function AdminEvenements() {
           ]}
           emptyState={evenements.length === 0 ? <EmptyState icon={CalendarDays} title="Aucun evenement pour le moment." /> : null}
         >
-          {evenements.map((evenement) => (
+          {visibleEvenements.map((evenement) => (
             <tr key={evenement.id} className="align-top">
               <td className="px-4 py-3 font-medium text-foreground">
                 <p className="max-w-xs truncate">{evenement.titre}</p>
@@ -434,7 +437,7 @@ export function AdminEvenements() {
                   <Button
                     type="button"
                     disabled={actionId === evenement.id}
-                    onClick={() => void handleDelete(evenement)}
+                    onClick={() => setEventToDelete(evenement)}
                     variant="danger"
                     size="sm"
                   >
@@ -481,6 +484,22 @@ export function AdminEvenements() {
           </div>
         ) : null}
       </Modal>
+
+      <ConfirmDialog
+        open={Boolean(eventToDelete)}
+        title="Supprimer cet événement ?"
+        description="Voulez-vous vraiment supprimer cet élément ? Cette action est irréversible."
+        confirmLabel="Supprimer l'événement"
+        isConfirming={Boolean(eventToDelete && actionId === eventToDelete.id)}
+        onCancel={() => setEventToDelete(null)}
+        onConfirm={async () => {
+          if (eventToDelete) {
+            await handleDelete(eventToDelete);
+          }
+        }}
+      >
+        {eventToDelete ? <p className="font-medium text-foreground">{eventToDelete.titre}</p> : null}
+      </ConfirmDialog>
     </div>
   );
 }

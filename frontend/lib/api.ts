@@ -568,29 +568,83 @@ export async function apiDownload(path: string, fallbackFilename: string): Promi
   };
 }
 
-export function formatApiError(error: unknown) {
-  function formatValue(value: unknown): string {
-    if (Array.isArray(value)) {
-      return value.map(formatValue).join(", ");
-    }
-    if (value && typeof value === "object") {
-      return Object.entries(value as Record<string, unknown>)
-        .map(([key, nestedValue]) => `${key}: ${formatValue(nestedValue)}`)
-        .join(", ");
-    }
-    return String(value);
-  }
+const apiFieldLabels: Record<string, string> = {
+  email: "Email",
+  mot_de_passe: "Mot de passe",
+  ancien_mot_de_passe: "Ancien mot de passe",
+  code: "Code temporaire",
+  prenom: "Prénom",
+  nom: "Nom",
+  telephone: "Téléphone",
+  niveau_academique: "Niveau académique",
+  mentor_choisi: "Mentor",
+  session_number: "Numéro de séance",
+  scheduled_date: "Date",
+  start_time: "Heure de début",
+  end_time: "Heure de fin",
+  public_title: "Titre public",
+  public_description: "Description publique",
+  mini_bio: "Mini bio",
+  consentement: "Consentement",
+  detail: "",
+  non_field_errors: "",
+};
 
+function friendlyFieldLabel(key: string) {
+  return apiFieldLabels[key] ?? key.replace(/_/g, " ");
+}
+
+function normalizeApiMessage(value: string) {
+  const trimmed = value.trim();
+  const lower = trimmed.toLowerCase();
+
+  if (lower === "identifiants invalides.") {
+    return "Identifiants invalides. Vérifiez votre email et votre mot de passe.";
+  }
+  if (lower === "compte inactif ou en attente de validation.") {
+    return "Ce compte n'est pas autorisé à se connecter pour le moment.";
+  }
+  if (lower === "code invalide ou expire.") {
+    return "Le code temporaire est invalide ou expiré.";
+  }
+  if (lower.includes("server") && lower.includes("error")) {
+    return "Le serveur a rencontré un problème. Réessayez dans un instant.";
+  }
+  return trimmed;
+}
+
+function formatApiValue(value: unknown): string {
+  if (Array.isArray(value)) {
+    return value.map((item) => formatApiValue(item)).join(", ");
+  }
+  if (value && typeof value === "object") {
+    return Object.entries(value as Record<string, unknown>)
+      .map(([key, nestedValue]) => formatApiEntry(key, nestedValue))
+      .join(" | ");
+  }
+  return normalizeApiMessage(String(value));
+}
+
+function formatApiEntry(key: string, value: unknown) {
+  const label = friendlyFieldLabel(key);
+  const formattedValue = formatApiValue(value);
+  return label ? `${label} : ${formattedValue}` : formattedValue;
+}
+
+export function formatApiError(error: unknown) {
   if (error instanceof ApiError) {
     if (error.payload && typeof error.payload === "object") {
       return Object.entries(error.payload as Record<string, unknown>)
-        .map(([key, value]) => `${key}: ${formatValue(value)}`)
+        .map(([key, value]) => formatApiEntry(key, value))
         .join(" | ");
     }
-    return error.message;
+    if (error.status >= 500) {
+      return "Le serveur a rencontré un problème. Réessayez dans un instant.";
+    }
+    return normalizeApiMessage(error.message);
   }
   if (error instanceof Error) {
-    return error.message;
+    return normalizeApiMessage(error.message);
   }
   return "Une erreur inconnue est survenue.";
 }
@@ -981,7 +1035,9 @@ export function getMentorSessions() {
 
 export function createMentorAssignmentSession(
   assignmentId: number,
-  payload: Pick<MentorshipSession, "session_number" | "scheduled_date" | "start_time" | "end_time" | "status" | "summary" | "mentor_comment">,
+  payload: Pick<MentorshipSession, "scheduled_date" | "start_time" | "end_time" | "status" | "summary" | "mentor_comment"> & {
+    session_number?: number;
+  },
 ) {
   return apiFetch<MentorshipSession>(`/mentor/assignments/${assignmentId}/sessions/`, {
     method: "POST",
@@ -990,10 +1046,11 @@ export function createMentorAssignmentSession(
 }
 
 export function createMentorSession(
-  payload: Pick<MentorshipSession, "session_number" | "scheduled_date" | "start_time" | "end_time" | "summary"> & {
+  payload: Pick<MentorshipSession, "scheduled_date" | "start_time" | "end_time" | "summary"> & {
     assignment?: number;
     mentoree?: number;
     mentor_comment?: string;
+    session_number?: number;
     status?: MentorshipSessionStatus;
   },
 ) {

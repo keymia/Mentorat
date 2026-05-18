@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
+import { useHydrated } from "@/components/layout/useHydrated";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -66,6 +67,7 @@ function isPeriodExpired(period?: MentorshipPeriod) {
 
 export function MentorSettingsPanel() {
   const searchParams = useSearchParams();
+  const isHydrated = useHydrated();
   const section = normalizeSection(searchParams.get("section"));
   const [user, setUser] = useState<UtilisateurDetail | null>(null);
   const [mentorProfile, setMentorProfile] = useState<UtilisateurDetail | null>(null);
@@ -88,6 +90,7 @@ export function MentorSettingsPanel() {
   const [isAccountUpdateOpen, setIsAccountUpdateOpen] = useState(false);
   const [selectedPhotoName, setSelectedPhotoName] = useState("");
   const [isTeamProfileExpanded, setIsTeamProfileExpanded] = useState(false);
+  const translationGuardProps = !isHydrated ? { "data-no-translate": true } : {};
 
   useEffect(() => {
     let isMounted = true;
@@ -277,11 +280,19 @@ export function MentorSettingsPanel() {
   }
 
   if (error) {
-    return <Alert variant="error">{error}</Alert>;
+    return (
+      <div className="contents" {...translationGuardProps}>
+        <Alert variant="error">{error}</Alert>
+      </div>
+    );
   }
 
   if (!user) {
-    return <Skeleton className="h-96" />;
+    return (
+      <div className="contents" {...translationGuardProps}>
+        <Skeleton className="h-96" />
+      </div>
+    );
   }
 
   const visibleTeamProfileRows = isTeamProfileExpanded ? teamProfileRows : teamProfileRows.slice(0, 3);
@@ -289,7 +300,7 @@ export function MentorSettingsPanel() {
   const accountType = user.role_label || "Mentor";
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-6" {...translationGuardProps}>
       <Modal
         open={isAccountDetailsOpen}
         title="Detail du compte"
@@ -340,7 +351,7 @@ export function MentorSettingsPanel() {
             {profileError ? <Alert variant="error" className="md:col-span-2">{profileError}</Alert> : null}
             <label>
               Prenom
-              <Input name="prenom" defaultValue={user.prenom} required />
+              <Input name="prenom" defaultValue={user.prenom} />
             </label>
             <label>
               Nom

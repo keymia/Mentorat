@@ -9,7 +9,6 @@ import {
   Handshake,
   HelpCircle,
   AlertTriangle,
-  Mail,
   Settings,
   UserCog,
   UserRoundCheck,
@@ -19,6 +18,7 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
+import { useHydrated } from "@/components/layout/useHydrated";
 import { AdminActionAlerts, ParametreSysteme, UtilisateurDetail, getAdminActionAlerts, getCurrentUser, getParametres } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
@@ -37,7 +37,6 @@ const adminLinks = [
   { href: "/admin/mentorship/progress", label: "Suivis", icon: UserRoundCheck },
   { href: "/admin/evenements", label: "Événements", icon: CalendarDays },
   { href: "/admin/partenaires", label: "Partenaires", icon: Handshake },
-  { href: "/admin/emails", label: "Emails", icon: Mail },
   { href: "/admin/administrateurs", label: "Administrateurs", icon: UserCog },
   { href: "/admin/help", label: "Aide", icon: HelpCircle },
 ];
@@ -46,14 +45,20 @@ function parameterHref(key: string) {
   return `/admin/parametres?param=${encodeURIComponent(key)}`;
 }
 
-export function AdminSidebarNav() {
+type AdminSidebarNavProps = {
+  onNavigate?: () => void;
+};
+
+export function AdminSidebarNav({ onNavigate }: AdminSidebarNavProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const isHydrated = useHydrated();
   const selectedParam = searchParams.get("param");
   const [parametres, setParametres] = useState<ParametreSysteme[]>([]);
   const [alerts, setAlerts] = useState<AdminActionAlerts | null>(null);
   const [currentUser, setCurrentUser] = useState<UtilisateurDetail | null>(null);
   const [isOpenByUser, setIsOpenByUser] = useState(false);
+  const translationGuardProps = !isHydrated ? { "data-no-translate": true } : {};
   const isOpen = pathname === "/admin/parametres" || isOpenByUser;
   const isAdminPrincipal = currentUser?.role_nom === "ADMIN_PRINCIPAL";
   const selectedParamKey = selectedParam ?? accountSettingsKey;
@@ -148,7 +153,7 @@ export function AdminSidebarNav() {
   );
 
   return (
-    <nav className="mt-5 grid gap-1 text-sm" aria-label="Navigation admin">
+    <nav className="mt-5 grid gap-1 text-sm" aria-label="Navigation admin" {...translationGuardProps}>
       {isAdminPrincipal && alerts?.session_ending_soon ? (
         <div className="mb-3 rounded-xl border border-amber-300/40 bg-amber-400/15 p-3 text-amber-50">
           <div className="flex items-start gap-2">
@@ -160,6 +165,7 @@ export function AdminSidebarNav() {
           <Link
             href={parameterHref(mentorshipPeriodKey)}
             className="mt-3 inline-flex rounded-lg bg-white/15 px-3 py-1.5 text-xs font-semibold text-white hover:bg-white/25"
+            onClick={onNavigate}
           >
             Créer une période
           </Link>
@@ -173,6 +179,7 @@ export function AdminSidebarNav() {
           <Link
             key={link.href}
             href={link.href}
+            onClick={onNavigate}
             className={cn(
               "flex items-center gap-3 rounded-xl px-3 py-2.5 text-white/75 transition hover:bg-white/10 hover:text-white",
               isActive && "bg-white/10 text-white",
@@ -214,6 +221,7 @@ export function AdminSidebarNav() {
             <Link
               key={link.key}
               href={link.href}
+              onClick={onNavigate}
               className={cn(
                 "rounded-lg px-3 py-2 text-xs font-medium text-white/60 transition hover:bg-white/10 hover:text-white",
                 pathname === "/admin/parametres" && selectedParamKey === link.key && "bg-white/10 text-white",

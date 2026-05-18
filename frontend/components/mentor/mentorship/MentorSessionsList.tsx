@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarClock, CalendarPlus, Eye, Pencil, Save } from "lucide-react";
+import { CalendarCheck2, CalendarClock, CalendarPlus, Eye, Pencil, Save } from "lucide-react";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 
 import { Alert } from "@/components/ui/alert";
@@ -10,13 +10,16 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { ListTable } from "@/components/ui/list-table";
 import { Modal } from "@/components/ui/modal";
+import { PaginationControls } from "@/components/ui/pagination-controls";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import { usePagination } from "@/hooks/usePagination";
 import {
   MentorshipAssignment,
   MentorshipSession,
   MentorshipSessionStatus,
   createMentorSession,
+  completeMentorSession,
   formatApiError,
   getMentorAssignments,
   getMentorSessions,
@@ -33,7 +36,6 @@ function nullableTime(value: string) {
 }
 
 function validateSessionForm(formData: FormData, assignment?: MentorshipAssignment) {
-  const sessionNumber = Number(formString(formData, "session_number"));
   const scheduledDate = formString(formData, "scheduled_date");
   const startTime = formString(formData, "start_time");
   const endTime = formString(formData, "end_time");
@@ -41,9 +43,6 @@ function validateSessionForm(formData: FormData, assignment?: MentorshipAssignme
 
   if (!assignment) {
     return "Le mentoré est obligatoire.";
-  }
-  if (!sessionNumber) {
-    return "Le numéro de séance est obligatoire.";
   }
   if (!scheduledDate) {
     return "La date est obligatoire.";
@@ -54,10 +53,17 @@ function validateSessionForm(formData: FormData, assignment?: MentorshipAssignme
   if (!summary) {
     return "L'objet de la séance est obligatoire.";
   }
-  if (assignment.required_sessions && sessionNumber > assignment.required_sessions) {
-    return "Le numéro de séance dépasse le nombre de séances prévues.";
-  }
   return "";
+}
+
+function nextSessionNumberForAssignment(sessions: MentorshipSession[], assignmentId?: number) {
+  if (!assignmentId) {
+    return 1;
+  }
+  const maxNumber = sessions
+    .filter((session) => session.assignment === assignmentId)
+    .reduce((currentMax, session) => Math.max(currentMax, session.session_number), 0);
+  return maxNumber + 1;
 }
 
 export function MentorSessionsList() {
@@ -78,6 +84,7 @@ export function MentorSessionsList() {
     [assignments],
   );
   const selectedAssignment = selectedAssignmentId ? assignmentsById.get(Number(selectedAssignmentId)) : undefined;
+  const { page, setPage, pageCount, visibleItems: visibleSessions } = usePagination(sessions, 10);
 
   const loadData = useCallback(async () => {
     try {
@@ -117,7 +124,7 @@ export function MentorSessionsList() {
     };
   }, []);
 
-  async function handleCreateSubmit(event: FormEvent<HTMLFormElement>) {
+async function handleCreateSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const formElement = event.currentTarget;
     const formData = new FormData(formElement);
@@ -129,11 +136,22 @@ export function MentorSessionsList() {
       return;
     }
 
+    const nextSessionNumber = nextSessionNumberForAssignment(sessions, assignment.id);
+    const sessionNumber = Number(formString(formData, "session_number"));
+    if (assignment.required_sessions && nextSessionNumber > assignment.required_sessions) {
+      setFormError("Toutes les séances prévues pour ce mentoré sont déjà créées.");
+      return;
+    }
+    if (!Number.isFinite(sessionNumber) || sessionNumber <= 0) {
+      setFormError("Le numéro de séance attribué est invalide.");
+      return;
+    }
+
     setIsSaving(true);
     try {
       await createMentorSession({
         assignment: assignment.id,
-        session_number: Number(formString(formData, "session_number")),
+        session_number: sessionNumber,
         scheduled_date: formString(formData, "scheduled_date"),
         start_time: nullableTime(formString(formData, "start_time")),
         end_time: nullableTime(formString(formData, "end_time")),
@@ -170,7 +188,6 @@ export function MentorSessionsList() {
     setIsSaving(true);
     try {
       await updateMentorSession(editSession.id, {
-        session_number: Number(formString(formData, "session_number")),
         scheduled_date: formString(formData, "scheduled_date"),
         start_time: nullableTime(formString(formData, "start_time")),
         end_time: nullableTime(formString(formData, "end_time")),
@@ -183,6 +200,21 @@ export function MentorSessionsList() {
       await loadData();
     } catch (apiError) {
       setFormError(formatApiError(apiError));
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function handleCompleteSession(session: MentorshipSession) {
+    setIsSaving(true);
+    setError("");
+    setMessage("");
+    try {
+      await completeMentorSession(session.id, {});
+      setMessage("Séance marquée comme réalisée.");
+      await loadData();
+    } catch (apiError) {
+      setError(formatApiError(apiError));
     } finally {
       setIsSaving(false);
     }
@@ -201,6 +233,8 @@ export function MentorSessionsList() {
   }
 
   function renderCreateForm() {
+    const nextSessionNumber = nextSessionNumberForAssignment(sessions, selectedAssignment?.id);
+
     return (
       <form onSubmit={handleCreateSubmit} className="grid gap-4 md:grid-cols-2">
         <label className="md:col-span-2">
@@ -222,7 +256,8 @@ export function MentorSessionsList() {
         </label>
         <label>
           Numéro de séance
-          <Input name="session_number" type="number" min={1} max={selectedAssignment?.required_sessions} required />
+          <Input value={selectedAssignment ? String(nextSessionNumber) : ""} placeholder="Choisissez un mentoré" readOnly />
+          <input type="hidden" name="session_number" value={selectedAssignment ? String(nextSessionNumber) : ""} />
         </label>
         <label>
           Date
@@ -254,7 +289,7 @@ export function MentorSessionsList() {
       <form onSubmit={handleEditSubmit} className="grid gap-4 md:grid-cols-2">
         <label>
           Numéro de séance
-          <Input name="session_number" type="number" min={1} defaultValue={session.session_number} required />
+          <Input value={`Séance ${session.session_number}`} readOnly disabled />
         </label>
         <label>
           Date
@@ -374,6 +409,7 @@ export function MentorSessionsList() {
           title="Liste des séances"
           countLabel={`${sessions.length} séance${sessions.length > 1 ? "s" : ""}`}
           minWidth={1080}
+          footer={<PaginationControls page={page} pageCount={pageCount} onPageChange={setPage} />}
           headers={[
             { label: "Mentoré" },
             { label: "Séance" },
@@ -383,7 +419,7 @@ export function MentorSessionsList() {
             { label: "Actions", className: "text-right" },
           ]}
         >
-          {sessions.map((session) => {
+          {visibleSessions.map((session) => {
             const assignment = assignmentsById.get(session.assignment);
             return (
               <tr key={session.id} className="align-top">
@@ -421,6 +457,18 @@ export function MentorSessionsList() {
                       <Pencil aria-hidden="true" />
                       Modifier
                     </Button>
+                    {session.status !== "completed" ? (
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        disabled={isSaving}
+                        onClick={() => void handleCompleteSession(session)}
+                      >
+                        <CalendarCheck2 aria-hidden="true" />
+                        Réaliser
+                      </Button>
+                    ) : null}
                   </div>
                 </td>
               </tr>

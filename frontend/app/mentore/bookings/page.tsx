@@ -1,12 +1,9 @@
 import { Alert } from "@/components/ui/alert";
-import { SiteFooter } from "@/components/layout/SiteFooter";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { SiteHeader } from "@/components/layout/SiteHeader";
 
 export default function MentoreBookingsPage() {
   return (
-    <div className="min-h-screen bg-background">
-      <SiteHeader />
+    <>
       <PageHeader
         eyebrow="Espace mentoré"
         title="Reservations automatiques desactivees"
@@ -18,7 +15,6 @@ export default function MentoreBookingsPage() {
           l&apos;administration.
         </Alert>
       </main>
-      <SiteFooter />
-    </div>
+    </>
   );
 }

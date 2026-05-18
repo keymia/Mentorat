@@ -21,6 +21,7 @@ import { useState } from "react";
 import { BrandMark } from "@/components/layout/BrandMark";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { UserSidebarIdentity } from "@/components/layout/UserSidebarIdentity";
+import { useHydrated } from "@/components/layout/useHydrated";
 import { Button } from "@/components/ui/button";
 import { clearStoredAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
@@ -87,12 +88,14 @@ function MentorNav({ onNavigate }: MentorNavProps) {
 function MentorUtilityNav({ onNavigate }: MentorNavProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const isHydrated = useHydrated();
   const selectedSection = searchParams.get("section") ?? "account";
   const [isSettingsOpenByUser, setIsSettingsOpenByUser] = useState(false);
+  const translationGuardProps = !isHydrated ? { "data-no-translate": true } : {};
   const isSettingsOpen = pathname === "/mentor/parametres" || isSettingsOpenByUser;
 
   return (
-    <nav className="grid gap-1 text-sm" aria-label="Navigation compte mentor">
+    <nav className="grid gap-1 text-sm" aria-label="Navigation compte mentor" {...translationGuardProps}>
       {mentorUtilityLinks.map((link) => {
         const isActive = isActivePath(pathname, link.href);
         return (
@@ -144,7 +147,7 @@ export function MentorShell({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div data-no-translate className="min-h-screen bg-background">
       <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur lg:hidden">
         <div className="flex items-center justify-between gap-3 px-4 py-3">
           <BrandMark href="/mentor/dashboard" />

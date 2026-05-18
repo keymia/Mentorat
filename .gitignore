@@ -14,3 +14,5 @@ frontend/out/
 frontend/.env.local
 frontend/.env.development
 frontend/.env.production
+.codex/
+.agents/

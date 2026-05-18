@@ -157,7 +157,7 @@ export function MentoreForm() {
         </label>
         <label>
           Prenom
-          <input name="prenom" required className="field" />
+          <input name="prenom" className="field" />
         </label>
         <label>
           Email

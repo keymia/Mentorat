@@ -421,6 +421,9 @@ class MentorshipSessionSerializer(CleanModelSerializer):
             "updated_at",
         ]
         read_only_fields = ["created_at", "updated_at"]
+        extra_kwargs = {
+            "session_number": {"required": False},
+        }
 
     def validate(self, attrs):
         instance = MentorshipSession(

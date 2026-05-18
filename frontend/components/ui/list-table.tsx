@@ -16,6 +16,7 @@ type ListTableProps = {
   children: ReactNode;
   emptyState?: ReactNode;
   minWidth?: number;
+  footer?: ReactNode;
 };
 
 export function ListTable({
@@ -26,6 +27,7 @@ export function ListTable({
   children,
   emptyState,
   minWidth = 980,
+  footer,
 }: ListTableProps) {
   return (
     <Card className="overflow-hidden">
@@ -42,20 +44,23 @@ export function ListTable({
       {emptyState ? (
         <div className="p-4">{emptyState}</div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="list-table-max-five w-full text-left text-sm" style={{ minWidth }}>
-            <thead className="border-b border-border bg-muted text-xs uppercase text-muted-foreground">
-              <tr>
-                {headers.map((header) => (
-                  <th key={header.label} className={cn("px-4 py-3", header.className)}>
-                    {header.label}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">{children}</tbody>
-          </table>
-        </div>
+        <>
+          <div className="overflow-x-auto">
+            <table className="list-table-max-five w-full text-left text-sm" style={{ minWidth }}>
+              <thead className="border-b border-border bg-muted text-xs uppercase text-muted-foreground">
+                <tr>
+                  {headers.map((header) => (
+                    <th key={header.label} className={cn("px-4 py-3", header.className)}>
+                      {header.label}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">{children}</tbody>
+            </table>
+          </div>
+          {footer ? <div className="border-t border-border px-4 py-3">{footer}</div> : null}
+        </>
       )}
     </Card>
   );

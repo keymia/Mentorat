@@ -16,10 +16,13 @@ import { HelpIconButton } from "@/components/help/HelpIconButton";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ListTable } from "@/components/ui/list-table";
 import { Modal } from "@/components/ui/modal";
+import { PaginationControls } from "@/components/ui/pagination-controls";
 import { Skeleton } from "@/components/ui/skeleton";
+import { usePagination } from "@/hooks/usePagination";
 
 const partnerTypes = [
   { value: "ACADEMIQUE", label: "Academique" },
@@ -91,6 +94,8 @@ export function AdminPartenaires() {
   const [actionId, setActionId] = useState<number | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [detailsPartner, setDetailsPartner] = useState<Partenaire | null>(null);
+  const [partnerToDelete, setPartnerToDelete] = useState<Partenaire | null>(null);
+  const { page, setPage, pageCount, visibleItems: visiblePartenaires } = usePagination(partenaires, 10);
 
   useEffect(() => {
     let isMounted = true;
@@ -184,11 +189,6 @@ export function AdminPartenaires() {
   }
 
   async function handleDelete(partenaire: Partenaire) {
-    const confirmed = window.confirm(`Supprimer ${partenaire.nom_partenaire} ?`);
-    if (!confirmed) {
-      return;
-    }
-
     setActionId(partenaire.id);
     setError("");
     setMessage("");
@@ -200,6 +200,8 @@ export function AdminPartenaires() {
         resetForm();
         setIsFormOpen(false);
       }
+      setDetailsPartner((current) => (current?.id === partenaire.id ? null : current));
+      setPartnerToDelete(null);
       setMessage("Partenaire supprimé.");
     } catch (apiError) {
       setError(formatApiError(apiError));
@@ -364,6 +366,7 @@ export function AdminPartenaires() {
           title="Liste des partenaires"
           countLabel={`${partenaires.length} partenaire${partenaires.length > 1 ? "s" : ""}`}
           minWidth={960}
+          footer={<PaginationControls page={page} pageCount={pageCount} onPageChange={setPage} />}
           action={
           <Button type="button" onClick={() => void reloadPartenaires()} variant="outline" size="sm" className="w-fit">
             <RefreshCcw aria-hidden="true" />
@@ -379,7 +382,7 @@ export function AdminPartenaires() {
           ]}
           emptyState={partenaires.length === 0 ? <EmptyState icon={Handshake} title="Aucun partenaire pour le moment." /> : null}
         >
-          {partenaires.map((partenaire) => (
+          {visiblePartenaires.map((partenaire) => (
             <tr key={partenaire.id} className="align-top">
               <td className="px-4 py-3 font-medium text-foreground">
                 <p className="max-w-xs truncate">{partenaire.nom_partenaire}</p>
@@ -469,7 +472,7 @@ export function AdminPartenaires() {
               <Button
                 type="button"
                 disabled={actionId === detailsPartner.id}
-                onClick={() => void handleDelete(detailsPartner)}
+                onClick={() => setPartnerToDelete(detailsPartner)}
                 variant="danger"
               >
                 <Trash2 aria-hidden="true" />
@@ -479,6 +482,22 @@ export function AdminPartenaires() {
           </div>
         ) : null}
       </Modal>
+
+      <ConfirmDialog
+        open={Boolean(partnerToDelete)}
+        title="Supprimer ce partenaire ?"
+        description="Voulez-vous vraiment supprimer cet élément ? Cette action est irréversible."
+        confirmLabel="Supprimer le partenaire"
+        isConfirming={Boolean(partnerToDelete && actionId === partnerToDelete.id)}
+        onCancel={() => setPartnerToDelete(null)}
+        onConfirm={async () => {
+          if (partnerToDelete) {
+            await handleDelete(partnerToDelete);
+          }
+        }}
+      >
+        {partnerToDelete ? <p className="font-medium text-foreground">{partnerToDelete.nom_partenaire}</p> : null}
+      </ConfirmDialog>
     </div>
   );
 }

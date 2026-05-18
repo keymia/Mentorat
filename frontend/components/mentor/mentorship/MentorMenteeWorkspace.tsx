@@ -89,11 +89,16 @@ export function MentorMenteeWorkspace({ menteeId }: { menteeId: number }) {
     }
     const formElement = event.currentTarget;
     const formData = new FormData(formElement);
+    const sessionNumber = Number(formString(formData, "session_number"));
     setError("");
     setMessage("");
+    if (!Number.isFinite(sessionNumber) || sessionNumber <= 0) {
+      setError("Le numéro de séance attribué est invalide.");
+      return;
+    }
     try {
       await createMentorAssignmentSession(detail.current_assignment.id, {
-        session_number: Number(formString(formData, "session_number")),
+        session_number: sessionNumber,
         scheduled_date: formString(formData, "scheduled_date"),
         start_time: nullableTime(formString(formData, "start_time")),
         end_time: nullableTime(formString(formData, "end_time")),
@@ -135,13 +140,15 @@ export function MentorMenteeWorkspace({ menteeId }: { menteeId: number }) {
   const progress = detail.progress;
   const progressStatus = progress?.progress_status ?? assignment.progress_status ?? "average";
   const progressPercentage = progress?.progress_percentage ?? assignment.progress_percentage ?? 0;
+  const nextSessionNumber = detail.sessions.reduce((maxNumber, session) => Math.max(maxNumber, session.session_number), 0) + 1;
 
   function renderCreateSessionForm() {
     return (
       <form onSubmit={handleCreateSession} className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <label>
-          Numero
-          <Input name="session_number" type="number" min={1} max={assignment.required_sessions} required />
+          Numéro de séance
+          <Input value={String(nextSessionNumber)} readOnly />
+          <input type="hidden" name="session_number" value={String(nextSessionNumber)} />
         </label>
         <label>
           Date

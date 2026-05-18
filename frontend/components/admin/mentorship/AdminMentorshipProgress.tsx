@@ -10,7 +10,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ListTable } from "@/components/ui/list-table";
 import { Modal } from "@/components/ui/modal";
+import { PaginationControls } from "@/components/ui/pagination-controls";
 import { Skeleton } from "@/components/ui/skeleton";
+import { usePagination } from "@/hooks/usePagination";
 import {
   MentoreeProgress,
   MentorshipFilters,
@@ -45,6 +47,7 @@ export function AdminMentorshipProgress({
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const activeFilters = filters ?? localFilters;
+  const { page, setPage, pageCount, visibleItems: visibleProgressRows } = usePagination(progressRows, 10);
 
   useEffect(() => {
     let isMounted = true;
@@ -159,6 +162,7 @@ export function AdminMentorshipProgress({
           title="Liste des suivis"
           countLabel={`${progressRows.length} suivi${progressRows.length > 1 ? "s" : ""}`}
           minWidth={1120}
+          footer={<PaginationControls page={page} pageCount={pageCount} onPageChange={setPage} />}
           headers={[
             { label: "Mentoré" },
             { label: "Mentor" },
@@ -169,7 +173,7 @@ export function AdminMentorshipProgress({
           ]}
           emptyState={progressRows.length === 0 ? <EmptyState icon={TrendingUp} title="Aucun suivi à afficher." /> : null}
         >
-          {progressRows.map((progress) => (
+          {visibleProgressRows.map((progress) => (
             <tr key={progress.id} className="align-top">
               <td className="px-4 py-3">
                 <div className="flex items-center gap-2">

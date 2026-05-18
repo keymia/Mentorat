@@ -11,7 +11,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ListTable } from "@/components/ui/list-table";
 import { Modal } from "@/components/ui/modal";
+import { PaginationControls } from "@/components/ui/pagination-controls";
 import { Skeleton } from "@/components/ui/skeleton";
+import { usePagination } from "@/hooks/usePagination";
 import {
   MentorshipFilters,
   MentorshipPeriod,
@@ -48,6 +50,7 @@ export function AdminMentorshipSessions({
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const activeFilters = filters ?? localFilters;
+  const { page, setPage, pageCount, visibleItems: visibleSessions } = usePagination(sessions, 10);
 
   useEffect(() => {
     let isMounted = true;
@@ -161,6 +164,7 @@ export function AdminMentorshipSessions({
           title="Liste des séances"
           countLabel={`${sessions.length} séance${sessions.length > 1 ? "s" : ""}`}
           minWidth={1080}
+          footer={<PaginationControls page={page} pageCount={pageCount} onPageChange={setPage} />}
           headers={[
             { label: "Numéro" },
             { label: "Date" },
@@ -173,7 +177,7 @@ export function AdminMentorshipSessions({
           ]}
           emptyState={sessions.length === 0 ? <EmptyState icon={CalendarClock} title="Aucune séance à afficher." /> : null}
         >
-          {sessions.map((session) => (
+          {visibleSessions.map((session) => (
             <tr key={session.id} className="align-top">
               <td className="px-4 py-3">
                 <div className="flex items-center gap-2">

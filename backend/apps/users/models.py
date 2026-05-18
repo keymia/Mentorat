@@ -103,7 +103,7 @@ class Utilisateur(AbstractBaseUser, PermissionsMixin):
         REFUSE = "REFUSE", "Refuse"
 
     nom = models.CharField(max_length=150)
-    prenom = models.CharField(max_length=150)
+    prenom = models.CharField(max_length=150, blank=True)
     email = models.EmailField(unique=True)
     telephone = models.CharField(max_length=30, blank=True)
     langue_preferee = models.CharField(max_length=2, choices=Langue.choices, default=Langue.FR)
@@ -168,7 +168,7 @@ class Utilisateur(AbstractBaseUser, PermissionsMixin):
     objects = UtilisateurManager()
 
     USERNAME_FIELD = "email"
-    REQUIRED_FIELDS = ["nom", "prenom"]
+    REQUIRED_FIELDS = ["nom"]
 
     class Meta:
         ordering = ["nom", "prenom"]

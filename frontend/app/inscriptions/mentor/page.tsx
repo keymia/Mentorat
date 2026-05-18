@@ -1,13 +1,10 @@
 import { MentorForm } from "@/components/forms/MentorForm";
-import { SiteFooter } from "@/components/layout/SiteFooter";
 import { PageHeader } from "@/components/PageHeader";
-import { SiteHeader } from "@/components/SiteHeader";
 import { Card, CardContent } from "@/components/ui/card";
 
 export default function MentorInscriptionPage() {
   return (
-    <div className="min-h-screen bg-background">
-      <SiteHeader />
+    <>
       <PageHeader
         eyebrow="Inscription mentor"
         title="Devenir mentor"
@@ -20,7 +17,6 @@ export default function MentorInscriptionPage() {
           </CardContent>
         </Card>
       </main>
-      <SiteFooter />
-    </div>
+    </>
   );
 }

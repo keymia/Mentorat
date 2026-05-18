@@ -229,6 +229,48 @@ const englishDictionary: Record<string, string> = {
   "Evenements planifies dans le programme.": "Events scheduled in the program.",
   "Partenaires visibles sur le site public.": "Partners visible on the public site.",
   "Aucune donnee pour le moment.": "No data at the moment.",
+  "L'email est obligatoire.": "Email is required.",
+  "Le mot de passe est obligatoire.": "Password is required.",
+  "Le code temporaire est obligatoire.": "Temporary code is required.",
+  "Identifiants invalides. Verifiez votre email et votre mot de passe.":
+    "Invalid credentials. Check your email and password.",
+  "Ce compte n'est pas autorise a se connecter pour le moment.":
+    "This account is not authorized to sign in right now.",
+  "Le code temporaire est invalide ou expire.": "The temporary code is invalid or expired.",
+  "Le serveur a rencontre un probleme. Reessayez dans un instant.":
+    "The server encountered a problem. Please try again shortly.",
+  "Ouvrir le menu admin": "Open admin menu",
+  "Fermer le menu admin": "Close admin menu",
+  "Mon compte": "My account",
+  "Administrateur principal": "Principal administrator",
+  "Administrateur operationnel": "Operational administrator",
+  "Numéro attribué": "Assigned number",
+  "Séance marquee comme realisee.": "Session marked as completed.",
+  Realiser: "Complete",
+  "Supprimer cet evenement ?": "Delete this event?",
+  "Supprimer ce partenaire ?": "Delete this partner?",
+  "Supprimer cet administrateur ?": "Delete this administrator?",
+  "Supprimer cette periode ?": "Delete this period?",
+  "Voulez-vous vraiment supprimer cet element ? Cette action est irreversible.":
+    "Are you sure you want to delete this item? This action cannot be undone.",
+  "Supprimer l'evenement": "Delete event",
+  "Supprimer le partenaire": "Delete partner",
+  "Supprimer l'administrateur": "Delete administrator",
+  "Supprimer la periode": "Delete period",
+  "Suppression...": "Deleting...",
+  "Gestion des equipes": "Team management",
+  "Validez les mentors qui ont accepte d'apparaitre publiquement et definissez leur ordre d'affichage.":
+    "Approve mentors who agreed to appear publicly and set their display order.",
+  "Seul l'administrateur principal peut creer, modifier, desactiver ou supprimer ces comptes.":
+    "Only the principal administrator can create, edit, deactivate, or delete these accounts.",
+  "Créer un administrateur": "Create administrator",
+  "Créer un administrateur operationnel": "Create operational administrator",
+  "Séances de mentorat": "Mentorship sessions",
+  "Consultez les seances programmees, realisees, reportees ou annulees.":
+    "Review scheduled, completed, postponed, or cancelled sessions.",
+  "Créer une séance": "Create session",
+  "Séance programmée.": "Session scheduled.",
+  "Séance créée.": "Session created.",
 };
 
 const frenchPolishDictionary: Record<string, string> = {

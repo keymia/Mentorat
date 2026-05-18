@@ -9,7 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ListTable } from "@/components/ui/list-table";
+import { PaginationControls } from "@/components/ui/pagination-controls";
 import { Skeleton } from "@/components/ui/skeleton";
+import { usePagination } from "@/hooks/usePagination";
 import {
   MentoreeProgress,
   MentorshipAssignment,
@@ -28,6 +30,7 @@ export function MentorProgressOverview() {
   const [rows, setRows] = useState<ProgressRow[]>([]);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const { page, setPage, pageCount, visibleItems: visibleRows } = usePagination(rows, 10);
 
   useEffect(() => {
     let isMounted = true;
@@ -75,6 +78,7 @@ export function MentorProgressOverview() {
       title="Liste des suivis"
       countLabel={`${rows.length} suivi${rows.length > 1 ? "s" : ""}`}
       minWidth={920}
+      footer={<PaginationControls page={page} pageCount={pageCount} onPageChange={setPage} />}
       headers={[
         { label: "Mentoré" },
         { label: "Progression" },
@@ -83,7 +87,7 @@ export function MentorProgressOverview() {
         { label: "Actions", className: "text-right" },
       ]}
     >
-      {rows.map(({ assignment, progress }) => (
+      {visibleRows.map(({ assignment, progress }) => (
         <tr key={assignment.id} className="align-top">
           <td className="px-4 py-3 font-medium text-foreground">{displayUser(assignment.mentoree_detail)}</td>
           <td className="px-4 py-3 text-muted-foreground">{progress.progress_percentage ?? "Non renseignée"}%</td>

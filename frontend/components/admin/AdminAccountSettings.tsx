@@ -298,15 +298,14 @@ export function AdminAccountSettings() {
       >
         <div className="grid gap-5">
           <form onSubmit={handleProfileSubmit} className="grid gap-4 md:grid-cols-2">
-            <label>
-              Prénom
-              <input
-                className="field"
-                required
-                value={draft.prenom}
-                onChange={(event) => setDraft({ ...draft, prenom: event.target.value })}
-              />
-            </label>
+              <label>
+                Prénom
+                <input
+                  className="field"
+                  value={draft.prenom}
+                  onChange={(event) => setDraft({ ...draft, prenom: event.target.value })}
+                />
+              </label>
             <label>
               Nom
               <input

@@ -1,9 +1,7 @@
 import { ExternalLink, Handshake } from "lucide-react";
 import Image from "next/image";
 
-import { SiteFooter } from "@/components/layout/SiteFooter";
 import { PageHeader } from "@/components/PageHeader";
-import { SiteHeader } from "@/components/SiteHeader";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -18,8 +16,7 @@ export default async function PartenairesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <SiteHeader />
+    <>
       <PageHeader
         eyebrow="Partenaires"
         title="Partenaires actifs"
@@ -68,7 +65,6 @@ export default async function PartenairesPage() {
           </div>
         )}
       </main>
-      <SiteFooter />
-    </div>
+    </>
   );
 }

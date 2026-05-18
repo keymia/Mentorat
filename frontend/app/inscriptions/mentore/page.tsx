@@ -1,13 +1,10 @@
 import { MentoreForm } from "@/components/forms/MentoreForm";
-import { SiteFooter } from "@/components/layout/SiteFooter";
 import { PageHeader } from "@/components/PageHeader";
-import { SiteHeader } from "@/components/SiteHeader";
 import { Card, CardContent } from "@/components/ui/card";
 
 export default function MentoreInscriptionPage() {
   return (
-    <div className="min-h-screen bg-background">
-      <SiteHeader />
+    <>
       <PageHeader
         eyebrow="Inscription mentoré"
         title="Choisir un mentor admissible"
@@ -20,7 +17,6 @@ export default function MentoreInscriptionPage() {
           </CardContent>
         </Card>
       </main>
-      <SiteFooter />
-    </div>
+    </>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { CheckCircle2, Eye, Pencil, Plus, Trash2, UserCog, XCircle } from "lucide-react";
 
 import { PhoneInput } from "@/components/forms/PhoneInput";
@@ -8,10 +8,13 @@ import { HelpIconButton } from "@/components/help/HelpIconButton";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ListTable } from "@/components/ui/list-table";
 import { Modal } from "@/components/ui/modal";
+import { PaginationControls } from "@/components/ui/pagination-controls";
 import { Skeleton } from "@/components/ui/skeleton";
+import { usePagination } from "@/hooks/usePagination";
 import {
   OperationalAdmin,
   approveOperationalAdminPublicProfile,
@@ -93,6 +96,7 @@ export function AdminOperationalAdmins() {
   const [isSaving, setIsSaving] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [detailsAdmin, setDetailsAdmin] = useState<OperationalAdmin | null>(null);
+  const [adminToDelete, setAdminToDelete] = useState<OperationalAdmin | null>(null);
 
   async function loadRows() {
     try {
@@ -203,6 +207,8 @@ export function AdminOperationalAdmins() {
     setMessage("");
     try {
       await deleteOperationalAdmin(admin.id);
+      setAdminToDelete(null);
+      setDetailsAdmin((current) => (current?.id === admin.id ? null : current));
       setMessage("Administrateur opérationnel supprimé.");
       await loadRows();
     } catch (apiError) {
@@ -236,7 +242,9 @@ export function AdminOperationalAdmins() {
     }
   }
 
-  const pendingPublicRows = rows.filter((admin) => admin.pending_public_validation);
+  const pendingPublicRows = useMemo(() => rows.filter((admin) => admin.pending_public_validation), [rows]);
+  const pendingPagination = usePagination(pendingPublicRows, 10);
+  const adminsPagination = usePagination(rows, 10);
 
   return (
     <div className="grid gap-5">
@@ -265,6 +273,13 @@ export function AdminOperationalAdmins() {
           title="En attente de validation publique"
           countLabel={`${pendingPublicRows.length} validation${pendingPublicRows.length > 1 ? "s" : ""}`}
           minWidth={1080}
+          footer={
+            <PaginationControls
+              page={pendingPagination.page}
+              pageCount={pendingPagination.pageCount}
+              onPageChange={pendingPagination.setPage}
+            />
+          }
           headers={[
             { label: "Administrateur" },
             { label: "Anciennes informations" },
@@ -273,7 +288,7 @@ export function AdminOperationalAdmins() {
             { label: "Actions", className: "text-right" },
           ]}
         >
-          {pendingPublicRows.map((admin) => (
+          {pendingPagination.visibleItems.map((admin) => (
             <tr key={admin.id} className="align-top">
               <td className="px-4 py-3">
                 <p className="font-medium text-foreground">{fullName(admin)}</p>
@@ -313,6 +328,13 @@ export function AdminOperationalAdmins() {
           title="Liste des administrateurs"
           countLabel={`${rows.length} administrateur${rows.length > 1 ? "s" : ""}`}
           minWidth={980}
+          footer={
+            <PaginationControls
+              page={adminsPagination.page}
+              pageCount={adminsPagination.pageCount}
+              onPageChange={adminsPagination.setPage}
+            />
+          }
           headers={[
             { label: "Nom" },
             { label: "Email" },
@@ -325,7 +347,7 @@ export function AdminOperationalAdmins() {
           ]}
           emptyState={rows.length === 0 ? <EmptyState icon={UserCog} title="Aucun administrateur opérationnel." /> : null}
         >
-          {rows.map((admin) => (
+          {adminsPagination.visibleItems.map((admin) => (
             <tr key={admin.id} className="align-top">
               <td className="px-4 py-3">
                 <p className="font-medium text-foreground">{fullName(admin)}</p>
@@ -352,7 +374,7 @@ export function AdminOperationalAdmins() {
                     <Pencil aria-hidden="true" />
                     Modifier
                   </Button>
-                  <Button type="button" variant="danger" size="sm" onClick={() => void handleDelete(admin)}>
+                  <Button type="button" variant="danger" size="sm" onClick={() => setAdminToDelete(admin)}>
                     <Trash2 aria-hidden="true" />
                     Supprimer
                   </Button>
@@ -373,7 +395,7 @@ export function AdminOperationalAdmins() {
         <form onSubmit={handleSubmit} className="grid gap-4 md:grid-cols-2">
           <label>
             Prénom
-            <input className="field" required value={draft.prenom} onChange={(event) => setDraft({ ...draft, prenom: event.target.value })} />
+            <input className="field" value={draft.prenom} onChange={(event) => setDraft({ ...draft, prenom: event.target.value })} />
           </label>
           <label>
             Nom
@@ -504,6 +526,21 @@ export function AdminOperationalAdmins() {
           </div>
         ) : null}
       </Modal>
+
+      <ConfirmDialog
+        open={Boolean(adminToDelete)}
+        title="Supprimer cet administrateur ?"
+        description="Voulez-vous vraiment supprimer cet élément ? Cette action est irréversible."
+        confirmLabel="Supprimer l'administrateur"
+        onCancel={() => setAdminToDelete(null)}
+        onConfirm={async () => {
+          if (adminToDelete) {
+            await handleDelete(adminToDelete);
+          }
+        }}
+      >
+        {adminToDelete ? <p className="font-medium text-foreground">{fullName(adminToDelete)}</p> : null}
+      </ConfirmDialog>
     </div>
   );
 }

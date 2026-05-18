@@ -1,9 +1,7 @@
 import { UsersRound } from "lucide-react";
 
-import { SiteFooter } from "@/components/layout/SiteFooter";
 import { PageHeader } from "@/components/PageHeader";
 import { PublicProfileCard } from "@/components/public/PublicProfileCard";
-import { SiteHeader } from "@/components/SiteHeader";
 import { Card, CardContent } from "@/components/ui/card";
 import { getPublicTeam } from "@/lib/api";
 import type { TeamMember } from "@/lib/api";
@@ -17,8 +15,7 @@ export default async function EquipesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <SiteHeader />
+    <>
       <PageHeader
         eyebrow="Équipes"
         title="Les mentors qui accompagnent la relève"
@@ -53,7 +50,6 @@ export default async function EquipesPage() {
           </div>
         )}
       </main>
-      <SiteFooter />
-    </div>
+    </>
   );
 }

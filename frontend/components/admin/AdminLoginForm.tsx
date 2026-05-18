@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
+import { useHydrated } from "@/components/layout/useHydrated";
 import {
   formatApiError,
   login,
@@ -16,9 +17,11 @@ import { Button } from "@/components/ui/button";
 export function AdminLoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const isHydrated = useHydrated();
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [challenge, setChallenge] = useState<LoginChallengeResponse | null>(null);
+  const translationGuardProps = !isHydrated ? { "data-no-translate": true } : {};
 
   function getUserHomePath(user: Record<string, unknown>) {
     const roleName = String(user.role_nom ?? "");
@@ -56,17 +59,38 @@ export function AdminLoginForm() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
-    setIsSubmitting(true);
 
     const formData = new FormData(event.currentTarget);
+    const email = String(formData.get("email") ?? "").trim();
+    const password = String(formData.get("mot_de_passe") ?? "");
+    const code = String(formData.get("code") ?? "").trim();
+
+    if (!challenge) {
+      if (!email) {
+        setError("L'email est obligatoire.");
+        return;
+      }
+      if (!password) {
+        setError("Le mot de passe est obligatoire.");
+        return;
+      }
+    }
+
+    if (challenge && !code) {
+      setError("Le code temporaire est obligatoire.");
+      return;
+    }
+
+    setIsSubmitting(true);
+
     try {
       if (challenge) {
-        const response = await verifyLoginCode(challenge.challenge_id, String(formData.get("code") ?? ""));
+        const response = await verifyLoginCode(challenge.challenge_id, code);
         completeLogin(response);
         return;
       }
 
-      const response = await login(String(formData.get("email") ?? ""), String(formData.get("mot_de_passe") ?? ""));
+      const response = await login(email, password);
       if ("access" in response) {
         completeLogin(response);
         return;
@@ -83,7 +107,7 @@ export function AdminLoginForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="grid gap-4">
+    <form onSubmit={handleSubmit} className="grid gap-4" {...translationGuardProps}>
       {challenge ? (
         <>
           <div className="rounded border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
@@ -99,7 +123,6 @@ export function AdminLoginForm() {
               autoComplete="one-time-code"
               pattern="[0-9]{6}"
               maxLength={6}
-              required
               className="field"
             />
           </label>
@@ -108,11 +131,11 @@ export function AdminLoginForm() {
         <>
           <label>
             Email
-            <input name="email" type="email" required className="field" />
+            <input name="email" type="email" className="field" />
           </label>
           <label>
             Mot de passe
-            <input name="mot_de_passe" type="password" required className="field" />
+            <input name="mot_de_passe" type="password" className="field" />
           </label>
         </>
       )}

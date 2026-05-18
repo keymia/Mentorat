@@ -11,7 +11,9 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ListTable } from "@/components/ui/list-table";
 import { Modal } from "@/components/ui/modal";
+import { PaginationControls } from "@/components/ui/pagination-controls";
 import { Skeleton } from "@/components/ui/skeleton";
+import { usePagination } from "@/hooks/usePagination";
 import {
   NiveauAcademique,
   Role,
@@ -178,6 +180,7 @@ export function AdminUsersList({
     () => levels.filter((level) => profileOptionsForLevel(level, profileOptions).length > 0),
     [levels, profileOptions],
   );
+  const { page, setPage, pageCount, visibleItems: visibleRows } = usePagination(rows, 10);
 
   function roleIdForProfile(profile: MentoratProfile, fallbackRole = draft.role) {
     if (profile === "MENTOR") {
@@ -386,7 +389,6 @@ export function AdminUsersList({
           Prénom
           <input
             className="field"
-            required
             value={draft.prenom}
             onChange={(event) => updateDraft("prenom", event.target.value)}
           />
@@ -543,6 +545,7 @@ export function AdminUsersList({
           title="Liste des profils"
           countLabel={`${rows.length} profil${rows.length > 1 ? "s" : ""}`}
           minWidth={1100}
+          footer={<PaginationControls page={page} pageCount={pageCount} onPageChange={setPage} />}
           headers={[
             { label: "Nom" },
             { label: "Email" },
@@ -554,7 +557,7 @@ export function AdminUsersList({
           ]}
           emptyState={rows.length === 0 ? <EmptyState icon={UsersRound} title={emptyMessage} /> : null}
         >
-          {rows.map((row) => (
+          {visibleRows.map((row) => (
             <tr key={row.id} className="align-top">
               <td className="px-4 py-3">
                 <p className="font-medium text-foreground">{fullName(row)}</p>

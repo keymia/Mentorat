@@ -8,11 +8,14 @@ import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { ListTable } from "@/components/ui/list-table";
 import { Modal } from "@/components/ui/modal";
+import { PaginationControls } from "@/components/ui/pagination-controls";
 import { Skeleton } from "@/components/ui/skeleton";
+import { usePagination } from "@/hooks/usePagination";
 import {
   MentorshipPeriod,
   MentorshipPeriodStatus,
@@ -66,10 +69,12 @@ export function AdminMentorshipPeriods({
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<UtilisateurDetail | null>(null);
   const [detailsPeriod, setDetailsPeriod] = useState<MentorshipPeriod | null>(null);
+  const [periodToDelete, setPeriodToDelete] = useState<MentorshipPeriod | null>(null);
   const [exportingKey, setExportingKey] = useState<string | null>(null);
   const canManagePeriods = currentUser?.role_nom === "ADMIN_PRINCIPAL";
   const canExportPeriods = currentUser?.role_nom === "ADMIN_PRINCIPAL";
   const exportRecommendedPeriods = periods.filter((period) => isExportRecommended(period));
+  const { page, setPage, pageCount, visibleItems: visiblePeriods } = usePagination(periods, 10);
 
   async function loadPeriods() {
     try {
@@ -265,6 +270,8 @@ export function AdminMentorshipPeriods({
     setMessage("");
     try {
       await deleteMentorshipPeriod(period.id);
+      setPeriodToDelete(null);
+      setDetailsPeriod((current) => (current?.id === period.id ? null : current));
       setMessage("Période supprimée.");
       await loadPeriods();
     } catch (apiError) {
@@ -361,6 +368,7 @@ export function AdminMentorshipPeriods({
           title="Liste des périodes"
           countLabel={`${periods.length} période${periods.length > 1 ? "s" : ""}`}
           minWidth={1040}
+          footer={<PaginationControls page={page} pageCount={pageCount} onPageChange={setPage} />}
           headers={[
             { label: "Titre" },
             { label: "Début" },
@@ -370,7 +378,7 @@ export function AdminMentorshipPeriods({
           ]}
           emptyState={periods.length === 0 ? <EmptyState icon={CalendarPlus} title="Aucune période pour le moment." /> : null}
         >
-          {periods.map((period) => (
+          {visiblePeriods.map((period) => (
             <tr key={period.id} className="align-top">
               <td className="px-4 py-3">
                 <p className="font-medium text-foreground">{period.title}</p>
@@ -441,7 +449,6 @@ export function AdminMentorshipPeriods({
               label="Maximum de mentorés par mentor"
               value={`${detailsPeriod.max_mentees_per_mentor} mentoré${detailsPeriod.max_mentees_per_mentor > 1 ? "s" : ""}`}
             />
-            <DetailItem label="Description" value={detailsPeriod.description || "Non renseignée"} className="md:col-span-2" />
             {isExportRecommended(detailsPeriod) ? (
               <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm leading-6 text-amber-900 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-100 md:col-span-2">
                 Cette période est terminée ou archivée. Pensez à exporter les données pour les rapports et la
@@ -489,8 +496,7 @@ export function AdminMentorshipPeriods({
                     type="button"
                     variant="danger"
                     onClick={() => {
-                      setDetailsPeriod(null);
-                      void removePeriod(detailsPeriod);
+                      setPeriodToDelete(detailsPeriod);
                     }}
                   >
                     <Trash2 aria-hidden="true" />
@@ -502,6 +508,21 @@ export function AdminMentorshipPeriods({
           </div>
         ) : null}
       </Modal>
+
+      <ConfirmDialog
+        open={Boolean(periodToDelete)}
+        title="Supprimer cette période ?"
+        description="Voulez-vous vraiment supprimer cet élément ? Cette action est irréversible."
+        confirmLabel="Supprimer la période"
+        onCancel={() => setPeriodToDelete(null)}
+        onConfirm={async () => {
+          if (periodToDelete) {
+            await removePeriod(periodToDelete);
+          }
+        }}
+      >
+        {periodToDelete ? <p className="font-medium text-foreground">{periodToDelete.title}</p> : null}
+      </ConfirmDialog>
     </div>
   );
 }

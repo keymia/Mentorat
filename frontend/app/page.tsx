@@ -3,8 +3,6 @@ import Link from "next/link";
 import { Suspense } from "react";
 
 import { InscriptionModalOptions } from "@/components/forms/InscriptionModalOptions";
-import { SiteFooter } from "@/components/layout/SiteFooter";
-import { SiteHeader } from "@/components/SiteHeader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -37,8 +35,7 @@ const steps = [
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-background">
-      <SiteHeader />
+    <>
       <main>
         <section className="relative isolate overflow-hidden border-b border-border bg-[var(--brand-ink)] text-white">
           <video
@@ -144,7 +141,6 @@ export default function Home() {
           </Card>
         </section>
       </main>
-      <SiteFooter />
-    </div>
+    </>
   );
 }

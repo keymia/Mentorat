@@ -9,7 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ListTable } from "@/components/ui/list-table";
+import { PaginationControls } from "@/components/ui/pagination-controls";
 import { Skeleton } from "@/components/ui/skeleton";
+import { usePagination } from "@/hooks/usePagination";
 import { MentorshipAssignment, formatApiError, getMentorMentees } from "@/lib/api";
 import { formatDate, progressStatusLabels } from "@/lib/mentorship";
 
@@ -26,6 +28,7 @@ export function MentorMenteesList() {
   const [assignments, setAssignments] = useState<MentorshipAssignment[]>([]);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const { page, setPage, pageCount, visibleItems: visibleAssignments } = usePagination(assignments, 10);
 
   useEffect(() => {
     let isMounted = true;
@@ -67,6 +70,7 @@ export function MentorMenteesList() {
       title="Liste des mentorés"
       countLabel={`${assignments.length} mentoré${assignments.length > 1 ? "s" : ""}`}
       minWidth={1040}
+      footer={<PaginationControls page={page} pageCount={pageCount} onPageChange={setPage} />}
       headers={[
         { label: "Mentoré" },
         { label: "Période" },
@@ -76,7 +80,7 @@ export function MentorMenteesList() {
         { label: "Actions", className: "text-right" },
       ]}
     >
-      {assignments.map((assignment) => (
+      {visibleAssignments.map((assignment) => (
         <tr key={assignment.id} className="align-top">
           <td className="px-4 py-3">
             <p className="font-medium text-foreground">{displayName(assignment)}</p>

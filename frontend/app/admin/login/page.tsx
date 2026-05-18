@@ -5,7 +5,7 @@ import { Suspense } from "react";
 
 export default function AdminLoginPage() {
   return (
-    <main className="premium-gradient flex min-h-screen items-center justify-center px-4 py-10">
+    <main data-no-translate className="premium-gradient flex min-h-screen items-center justify-center px-4 py-10">
       <Card className="w-full max-w-md border-white/40 bg-card/88 backdrop-blur-xl">
         <CardContent className="p-6">
           <BrandMark href="/" />

@@ -10,7 +10,9 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ListTable } from "@/components/ui/list-table";
+import { PaginationControls } from "@/components/ui/pagination-controls";
 import { Skeleton } from "@/components/ui/skeleton";
+import { usePagination } from "@/hooks/usePagination";
 import {
   AdminMentorshipOverview,
   AdminMentorshipReport,
@@ -47,6 +49,8 @@ export function AdminMentorshipReports({
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const activeFilters = filters ?? localFilters;
+  const reportRows = report?.results ?? [];
+  const { page, setPage, pageCount, visibleItems: visibleReportRows } = usePagination(reportRows, 10);
 
   useEffect(() => {
     let isMounted = true;
@@ -170,6 +174,7 @@ export function AdminMentorshipReports({
             title="Liste des rapports"
             countLabel={`${report.results.length} affectation${report.results.length > 1 ? "s" : ""}`}
             minWidth={1080}
+            footer={<PaginationControls page={page} pageCount={pageCount} onPageChange={setPage} />}
             headers={[
               { label: "Mentoré" },
               { label: "Mentor" },
@@ -179,7 +184,7 @@ export function AdminMentorshipReports({
             ]}
             emptyState={report.results.length === 0 ? <EmptyState icon={ClipboardList} title="Aucun rapport à afficher." /> : null}
           >
-            {report.results.map((row) => (
+            {visibleReportRows.map((row) => (
               <tr key={row.assignment.id} className="align-top">
                 <td className="px-4 py-3 font-medium text-foreground">{displayUser(row.assignment.mentoree_detail)}</td>
                 <td className="px-4 py-3 text-muted-foreground">{displayUser(row.assignment.mentor_detail)}</td>

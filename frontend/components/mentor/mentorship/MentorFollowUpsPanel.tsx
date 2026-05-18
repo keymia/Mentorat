@@ -9,8 +9,10 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ListTable } from "@/components/ui/list-table";
 import { Modal } from "@/components/ui/modal";
+import { PaginationControls } from "@/components/ui/pagination-controls";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import { usePagination } from "@/hooks/usePagination";
 import {
   MentoreeProgress,
   MentoreeProgressStatus,
@@ -46,6 +48,7 @@ export function MentorFollowUpsPanel() {
     () => new Map(assignments.map((assignment) => [assignment.id, assignment])),
     [assignments],
   );
+  const { page, setPage, pageCount, visibleItems: visibleSessions } = usePagination(sessions, 10);
 
   const loadData = useCallback(async () => {
     try {
@@ -284,6 +287,7 @@ export function MentorFollowUpsPanel() {
         title="Liste des séances achevées"
         countLabel={`${sessions.length} séance${sessions.length > 1 ? "s" : ""}`}
         minWidth={1080}
+        footer={<PaginationControls page={page} pageCount={pageCount} onPageChange={setPage} />}
         headers={[
           { label: "Mentoré" },
           { label: "Séance" },
@@ -293,7 +297,7 @@ export function MentorFollowUpsPanel() {
           { label: "Actions", className: "text-right" },
         ]}
       >
-        {sessions.map((session) => {
+        {visibleSessions.map((session) => {
           const assignment = getAssignment(session);
           const progress = getProgress(session);
           const progressStatus = progress?.progress_status ?? assignment?.progress_status ?? "average";

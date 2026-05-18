@@ -1,25 +1,9 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Libre_Baskerville } from "next/font/google";
 
+import { AppShell } from "@/components/layout/AppShell";
 import { FloatingSiteControls } from "@/components/layout/FloatingSiteControls";
 
 import "./globals.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-const libreBaskerville = Libre_Baskerville({
-  variable: "--font-brand-serif",
-  subsets: ["latin"],
-  weight: ["400", "700"],
-});
 
 const themeInitScript = `
   (() => {
@@ -88,6 +72,11 @@ const languageInitScript = `
 export const metadata: Metadata = {
   title: "BMC Mentorat",
   description: "Plateforme de mentorat académique BMC.",
+  icons: {
+    icon: "/mentorat-logo.svg",
+    shortcut: "/mentorat-logo.svg",
+    apple: "/mentorat-logo.svg",
+  },
 };
 
 export default function RootLayout({
@@ -100,14 +89,14 @@ export default function RootLayout({
       lang="fr"
       suppressHydrationWarning
       data-scroll-behavior="smooth"
-      className={`${geistSans.variable} ${geistMono.variable} ${libreBaskerville.variable} h-full`}
+      className="h-full"
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <script dangerouslySetInnerHTML={{ __html: languageInitScript }} />
       </head>
       <body className="min-h-full bg-background text-foreground antialiased">
-        {children}
+        <AppShell>{children}</AppShell>
         <FloatingSiteControls />
       </body>
     </html>

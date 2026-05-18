@@ -43,7 +43,7 @@ def available_periods_queryset():
 
 class MentorInscriptionSerializer(serializers.Serializer):
     nom = serializers.CharField(max_length=150)
-    prenom = serializers.CharField(max_length=150)
+    prenom = serializers.CharField(max_length=150, required=False, allow_blank=True)
     email = serializers.EmailField()
     telephone = serializers.CharField(max_length=30, required=False, allow_blank=True)
     langue_preferee = serializers.ChoiceField(choices=Utilisateur.Langue.choices, default=Utilisateur.Langue.FR)
@@ -108,7 +108,7 @@ class MentorInscriptionSerializer(serializers.Serializer):
 
 class MentoreInscriptionSerializer(serializers.Serializer):
     nom = serializers.CharField(max_length=150)
-    prenom = serializers.CharField(max_length=150)
+    prenom = serializers.CharField(max_length=150, required=False, allow_blank=True)
     email = serializers.EmailField()
     telephone = serializers.CharField(max_length=30, required=False, allow_blank=True)
     langue_preferee = serializers.ChoiceField(choices=Utilisateur.Langue.choices, default=Utilisateur.Langue.FR)
