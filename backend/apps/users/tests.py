@@ -269,7 +269,8 @@ class AuthAndRoleRulesTests(APITestCase):
             "/api/account/me/",
             {
                 "can_appear_on_about_page": True,
-                "public_title": "Direction du programme",
+                "public_appellation": "Dr",
+                "public_title": "MD, PhD",
                 "public_description": "Pilotage du programme de mentorat.",
             },
             format="json",
@@ -285,7 +286,8 @@ class AuthAndRoleRulesTests(APITestCase):
         self.assertEqual(response.status_code, 200)
         self.assertGreaterEqual(len(response.data), 2)
         self.assertEqual(response.data[0]["nom_complet"], "Admin Principal")
-        self.assertEqual(response.data[0]["public_title"], "Direction du programme")
+        self.assertEqual(response.data[0]["public_display_name"], "Dr Admin Principal, MD, PhD")
+        self.assertEqual(response.data[0]["public_title"], "MD, PhD")
 
     def test_admin_principal_peut_refuser_validation_publique_operationnelle(self):
         self.client.force_authenticate(self.admin_operationnel)
@@ -384,7 +386,8 @@ class AuthAndRoleRulesTests(APITestCase):
                 "mot_de_passe": "Testpass123!",
                 "statut_compte": Utilisateur.StatutCompte.ACTIF,
                 "can_appear_on_about_page": True,
-                "public_title": "Coordonnateur",
+                "public_appellation": "Mme",
+                "public_title": "MD, Chercheuse en santé publique",
                 "public_description": "Coordination operationnelle du programme.",
             },
             format="json",
@@ -398,7 +401,8 @@ class AuthAndRoleRulesTests(APITestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.data), 1)
         self.assertEqual(response.data[0]["nom_complet"], "Omar Ops")
-        self.assertEqual(response.data[0]["public_title"], "Coordonnateur")
+        self.assertEqual(response.data[0]["public_display_name"], "Mme Omar Ops, MD, Chercheuse en santé publique")
+        self.assertEqual(response.data[0]["public_title"], "MD, Chercheuse en santé publique")
 
         self.client.force_authenticate(self.admin_operationnel)
         response = self.client.patch(

@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { CheckCircle2, Eye, Pencil, Plus, Trash2, UserCog, XCircle } from "lucide-react";
 
+import { PublicTitleMultiSelect } from "@/components/admin/PublicTitleMultiSelect";
 import { PhoneInput } from "@/components/forms/PhoneInput";
 import { HelpIconButton } from "@/components/help/HelpIconButton";
 import { Alert } from "@/components/ui/alert";
@@ -25,6 +26,14 @@ import {
   rejectOperationalAdminPublicProfile,
   updateOperationalAdmin,
 } from "@/lib/api";
+import {
+  PUBLIC_APPELLATIONS,
+  formatAdminPublicIdentity,
+  resolvePublicTitles,
+  splitPublicTitles,
+  type PublicAppellation,
+  type PublicTitleOption,
+} from "@/lib/publicAdminProfile";
 
 type Draft = {
   prenom: string;
@@ -35,7 +44,9 @@ type Draft = {
   region: string;
   statut_compte: string;
   can_appear_on_about_page: boolean;
-  public_title: string;
+  public_appellation: PublicAppellation;
+  public_title_choices: PublicTitleOption[];
+  custom_public_title: string;
   public_description: string;
 };
 
@@ -48,7 +59,9 @@ const emptyDraft: Draft = {
   region: "",
   statut_compte: "ACTIF",
   can_appear_on_about_page: false,
-  public_title: "",
+  public_appellation: "",
+  public_title_choices: [],
+  custom_public_title: "",
   public_description: "",
 };
 
@@ -56,8 +69,22 @@ function fullName(admin: OperationalAdmin) {
   return `${admin.prenom} ${admin.nom}`.trim() || admin.email;
 }
 
-function approvedFullName(admin: OperationalAdmin) {
-  return `${admin.approved_public_prenom} ${admin.approved_public_nom}`.trim() || "Non valide";
+function approvedPublicIdentity(admin: OperationalAdmin) {
+  return formatAdminPublicIdentity({
+    appellation: admin.approved_public_appellation,
+    prenom: admin.approved_public_prenom,
+    nom: admin.approved_public_nom,
+    title: admin.approved_public_title,
+  });
+}
+
+function currentPublicIdentity(admin: OperationalAdmin) {
+  return formatAdminPublicIdentity({
+    appellation: admin.public_appellation,
+    prenom: admin.prenom,
+    nom: admin.nom,
+    title: admin.public_title,
+  });
 }
 
 function publicValidationLabel(admin: OperationalAdmin) {
@@ -142,6 +169,7 @@ export function AdminOperationalAdmins() {
   }
 
   function openEdit(admin: OperationalAdmin) {
+    const publicTitle = splitPublicTitles(admin.public_title);
     setDraft({
       prenom: admin.prenom,
       nom: admin.nom,
@@ -151,7 +179,9 @@ export function AdminOperationalAdmins() {
       region: admin.region ?? "",
       statut_compte: admin.statut_compte,
       can_appear_on_about_page: admin.can_appear_on_about_page,
-      public_title: admin.public_title ?? "",
+      public_appellation: (admin.public_appellation ?? "") as PublicAppellation,
+      public_title_choices: publicTitle.publicTitleChoices,
+      custom_public_title: publicTitle.customPublicTitle,
       public_description: admin.public_description ?? "",
     });
     setEditingId(admin.id);
@@ -175,7 +205,26 @@ export function AdminOperationalAdmins() {
     const formData = new FormData(event.currentTarget);
     const photo = formData.get("public_photo");
     const payload = new FormData();
-    Object.entries(draft).forEach(([key, value]) => {
+    const publicTitle = resolvePublicTitles(draft.public_title_choices, draft.custom_public_title);
+    if (draft.can_appear_on_about_page && !publicTitle) {
+      setError("Sélectionnez au moins un titre ou diplôme pour l’affichage public.");
+      setIsSaving(false);
+      return;
+    }
+    const payloadFields = {
+      prenom: draft.prenom,
+      nom: draft.nom,
+      email: draft.email,
+      mot_de_passe: draft.mot_de_passe,
+      telephone: draft.telephone,
+      region: draft.region,
+      statut_compte: draft.statut_compte,
+      can_appear_on_about_page: String(draft.can_appear_on_about_page),
+      public_appellation: draft.public_appellation,
+      public_title: publicTitle,
+      public_description: draft.public_description,
+    };
+    Object.entries(payloadFields).forEach(([key, value]) => {
       if (key === "mot_de_passe" && editingId && !value) {
         return;
       }
@@ -294,12 +343,10 @@ export function AdminOperationalAdmins() {
                 <p className="font-medium text-foreground">{fullName(admin)}</p>
               </td>
               <td className="px-4 py-3 text-sm text-muted-foreground">
-                <p>{approvedFullName(admin)}</p>
-                <p>{admin.approved_public_title || "Titre non valide"}</p>
+                <p>{approvedPublicIdentity(admin)}</p>
               </td>
               <td className="px-4 py-3 text-sm text-muted-foreground">
-                <p>{fullName(admin)}</p>
-                <p>{admin.public_title || "Titre non renseigné"}</p>
+                <p>{currentPublicIdentity(admin)}</p>
               </td>
               <td className="px-4 py-3">{publicValidationBadge(admin)}</td>
               <td className="px-4 py-3">
@@ -339,7 +386,7 @@ export function AdminOperationalAdmins() {
             { label: "Nom" },
             { label: "Email" },
             { label: "Téléphone" },
-            { label: "Titre public" },
+            { label: "Titre / diplôme" },
             { label: "Statut" },
             { label: "Affichage public" },
             { label: "Validation publique" },
@@ -394,6 +441,23 @@ export function AdminOperationalAdmins() {
       >
         <form onSubmit={handleSubmit} className="grid gap-4 md:grid-cols-2">
           <label>
+            Appellation
+            <select
+              className="field"
+              value={draft.public_appellation}
+              onChange={(event) =>
+                setDraft({ ...draft, public_appellation: event.target.value as PublicAppellation })
+              }
+            >
+              <option value="">Sélectionnez une appellation</option>
+              {PUBLIC_APPELLATIONS.map((appellation) => (
+                <option key={appellation} value={appellation}>
+                  {appellation}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
             Prénom
             <input className="field" value={draft.prenom} onChange={(event) => setDraft({ ...draft, prenom: event.target.value })} />
           </label>
@@ -401,6 +465,23 @@ export function AdminOperationalAdmins() {
             Nom
             <input className="field" required value={draft.nom} onChange={(event) => setDraft({ ...draft, nom: event.target.value })} />
           </label>
+          <div className="md:col-span-2">
+            <PublicTitleMultiSelect
+              selectedTitles={draft.public_title_choices}
+              customTitle={draft.custom_public_title}
+              required={draft.can_appear_on_about_page}
+              onSelectedTitlesChange={(titles) =>
+                setDraft((currentDraft) => ({
+                  ...currentDraft,
+                  public_title_choices: titles,
+                  custom_public_title: titles.includes("Autre") ? currentDraft.custom_public_title : "",
+                }))
+              }
+              onCustomTitleChange={(title) =>
+                setDraft((currentDraft) => ({ ...currentDraft, custom_public_title: title }))
+              }
+            />
+          </div>
           <label>
             Email
             <input className="field" type="email" required value={draft.email} onChange={(event) => setDraft({ ...draft, email: event.target.value })} />
@@ -447,16 +528,6 @@ export function AdminOperationalAdmins() {
             />
             <span>Afficher sur la page À propos</span>
           </label>
-          <label>
-            Titre public
-            <input
-              className="field"
-              required={draft.can_appear_on_about_page}
-              placeholder="Coordonnateur, Chercheur, Docteur..."
-              value={draft.public_title}
-              onChange={(event) => setDraft({ ...draft, public_title: event.target.value })}
-            />
-          </label>
           <label className="md:col-span-2">
             Courte description publique
             <textarea
@@ -500,14 +571,16 @@ export function AdminOperationalAdmins() {
             <div className="grid gap-3 md:grid-cols-2">
               <div className="rounded-lg border border-border p-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Anciennes informations validées</p>
-                <DetailItem label="Nom public" value={approvedFullName(detailsAdmin)} className="mt-3" />
-                <DetailItem label="Titre public" value={detailsAdmin.approved_public_title || "Non valide"} className="mt-3" />
+                <DetailItem label="Identité publique" value={approvedPublicIdentity(detailsAdmin)} className="mt-3" />
+                <DetailItem label="Appellation" value={detailsAdmin.approved_public_appellation || "Non validée"} className="mt-3" />
+                <DetailItem label="Titre / diplôme" value={detailsAdmin.approved_public_title || "Non validé"} className="mt-3" />
                 <DetailItem label="Description publique" value={detailsAdmin.approved_public_description || "Non validée"} className="mt-3" />
               </div>
               <div className="rounded-lg border border-border p-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Nouvelles informations</p>
-                <DetailItem label="Nom public" value={fullName(detailsAdmin)} className="mt-3" />
-                <DetailItem label="Titre public" value={detailsAdmin.public_title || "Non renseigné"} className="mt-3" />
+                <DetailItem label="Identité publique" value={currentPublicIdentity(detailsAdmin)} className="mt-3" />
+                <DetailItem label="Appellation" value={detailsAdmin.public_appellation || "Non renseignée"} className="mt-3" />
+                <DetailItem label="Titre / diplôme" value={detailsAdmin.public_title || "Non renseigné"} className="mt-3" />
                 <DetailItem label="Description publique" value={detailsAdmin.public_description || "Non renseignée"} className="mt-3" />
               </div>
             </div>
