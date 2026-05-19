@@ -1,0 +1,13 @@
+export const BRAND_SHORT_NAME = "BMM";
+export const BRAND_FULL_NAME = "Black Med Mentorship";
+export const BRAND_LOGO_SRC = "/bmm-logo.png";
+export const BRAND_FAVICON_VERSION = "v=4";
+export const BRAND_FAVICON_ICO_SRC = `/favicon.ico?${BRAND_FAVICON_VERSION}`;
+export const BRAND_FAVICON_SVG_SRC = `/favicon.svg?${BRAND_FAVICON_VERSION}`;
+export const BRAND_FAVICON_16_SRC = `/favicon-16x16.png?${BRAND_FAVICON_VERSION}`;
+export const BRAND_FAVICON_32_SRC = `/favicon-32x32.png?${BRAND_FAVICON_VERSION}`;
+export const BRAND_FAVICON_48_SRC = `/favicon-48x48.png?${BRAND_FAVICON_VERSION}`;
+export const BRAND_APPLE_TOUCH_ICON_SRC = `/apple-touch-icon.png?${BRAND_FAVICON_VERSION}`;
+export const BRAND_ICON_SRC = `/icon.png?${BRAND_FAVICON_VERSION}`;
+export const BRAND_ICON_192_SRC = `/icon-192x192.png?${BRAND_FAVICON_VERSION}`;
+export const BRAND_ICON_512_SRC = `/icon-512x512.png?${BRAND_FAVICON_VERSION}`;

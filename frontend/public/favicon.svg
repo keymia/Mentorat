@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="BMM">
+  <circle cx="256" cy="256" r="236" fill="#f6e7d3" stroke="#be894a" stroke-width="24"/>
+  <text x="256" y="191" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="118" font-weight="700" fill="#181614">BMM</text>
+  <circle cx="256" cy="338" r="88" fill="#9e1215"/>
+  <rect x="238" y="286" width="36" height="104" rx="3" fill="#fff8ed"/>
+  <rect x="204" y="320" width="104" height="36" rx="3" fill="#fff8ed"/>
+</svg>

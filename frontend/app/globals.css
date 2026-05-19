@@ -63,32 +63,53 @@ a {
 }
 
 .public-motion-card {
+  cursor: default;
+  transform: translate3d(0, 0, 0) scale(1);
   transition:
-    transform 340ms ease,
-    box-shadow 340ms ease,
-    border-color 340ms ease,
-    filter 340ms ease;
+    transform 500ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 500ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 500ms cubic-bezier(0.22, 1, 0.36, 1),
+    filter 500ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform, box-shadow;
 }
 
 .public-motion-card:hover {
-  border-color: color-mix(in srgb, var(--accent) 62%, transparent);
-  box-shadow: 0 26px 70px rgb(23 21 19 / 0.18);
-  transform: translateY(-7px) scale(1.025);
+  border-color: color-mix(in srgb, var(--accent) 76%, transparent);
+  box-shadow: 0 42px 110px rgb(23 21 19 / 0.32), 0 0 0 1px color-mix(in srgb, var(--accent) 24%, transparent);
+  transform: translateY(-11px) scale(1.045);
 }
 
 .dark .public-motion-card:hover {
-  box-shadow: 0 30px 80px rgb(0 0 0 / 0.38), 0 0 0 1px color-mix(in srgb, var(--accent) 28%, transparent);
+  box-shadow: 0 46px 116px rgb(0 0 0 / 0.58), 0 0 0 1px color-mix(in srgb, var(--accent) 42%, transparent);
 }
 
 .public-motion-image {
+  backface-visibility: hidden;
+  transform: translate3d(0, 0, 0) scale(1.01);
+  transform-origin: center;
   transition:
-    transform 820ms cubic-bezier(0.22, 1, 0.36, 1),
-    filter 820ms cubic-bezier(0.22, 1, 0.36, 1);
+    transform 480ms cubic-bezier(0.22, 1, 0.36, 1),
+    filter 480ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform, filter;
 }
 
-.public-motion-card:hover .public-motion-image {
-  filter: saturate(1.08) contrast(1.05);
-  transform: scale(1.1);
+.public-motion-card:hover .public-motion-image,
+.group:hover .public-motion-image {
+  filter: saturate(1.24) contrast(1.14) brightness(1.04);
+  transform: translate3d(0, 0, 0) scale(1.18);
+}
+
+@media (hover: none) {
+  .public-motion-card:hover {
+    box-shadow: var(--shadow-card);
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  .public-motion-card:hover .public-motion-image,
+  .group:hover .public-motion-image {
+    filter: none;
+    transform: translate3d(0, 0, 0) scale(1.01);
+  }
 }
 
 [data-reveal-container="true"] .reveal-image,
@@ -161,6 +182,7 @@ a {
 
   .public-motion-card:hover,
   .public-motion-card:hover .public-motion-image,
+  .group:hover .public-motion-image,
   [data-reveal-container="true"] .reveal-image,
   [data-reveal-container="true"] .reveal-title,
   [data-reveal-container="true"] .reveal-description,

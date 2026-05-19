@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import { BRAND_FULL_NAME, BRAND_LOGO_SRC, BRAND_SHORT_NAME } from "@/lib/branding";
 import { cn } from "@/lib/utils";
 
 type BrandMarkProps = {
@@ -15,8 +16,8 @@ export function BrandMark({ href = "/", compact = false, className, inverse = fa
     <span className={cn("flex items-center gap-3", className)}>
       <span className="relative flex h-12 w-14 shrink-0 overflow-hidden rounded-lg bg-[var(--brand-cream)] shadow-card ring-1 ring-border">
         <Image
-          src="/bmm-logo.jpeg"
-          alt="BMM - Black Med Mentorship"
+          src={BRAND_LOGO_SRC}
+          alt={`${BRAND_SHORT_NAME} - ${BRAND_FULL_NAME}`}
           fill
           sizes="56px"
           className="object-contain p-1"
@@ -26,7 +27,7 @@ export function BrandMark({ href = "/", compact = false, className, inverse = fa
       {!compact ? (
         <span className="grid leading-tight">
           <span className={cn("font-display text-lg font-bold tracking-normal", inverse ? "text-white" : "text-foreground")}>
-            BMM
+            {BRAND_SHORT_NAME}
           </span>
           <span
             className={cn(
@@ -34,7 +35,7 @@ export function BrandMark({ href = "/", compact = false, className, inverse = fa
               inverse ? "text-white/62" : "text-muted-foreground",
             )}
           >
-            Black Med Mentorship
+            {BRAND_FULL_NAME}
           </span>
         </span>
       ) : null}

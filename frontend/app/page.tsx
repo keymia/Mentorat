@@ -37,9 +37,9 @@ export default function Home() {
   return (
     <>
       <main>
-        <section className="relative isolate overflow-hidden border-b border-border bg-[var(--brand-ink)] text-white">
+        <section className="group relative isolate overflow-hidden border-b border-border bg-[var(--brand-ink)] text-white">
           <video
-            className="absolute inset-0 h-full w-full object-cover brightness-[0.86] contrast-[1.18] saturate-[1.12] transition duration-500 dark:brightness-[0.42] dark:contrast-[1.32] dark:saturate-[0.88]"
+            className="absolute inset-0 h-full w-full object-cover brightness-[0.86] contrast-[1.18] saturate-[1.12] transition-[filter,transform] duration-500 ease-out group-hover:scale-[1.08] dark:brightness-[0.42] dark:contrast-[1.32] dark:saturate-[0.88]"
             src="/videos/accueil-final.mp4"
             autoPlay
             muted

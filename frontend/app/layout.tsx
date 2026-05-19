@@ -2,6 +2,19 @@ import type { Metadata } from "next";
 
 import { AppShell } from "@/components/layout/AppShell";
 import { FloatingSiteControls } from "@/components/layout/FloatingSiteControls";
+import {
+  BRAND_APPLE_TOUCH_ICON_SRC,
+  BRAND_FAVICON_16_SRC,
+  BRAND_FAVICON_32_SRC,
+  BRAND_FAVICON_48_SRC,
+  BRAND_FAVICON_ICO_SRC,
+  BRAND_FAVICON_SVG_SRC,
+  BRAND_FULL_NAME,
+  BRAND_ICON_SRC,
+  BRAND_ICON_192_SRC,
+  BRAND_ICON_512_SRC,
+  BRAND_SHORT_NAME,
+} from "@/lib/branding";
 
 import "./globals.css";
 
@@ -70,12 +83,21 @@ const languageInitScript = `
 `;
 
 export const metadata: Metadata = {
-  title: "BMM - Black Med Mentorship",
-  description: "Plateforme de mentorat académique Black Med Mentorship.",
+  title: `${BRAND_SHORT_NAME} - ${BRAND_FULL_NAME}`,
+  description: `Plateforme de mentorat académique ${BRAND_FULL_NAME}.`,
   icons: {
-    icon: "/bmm-logo.jpeg",
-    shortcut: "/bmm-logo.jpeg",
-    apple: "/bmm-logo.jpeg",
+    icon: [
+      { url: BRAND_FAVICON_ICO_SRC, type: "image/x-icon" },
+      { url: BRAND_FAVICON_SVG_SRC, type: "image/svg+xml" },
+      { url: BRAND_FAVICON_16_SRC, sizes: "16x16", type: "image/png" },
+      { url: BRAND_FAVICON_32_SRC, sizes: "32x32", type: "image/png" },
+      { url: BRAND_FAVICON_48_SRC, sizes: "48x48", type: "image/png" },
+      { url: BRAND_ICON_SRC, sizes: "192x192", type: "image/png" },
+      { url: BRAND_ICON_192_SRC, sizes: "192x192", type: "image/png" },
+      { url: BRAND_ICON_512_SRC, sizes: "512x512", type: "image/png" },
+    ],
+    shortcut: BRAND_FAVICON_ICO_SRC,
+    apple: [{ url: BRAND_APPLE_TOUCH_ICON_SRC, sizes: "180x180", type: "image/png" }],
   },
 };
 
