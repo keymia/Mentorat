@@ -1,5 +1,6 @@
 import { Alert } from "@/components/ui/alert";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { RevealOnScroll } from "@/components/public/RevealOnScroll";
 
 export default function MentoreBookingsPage() {
   return (
@@ -10,10 +11,12 @@ export default function MentoreBookingsPage() {
         description="Les rencontres sont maintenant programmées par le mentor dans le cadre de la période active."
       />
       <main className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
-        <Alert variant="info">
-          Votre mentor vous communiquera les dates des seances. Les commentaires et suivis sont geres par le mentor et visibles par
-          l&apos;administration.
-        </Alert>
+        <RevealOnScroll distance={46} duration={0.72}>
+          <Alert variant="info">
+            Votre mentor vous communiquera les dates des seances. Les commentaires et suivis sont geres par le mentor et visibles
+            par l&apos;administration.
+          </Alert>
+        </RevealOnScroll>
       </main>
     </>
   );

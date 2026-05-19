@@ -6,8 +6,10 @@ import { useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-const THEME_STORAGE_KEY = "bmc-theme";
-const THEME_CHANGE_EVENT = "bmc-theme-change";
+const THEME_STORAGE_KEY = "bmm-theme";
+const LEGACY_THEME_STORAGE_KEY = "bmc-theme";
+const THEME_CHANGE_EVENT = "bmm-theme-change";
+const LEGACY_THEME_CHANGE_EVENT = "bmc-theme-change";
 type ThemeMode = "light" | "dark";
 
 const themeTokens: Record<ThemeMode, Record<string, string>> = {
@@ -61,16 +63,18 @@ function subscribeToThemeChanges(callback: () => void) {
   }
 
   const handleStorage = (event: StorageEvent) => {
-    if (event.key === THEME_STORAGE_KEY) {
+    if (event.key === THEME_STORAGE_KEY || event.key === LEGACY_THEME_STORAGE_KEY) {
       callback();
     }
   };
 
   window.addEventListener(THEME_CHANGE_EVENT, callback);
+  window.addEventListener(LEGACY_THEME_CHANGE_EVENT, callback);
   window.addEventListener("storage", handleStorage);
 
   return () => {
     window.removeEventListener(THEME_CHANGE_EVENT, callback);
+    window.removeEventListener(LEGACY_THEME_CHANGE_EVENT, callback);
     window.removeEventListener("storage", handleStorage);
   };
 }

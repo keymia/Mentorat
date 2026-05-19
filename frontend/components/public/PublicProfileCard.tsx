@@ -1,6 +1,7 @@
 import Image from "next/image";
 
 import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 type PublicProfileCardProps = {
   name: string;
@@ -9,6 +10,9 @@ type PublicProfileCardProps = {
   imageUrl?: string | null;
   badges?: Array<string | null | undefined>;
   minHeightClassName?: string;
+  cardClassName?: string;
+  nameClassName?: string;
+  descriptionClassName?: string;
 };
 
 function initials(name: string) {
@@ -28,12 +32,21 @@ export function PublicProfileCard({
   imageUrl,
   badges = [],
   minHeightClassName = "min-h-[420px]",
+  cardClassName,
+  nameClassName,
+  descriptionClassName,
 }: PublicProfileCardProps) {
   const visibleBadges = badges.filter((badge): badge is string => Boolean(badge));
 
   return (
-    <Card className={`group relative overflow-hidden bg-muted shadow-card ${minHeightClassName}`}>
-      <div className="absolute inset-0">
+    <Card
+      className={cn(
+        "public-motion-card group relative overflow-hidden bg-muted shadow-card",
+        minHeightClassName,
+        cardClassName,
+      )}
+    >
+      <div className="reveal-image absolute inset-0">
         {imageUrl ? (
           <Image
             src={imageUrl}
@@ -41,10 +54,10 @@ export function PublicProfileCard({
             fill
             unoptimized
             sizes="(min-width: 1280px) 33vw, (min-width: 768px) 50vw, 100vw"
-            className="h-full w-full object-cover transition duration-700 ease-out motion-safe:group-hover:scale-105"
+            className="public-motion-image h-full w-full object-cover"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(135deg,var(--brand-ink),var(--brand-red-strong))] text-5xl font-bold text-white">
+          <div className="public-motion-image flex h-full w-full items-center justify-center bg-[linear-gradient(135deg,var(--brand-ink),var(--brand-red-strong))] text-5xl font-bold text-white">
             {initials(name)}
           </div>
         )}
@@ -55,11 +68,11 @@ export function PublicProfileCard({
       <CardContent className="relative z-10 flex min-h-[inherit] items-end p-5 sm:p-6">
         <div className="w-full rounded-lg border border-white/15 bg-black/30 p-4 text-white shadow-2xl backdrop-blur-md">
           {title ? (
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--brand-bronze)]">{title}</p>
+            <p className="reveal-actions text-xs font-semibold uppercase tracking-[0.16em] text-[var(--brand-bronze)]">{title}</p>
           ) : null}
-          <h3 className="mt-2 text-2xl font-semibold leading-tight text-white">{name}</h3>
+          <h3 className={cn("reveal-title mt-2 text-2xl font-semibold leading-tight text-white", nameClassName)}>{name}</h3>
           {visibleBadges.length > 0 ? (
-            <div className="mt-3 flex flex-wrap gap-2">
+            <div className="reveal-actions mt-3 flex flex-wrap gap-2">
               {visibleBadges.map((badge) => (
                 <span
                   key={badge}
@@ -70,7 +83,11 @@ export function PublicProfileCard({
               ))}
             </div>
           ) : null}
-          {description ? <p className="mt-3 line-clamp-6 text-sm leading-6 text-white/88">{description}</p> : null}
+          {description ? (
+            <p className={cn("reveal-description mt-3 line-clamp-6 text-sm leading-6 text-white/88", descriptionClassName)}>
+              {description}
+            </p>
+          ) : null}
         </div>
       </CardContent>
     </Card>

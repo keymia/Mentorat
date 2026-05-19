@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { useHydrated } from "@/components/layout/useHydrated";
+import { RevealOnScroll } from "@/components/public/RevealOnScroll";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Modal } from "@/components/ui/modal";
@@ -84,22 +85,24 @@ export function InscriptionModalOptions({ variant = "cards" }: InscriptionModalO
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
-          {options.map((option) => (
-            <Card key={option.type} className="h-full transition hover:-translate-y-1 hover:border-accent hover:shadow-soft">
-              <CardContent className="grid h-full gap-4 p-6">
-                <div className="flex size-12 items-center justify-center rounded-xl bg-secondary text-primary">
-                  <option.icon className="size-5" aria-hidden="true" />
-                </div>
-                <div>
-                  <h2 className="font-display text-2xl font-bold">{option.title}</h2>
-                  <p className="mt-3 leading-7 text-muted-foreground">{option.text}</p>
-                </div>
-                <Button type="button" className="mt-auto w-fit" onClick={() => openForm(option.type)}>
-                  <option.icon aria-hidden="true" />
-                  {option.action}
-                </Button>
-              </CardContent>
-            </Card>
+          {options.map((option, index) => (
+            <RevealOnScroll key={option.type} className="h-full" delayMs={index * 140}>
+              <Card className="public-motion-card h-full">
+                <CardContent className="grid h-full gap-4 p-6">
+                  <div className="reveal-image flex size-12 items-center justify-center rounded-xl bg-secondary text-primary">
+                    <option.icon className="size-5" aria-hidden="true" />
+                  </div>
+                  <div>
+                    <h2 className="reveal-title font-display text-2xl font-bold">{option.title}</h2>
+                    <p className="reveal-description mt-3 leading-7 text-muted-foreground">{option.text}</p>
+                  </div>
+                  <Button type="button" className="reveal-actions mt-auto w-fit" onClick={() => openForm(option.type)}>
+                    <option.icon aria-hidden="true" />
+                    {option.action}
+                  </Button>
+                </CardContent>
+              </Card>
+            </RevealOnScroll>
           ))}
         </div>
       )}

@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { Eye, Pencil, Save, UsersRound } from "lucide-react";
+import { Eye, Pencil, Save, Trash2, UsersRound } from "lucide-react";
 import Image from "next/image";
 
 import { HelpIconButton } from "@/components/help/HelpIconButton";
@@ -9,14 +9,20 @@ import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ListTable } from "@/components/ui/list-table";
 import { Modal } from "@/components/ui/modal";
+import { PaginationControls } from "@/components/ui/pagination-controls";
 import { Skeleton } from "@/components/ui/skeleton";
+import { usePagination } from "@/hooks/usePagination";
 import {
   AdminTeamMember,
+  UtilisateurDetail,
+  deleteUtilisateur,
   formatApiError,
   getAdminTeamMembers,
+  getCurrentUser,
   updateAdminTeamMember,
 } from "@/lib/api";
 
@@ -46,6 +52,7 @@ function initials(name: string) {
 
 export function AdminTeamMembers() {
   const [rows, setRows] = useState<AdminTeamMember[]>([]);
+  const [currentUser, setCurrentUser] = useState<UtilisateurDetail | null>(null);
   const [drafts, setDrafts] = useState<Drafts>({});
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -53,6 +60,9 @@ export function AdminTeamMembers() {
   const [savingId, setSavingId] = useState<number | null>(null);
   const [detailsRow, setDetailsRow] = useState<AdminTeamMember | null>(null);
   const [editingRow, setEditingRow] = useState<AdminTeamMember | null>(null);
+  const [rowToDelete, setRowToDelete] = useState<AdminTeamMember | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const isAdminPrincipal = currentUser?.role_nom === "ADMIN_PRINCIPAL";
 
   const pendingRows = useMemo(() => rows.filter((row) => !row.is_team_approved), [rows]);
   const approvedRows = useMemo(
@@ -62,13 +72,16 @@ export function AdminTeamMembers() {
         .sort((first, second) => (first.team_display_order || 0) - (second.team_display_order || 0)),
     [rows],
   );
+  const pendingPagination = usePagination(pendingRows, 8);
+  const approvedPagination = usePagination(approvedRows, 8);
 
   useEffect(() => {
     let isMounted = true;
-    getAdminTeamMembers()
-      .then((teamMembers) => {
+    Promise.all([getAdminTeamMembers(), getCurrentUser()])
+      .then(([teamMembers, user]) => {
         if (isMounted) {
           setRows(teamMembers);
+          setCurrentUser(user);
           setDrafts(buildDrafts(teamMembers));
         }
       })
@@ -128,6 +141,24 @@ export function AdminTeamMembers() {
       setError(formatApiError(apiError));
     } finally {
       setSavingId(null);
+    }
+  }
+
+  async function handleDelete(row: AdminTeamMember) {
+    setIsDeleting(true);
+    setError("");
+    setMessage("");
+    try {
+      await deleteUtilisateur(row.id, "mentor");
+      setRows((currentRows) => currentRows.filter((item) => item.id !== row.id));
+      setDetailsRow(null);
+      setEditingRow((current) => (current?.id === row.id ? null : current));
+      setRowToDelete(null);
+      setMessage("Mentor désactivé. Ses mentorés sont replacés en attente d’assignation.");
+    } catch (apiError) {
+      setError(formatApiError(apiError));
+    } finally {
+      setIsDeleting(false);
     }
   }
 
@@ -218,17 +249,25 @@ export function AdminTeamMembers() {
               <ListTable
                 title="Demandes à traiter"
                 countLabel={`${pendingRows.length} demande${pendingRows.length > 1 ? "s" : ""}`}
-                minWidth={1080}
+                minWidth={820}
+                footer={
+                  pendingPagination.pageCount > 1 ? (
+                    <PaginationControls
+                      page={pendingPagination.page}
+                      pageCount={pendingPagination.pageCount}
+                      onPageChange={pendingPagination.setPage}
+                    />
+                  ) : null
+                }
                 headers={[
-                  { label: "Nom" },
-                  { label: "Email" },
-                  { label: "Niveau" },
+                  { label: "Mentor" },
+                  { label: "Niveau académique" },
                   { label: "Domaine" },
                   { label: "Statut" },
                   { label: "Actions", className: "text-right" },
                 ]}
               >
-                {pendingRows.map((row) => (
+                {pendingPagination.visibleItems.map((row) => (
                   <tr key={row.id} className="align-top">
                     <td className="px-4 py-3">
                       <div className="flex min-w-0 items-center gap-3">
@@ -238,7 +277,6 @@ export function AdminTeamMembers() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-muted-foreground">{row.email}</td>
                     <td className="px-4 py-3 text-muted-foreground">{row.niveau_academique_nom || "Non renseigné"}</td>
                     <td className="px-4 py-3 text-muted-foreground">{row.domaine_specialite || "Non renseigné"}</td>
                     <td className="px-4 py-3">
@@ -265,18 +303,25 @@ export function AdminTeamMembers() {
               <ListTable
                 title="Mentors affichés"
                 countLabel={`${approvedRows.length} mentor${approvedRows.length > 1 ? "s" : ""}`}
-                minWidth={980}
+                minWidth={820}
+                footer={
+                  approvedPagination.pageCount > 1 ? (
+                    <PaginationControls
+                      page={approvedPagination.page}
+                      pageCount={approvedPagination.pageCount}
+                      onPageChange={approvedPagination.setPage}
+                    />
+                  ) : null
+                }
                 headers={[
-                  { label: "Nom" },
-                  { label: "Email" },
-                  { label: "Niveau" },
-                  { label: "Domaine" },
+                  { label: "Mentor" },
+                  { label: "Niveau académique" },
                   { label: "Ordre" },
                   { label: "Statut" },
                   { label: "Actions", className: "text-right" },
                 ]}
               >
-                {approvedRows.map((row) => (
+                {approvedPagination.visibleItems.map((row) => (
                   <tr key={row.id} className="align-top">
                     <td className="px-4 py-3">
                       <div className="flex min-w-0 items-center gap-3">
@@ -286,9 +331,7 @@ export function AdminTeamMembers() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-muted-foreground">{row.email}</td>
                     <td className="px-4 py-3 text-muted-foreground">{row.niveau_academique_nom || "Non renseigné"}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{row.domaine_specialite || "Non renseigné"}</td>
                     <td className="px-4 py-3 text-muted-foreground">{row.team_display_order || 0}</td>
                     <td className="px-4 py-3">
                       <Badge variant="success">Valide</Badge>
@@ -346,6 +389,17 @@ export function AdminTeamMembers() {
             <div className="rounded-lg border border-border p-4">
               <p className="text-sm leading-6 text-muted-foreground">{detailsRow.mini_bio || "Mini bio non renseignée."}</p>
             </div>
+            {isAdminPrincipal ? (
+              <div className="flex flex-col gap-3 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-900/60 dark:bg-red-950/20 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm text-red-900 dark:text-red-100">
+                  La suppression d’un mentor se fait depuis le détail et replace ses mentorés en attente d’assignation.
+                </p>
+                <Button type="button" variant="danger" onClick={() => setRowToDelete(detailsRow)}>
+                  <Trash2 aria-hidden="true" />
+                  Supprimer
+                </Button>
+              </div>
+            ) : null}
           </div>
         ) : null}
       </Modal>
@@ -358,6 +412,20 @@ export function AdminTeamMembers() {
       >
         {editingRow ? editForm(editingRow, true) : null}
       </Modal>
+
+      <ConfirmDialog
+        open={Boolean(rowToDelete)}
+        title="Supprimer ce mentor"
+        description="Êtes-vous sûr de vouloir supprimer ce mentor ? Ses mentorés seront conservés et replacés en attente d’assignation."
+        confirmLabel="Confirmer la suppression"
+        isConfirming={isDeleting}
+        onCancel={() => {
+          if (!isDeleting) {
+            setRowToDelete(null);
+          }
+        }}
+        onConfirm={() => (rowToDelete ? handleDelete(rowToDelete) : undefined)}
+      />
     </div>
   );
 }

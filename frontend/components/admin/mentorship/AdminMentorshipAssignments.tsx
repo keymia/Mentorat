@@ -22,7 +22,7 @@ import {
 } from "@/lib/api";
 import { assignmentStatusLabels, displayUser, formatDate, formatDateTime } from "@/lib/mentorship";
 
-const pageSize = 10;
+const pageSize = 8;
 
 const matchingStatusLabels: Record<AdminMatchingStatus, string> = {
   assigned: "Assigne",
@@ -284,25 +284,27 @@ export function AdminMentorshipAssignments() {
               </tbody>
             </table>
           </div>
-          <div className="flex items-center justify-between border-t border-border px-4 py-3 text-sm text-muted-foreground">
-            <span>
-              Page {page} sur {pageCount}
-            </span>
-            <div className="flex gap-2">
-              <Button type="button" variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((current) => current - 1)}>
-                Précédent
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={page >= pageCount}
-                onClick={() => setPage((current) => current + 1)}
-              >
-                Suivant
-              </Button>
+          {pageCount > 1 ? (
+            <div className="flex items-center justify-between border-t border-border px-4 py-3 text-sm text-muted-foreground">
+              <span>
+                Page {page} sur {pageCount}
+              </span>
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((current) => current - 1)}>
+                  Précédent
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={page >= pageCount}
+                  onClick={() => setPage((current) => current + 1)}
+                >
+                  Suivant
+                </Button>
+              </div>
             </div>
-          </div>
+          ) : null}
         </Card>
       ) : null}
 

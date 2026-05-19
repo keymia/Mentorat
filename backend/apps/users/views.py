@@ -1,10 +1,11 @@
 from django.conf import settings
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.core.mail import send_mail
 from django.db.models import Case, IntegerField, Q, Value, When
 from django.shortcuts import get_object_or_404
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -17,6 +18,7 @@ from apps.parametres.models import ParametreSysteme
 from apps.users.models import LoginVerificationCode, NiveauAcademique, Role, Utilisateur
 from apps.users.permissions import CanCreateAdministrateur, IsAdminRole
 from apps.users.permissions import IsAdminPrincipal
+from apps.users.services import deactivate_mentor_and_release_mentees, delete_mentee_with_related_data
 from apps.users.serializers import (
     AdminOwnAccountSerializer,
     LoginSerializer,
@@ -221,8 +223,44 @@ class UtilisateurViewSet(viewsets.ModelViewSet):
         return super().partial_update(request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
-        self.assert_can_manage_admin(self.get_object())
-        return super().destroy(request, *args, **kwargs)
+        target = self.get_object()
+        if not request.user.est_admin_principal:
+            raise PermissionDenied("Seul l'administrateur principal peut supprimer un mentor ou un mentore.")
+        if target.est_administrateur:
+            raise PermissionDenied("Utilisez la gestion des administrateurs pour supprimer un compte administrateur.")
+
+        delete_mode = request.query_params.get("delete_mode")
+        if not delete_mode:
+            if target.est_mentor and not target.est_mentore:
+                delete_mode = "mentor"
+            elif target.est_mentore and not target.est_mentor:
+                delete_mode = "mentee"
+            else:
+                raise ValidationError({"delete_mode": "Precisez delete_mode=mentor ou delete_mode=mentee."})
+
+        try:
+            if delete_mode == "mentor":
+                summary = deactivate_mentor_and_release_mentees(target)
+                return Response(
+                    {
+                        "detail": "Mentor desactive. Ses mentores sont replaces en attente d'assignation.",
+                        "summary": summary,
+                    },
+                    status=status.HTTP_200_OK,
+                )
+            if delete_mode == "mentee":
+                summary = delete_mentee_with_related_data(target)
+                return Response(
+                    {
+                        "detail": "Mentore supprime avec ses donnees directement liees.",
+                        "summary": summary,
+                    },
+                    status=status.HTTP_200_OK,
+                )
+        except DjangoValidationError as exc:
+            raise ValidationError(exc.message_dict if hasattr(exc, "message_dict") else exc.messages)
+
+        raise ValidationError({"delete_mode": "Mode de suppression invalide."})
 
 
 class MentorViewSet(viewsets.ReadOnlyModelViewSet):

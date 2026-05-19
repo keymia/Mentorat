@@ -74,7 +74,7 @@ export function AdminMentorshipPeriods({
   const canManagePeriods = currentUser?.role_nom === "ADMIN_PRINCIPAL";
   const canExportPeriods = currentUser?.role_nom === "ADMIN_PRINCIPAL";
   const exportRecommendedPeriods = periods.filter((period) => isExportRecommended(period));
-  const { page, setPage, pageCount, visibleItems: visiblePeriods } = usePagination(periods, 10);
+  const { page, setPage, pageCount, visibleItems: visiblePeriods } = usePagination(periods, 8);
 
   async function loadPeriods() {
     try {
@@ -368,7 +368,7 @@ export function AdminMentorshipPeriods({
           title="Liste des périodes"
           countLabel={`${periods.length} période${periods.length > 1 ? "s" : ""}`}
           minWidth={1040}
-          footer={<PaginationControls page={page} pageCount={pageCount} onPageChange={setPage} />}
+          footer={pageCount > 1 ? <PaginationControls page={page} pageCount={pageCount} onPageChange={setPage} /> : null}
           headers={[
             { label: "Titre" },
             { label: "Début" },

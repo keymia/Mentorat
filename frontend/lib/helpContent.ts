@@ -8,7 +8,6 @@ export type HelpModuleKey =
   | "registrations"
   | "matching"
   | "periods"
-  | "sessions"
   | "admin_followups"
   | "mentors"
   | "mentees"
@@ -262,33 +261,6 @@ export const helpModules: HelpModule[] = [
     ],
   },
   {
-    key: "sessions",
-    title: "Séances admin",
-    scope: "admin",
-    roles: ["ADMIN_PRINCIPAL", "ADMIN_OPERATIONNEL"],
-    objective: "Suivre les rencontres programmées et réalisées dans le programme.",
-    whoCanUse: "Administrateur principal et administrateur opérationnel.",
-    actions: [
-      "Consulter les séances.",
-      "Vérifier les statuts.",
-      "Contrôler la progression des sessions.",
-    ],
-    steps: [
-      "Ouvrir le module Séances ou rapports de mentorat.",
-      "Filtrer si des options sont disponibles.",
-      "Consulter les détails avant toute correction.",
-    ],
-    rules: [
-      "Les mentors programment leurs séances depuis leur espace.",
-      "Les statuts doivent rester cohérents avec le suivi.",
-      "Les administrateurs opérationnels ne créent pas les sessions/périodes de mentorat.",
-    ],
-    attention: [
-      "Une séance non réalisée ne doit pas compter dans l’avancement.",
-      "Les changements administratifs doivent rester traçables.",
-    ],
-  },
-  {
     key: "admin_followups",
     title: "Suivis admin",
     scope: "admin",
@@ -325,6 +297,7 @@ export const helpModules: HelpModule[] = [
       "Modifier ses informations autorisées.",
       "Changer son statut de compte.",
       "Voir le détail du profil.",
+      "Supprimer un mentor depuis le détail, uniquement si vous êtes administrateur principal.",
     ],
     steps: [
       "Ouvrir Mentors.",
@@ -336,10 +309,13 @@ export const helpModules: HelpModule[] = [
       "Le secondaire ne peut pas être mentor.",
       "La médecine est mentor uniquement.",
       "Les niveaux intermédiaires peuvent être mentor et mentoré.",
+      "Le tableau affiche au maximum cinq colonnes, avec Actions en dernière colonne.",
+      "La suppression d’un mentor conserve ses mentorés et les replace en attente d’assignation.",
     ],
     attention: [
       "Ne pas créer un second compte si la personne existe déjà.",
       "Le niveau académique ne doit pas diminuer.",
+      "Les administrateurs opérationnels ne peuvent pas supprimer de mentor.",
     ],
   },
   {
@@ -354,6 +330,7 @@ export const helpModules: HelpModule[] = [
       "Modifier un mentoré.",
       "Transformer un mentoré admissible en mentor ou mentor + mentoré.",
       "Voir le détail du profil.",
+      "Supprimer un mentoré depuis le détail, uniquement si vous êtes administrateur principal.",
     ],
     steps: [
       "Ouvrir Mentorés.",
@@ -365,10 +342,13 @@ export const helpModules: HelpModule[] = [
       "Secondaire : mentoré uniquement.",
       "Niveaux intermédiaires : mentor, mentoré, ou mentor et mentoré.",
       "Médecine : mentor uniquement.",
+      "Le tableau affiche au maximum cinq colonnes, avec Actions en dernière colonne.",
+      "La suppression d’un mentoré supprime définitivement ses données liées.",
     ],
     attention: [
       "Transformer un mentoré ne doit pas supprimer ses données de mentoré.",
       "Le backend refuse les profils incompatibles même si l’interface est contournée.",
+      "Les administrateurs opérationnels ne peuvent pas supprimer de mentoré.",
     ],
   },
   {
@@ -383,6 +363,7 @@ export const helpModules: HelpModule[] = [
       "Vérifier la photo, la mini bio, le domaine et le niveau.",
       "Approuver ou retirer l’affichage public.",
       "Définir un ordre d’affichage.",
+      "Supprimer un mentor depuis le détail, uniquement si vous êtes administrateur principal.",
     ],
     steps: [
       "Ouvrir Équipes.",
@@ -393,9 +374,12 @@ export const helpModules: HelpModule[] = [
     rules: [
       "Un mentor apparaît publiquement seulement après validation admin.",
       "Le profil doit contenir une photo, une mini bio, un domaine et un consentement.",
+      "Le tableau affiche au maximum cinq colonnes, avec Actions en dernière colonne.",
+      "Supprimer un mentor depuis Équipes conserve ses mentorés et les replace en attente d’assignation.",
     ],
     attention: [
       "Refuser ou masquer un profil incomplet plutôt que publier une information fragile.",
+      "La suppression n’est jamais disponible directement dans le tableau.",
     ],
   },
   {
@@ -952,30 +936,6 @@ const englishHelpContent: Record<HelpModuleKey, HelpModuleContent> = {
       "Do not create two active periods at the same time without a clear reason.",
     ],
   },
-  sessions: {
-    title: "Admin sessions",
-    objective: "Track scheduled and completed mentorship meetings.",
-    whoCanUse: "Principal administrator and operational administrator.",
-    actions: [
-      "Review sessions.",
-      "Check statuses.",
-      "Monitor session progress.",
-    ],
-    steps: [
-      "Open Sessions or mentorship reports.",
-      "Apply filters if available.",
-      "Review details before any correction.",
-    ],
-    rules: [
-      "Mentors schedule their own sessions from their workspace.",
-      "Statuses must remain consistent with follow-up data.",
-      "Operational administrators do not create mentorship sessions or periods.",
-    ],
-    attention: [
-      "A session that was not completed must not count toward progress.",
-      "Administrative changes should remain traceable.",
-    ],
-  },
   admin_followups: {
     title: "Admin follow-ups",
     objective: "Review mentee progress and the quality of follow-ups.",
@@ -1007,6 +967,7 @@ const englishHelpContent: Record<HelpModuleKey, HelpModuleContent> = {
       "Edit authorized information.",
       "Change account status.",
       "Open profile details.",
+      "Delete a mentor from the detail view only if you are the principal administrator.",
     ],
     steps: [
       "Open Mentors.",
@@ -1018,10 +979,13 @@ const englishHelpContent: Record<HelpModuleKey, HelpModuleContent> = {
       "Secondary level cannot be a mentor.",
       "Medicine is mentor only.",
       "Intermediate levels can be mentor and mentee.",
+      "The table shows at most five columns, with Actions as the last column.",
+      "Deleting a mentor keeps their mentees and returns them to pending assignment.",
     ],
     attention: [
       "Do not create a second account if the person already exists.",
       "Academic level must not decrease.",
+      "Operational administrators cannot delete mentors.",
     ],
   },
   mentees: {
@@ -1033,6 +997,7 @@ const englishHelpContent: Record<HelpModuleKey, HelpModuleContent> = {
       "Edit a mentee.",
       "Turn an eligible mentee into mentor or mentor plus mentee.",
       "Open profile details.",
+      "Delete a mentee from the detail view only if you are the principal administrator.",
     ],
     steps: [
       "Open Mentees.",
@@ -1044,10 +1009,13 @@ const englishHelpContent: Record<HelpModuleKey, HelpModuleContent> = {
       "Secondary: mentee only.",
       "Intermediate levels: mentor, mentee, or mentor and mentee.",
       "Medicine: mentor only.",
+      "The table shows at most five columns, with Actions as the last column.",
+      "Deleting a mentee permanently removes their related mentoring data.",
     ],
     attention: [
       "Turning a mentee into a mentor must not delete mentee data.",
       "The backend rejects incompatible profiles even if the interface is bypassed.",
+      "Operational administrators cannot delete mentees.",
     ],
   },
   teams: {
@@ -1059,6 +1027,7 @@ const englishHelpContent: Record<HelpModuleKey, HelpModuleContent> = {
       "Check photo, short bio, field, and level.",
       "Approve or remove public display.",
       "Set display order.",
+      "Delete a mentor from the detail view only if you are the principal administrator.",
     ],
     steps: [
       "Open Teams.",
@@ -1069,9 +1038,12 @@ const englishHelpContent: Record<HelpModuleKey, HelpModuleContent> = {
     rules: [
       "A mentor appears publicly only after admin approval.",
       "The profile must include a photo, short bio, field, and consent.",
+      "The table shows at most five columns, with Actions as the last column.",
+      "Deleting a mentor from Teams keeps their mentees and returns them to pending assignment.",
     ],
     attention: [
       "Reject or hide an incomplete profile instead of publishing weak information.",
+      "Deletion is never available directly in the table.",
     ],
   },
   operational_admins: {

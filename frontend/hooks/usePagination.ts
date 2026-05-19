@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 
-export function usePagination<T>(items: T[], pageSize = 10) {
+export function usePagination<T>(items: T[], pageSize = 8) {
   const [rawPage, setRawPage] = useState(1);
 
   const pageCount = Math.max(Math.ceil(items.length / pageSize), 1);

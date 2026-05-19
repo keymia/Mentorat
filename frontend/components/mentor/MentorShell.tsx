@@ -147,7 +147,7 @@ export function MentorShell({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div data-no-translate className="min-h-screen bg-background">
+    <div data-no-translate className="min-h-screen bg-background lg:h-screen lg:overflow-hidden">
       <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur lg:hidden">
         <div className="flex items-center justify-between gap-3 px-4 py-3">
           <BrandMark href="/mentor/dashboard" />
@@ -200,7 +200,7 @@ export function MentorShell({ children }: { children: ReactNode }) {
         </div>
       ) : null}
 
-      <div className="mx-auto grid max-w-[1500px] lg:min-h-screen lg:grid-cols-[290px_1fr]">
+      <div className="mx-auto grid max-w-[1500px] lg:h-full lg:grid-cols-[290px_minmax(0,1fr)]">
         <aside className="sticky top-0 hidden h-screen overflow-y-auto overscroll-contain border-r border-white/10 bg-[var(--brand-ink)] p-4 text-white lg:block">
           <div className="flex items-start justify-between gap-3">
             <BrandMark href="/mentor/dashboard" inverse />
@@ -233,7 +233,7 @@ export function MentorShell({ children }: { children: ReactNode }) {
           </div>
         </aside>
 
-        <main className="min-w-0 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">{children}</main>
+        <main className="min-w-0 px-4 py-6 sm:px-6 lg:h-screen lg:overflow-y-auto lg:overscroll-contain lg:px-8 lg:py-8">{children}</main>
       </div>
     </div>
   );

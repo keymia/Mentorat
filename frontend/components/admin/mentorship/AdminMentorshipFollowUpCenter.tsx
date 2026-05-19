@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart3, CalendarClock, TrendingUp } from "lucide-react";
+import { BarChart3, TrendingUp } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { HelpIconButton } from "@/components/help/HelpIconButton";
@@ -19,11 +19,9 @@ import { displayUser } from "@/lib/mentorship";
 
 import { AdminMentorshipProgress } from "./AdminMentorshipProgress";
 import { AdminMentorshipReports } from "./AdminMentorshipReports";
-import { AdminMentorshipSessions } from "./AdminMentorshipSessions";
 
 const sections = [
   { href: "#suivis", label: "Suivis", icon: TrendingUp },
-  { href: "#seances", label: "Séances", icon: CalendarClock },
   { href: "#rapports", label: "Rapports", icon: BarChart3 },
 ];
 
@@ -121,7 +119,7 @@ export function AdminMentorshipFollowUpCenter() {
             <HelpIconButton moduleKey="admin_followups" scope="admin" />
           </div>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            Centralisez les suivis, les séances et les rapports de mentorat.
+            Centralisez les suivis et les rapports de mentorat.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -197,16 +195,6 @@ export function AdminMentorshipFollowUpCenter() {
               </p>
             </div>
             <AdminMentorshipProgress showHeader={false} showFilters={false} filters={sharedFilters} />
-          </section>
-
-          <section id="seances" className="scroll-mt-6">
-            <div className="mb-4">
-              <h2 className="text-xl font-semibold">Séances de mentorat</h2>
-              <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                Séances programmées, réalisées, reportées ou annulées.
-              </p>
-            </div>
-            <AdminMentorshipSessions showHeader={false} showFilters={false} filters={sharedFilters} />
           </section>
 
           <section id="rapports" className="scroll-mt-6">

@@ -10,8 +10,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ListTable } from "@/components/ui/list-table";
 import { Modal } from "@/components/ui/modal";
+import { PaginationControls } from "@/components/ui/pagination-controls";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import { usePagination } from "@/hooks/usePagination";
 import {
   MentorMenteeDetail,
   MentorshipSession,
@@ -46,6 +48,8 @@ export function MentorMenteeWorkspace({ menteeId }: { menteeId: number }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isCreateSessionOpen, setIsCreateSessionOpen] = useState(false);
   const [selectedFollowUpSession, setSelectedFollowUpSession] = useState<MentorshipSession | null>(null);
+  const sessions = detail?.sessions ?? [];
+  const { page, setPage, pageCount, visibleItems: visibleSessions } = usePagination(sessions, 8);
 
   const loadDetail = useCallback(async () => {
     try {
@@ -334,6 +338,7 @@ export function MentorMenteeWorkspace({ menteeId }: { menteeId: number }) {
         title="Séances"
         countLabel="Liste des rencontres, statuts, résumés et commentaires."
         minWidth={980}
+        footer={pageCount > 1 ? <PaginationControls page={page} pageCount={pageCount} onPageChange={setPage} /> : null}
         headers={[
           { label: "Séance" },
           { label: "Résumé" },
@@ -342,12 +347,12 @@ export function MentorMenteeWorkspace({ menteeId }: { menteeId: number }) {
           { label: "Actions", className: "text-right" },
         ]}
         emptyState={
-          detail.sessions.length === 0 ? (
+          sessions.length === 0 ? (
             <p className="text-sm text-muted-foreground">Aucune séance programmée pour ce mentoré.</p>
           ) : null
         }
       >
-        {detail.sessions.map((session) => (
+        {visibleSessions.map((session) => (
           <tr key={session.id} className="align-top">
             <td className="px-4 py-3">
               <p className="font-medium text-foreground">Séance {session.session_number}</p>

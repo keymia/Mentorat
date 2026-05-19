@@ -389,6 +389,71 @@ Un mentor apparaît publiquement uniquement si :
 - niveau académique
 - domaine
 
+La page publique Équipes doit rester moderne et lisible :
+
+- cartes responsives plutôt qu’un tableau public
+- photo ou initiales si aucune photo n’est disponible
+- nom, domaine, niveau académique et mini bio clairement séparés
+- badges et icônes utilisés seulement pour renforcer la hiérarchie
+- contraste compatible avec les thèmes clair et sombre
+
+---
+
+# 11.1 Pages publiques longues
+
+Les pages publiques dont le contenu dépasse la hauteur visible doivent permettre le scroll vertical naturel.
+
+À respecter :
+
+- ne pas bloquer le scroll du `html` ou du `body`
+- conserver la navbar sticky
+- conserver le footer
+- permettre aux modales de gérer leur propre verrouillage de scroll pendant leur ouverture
+
+---
+
+# 11.2 Page publique À propos
+
+L’identité publique des administrateurs affichés sur la page À propos doit ressortir davantage que la description.
+
+Règles visuelles :
+
+- appellation, prénom, nom et titre/diplôme utilisent une couleur accentuée du thème BMM
+- la description utilise une couleur secondaire plus douce
+- le rendu doit rester lisible en mode clair, en mode sombre et sur mobile
+
+---
+
+## Tableaux administrateurs et suppression
+
+Les tableaux administrateurs Mentors, Mentorés et Équipes doivent rester lisibles :
+
+- maximum 5 colonnes visibles
+- la 5e colonne est toujours Actions
+- les informations secondaires sont accessibles dans Détails
+- l’action Supprimer ne doit jamais apparaître directement dans le tableau
+
+La suppression est réservée à l’administrateur principal.
+
+Suppression d’un mentor :
+
+- elle se déclenche uniquement depuis la vue Détails
+- elle demande une confirmation explicite
+- les mentorés associés sont conservés
+- les mentorés sont replacés en attente d’assignation
+- les inscriptions concernées repassent en statut de jumelage requis
+- les séances, suivis et historiques déjà enregistrés sont conservés
+
+Suppression d’un mentoré :
+
+- elle se déclenche uniquement depuis la vue Détails
+- elle demande une confirmation explicite
+- elle supprime le mentoré et ses données directement liées
+- elle supprime ses relations de mentorat, séances, suivis et inscriptions associées
+- elle ne doit pas provoquer de suppression accidentelle d’autres mentorés
+
+Les administrateurs opérationnels peuvent consulter, modifier et gérer les statuts autorisés, mais ils ne peuvent pas supprimer un mentor ou un mentoré.
+
 ---
 
 # 12. Mini bio mentor

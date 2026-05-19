@@ -28,7 +28,7 @@ export function MentorMenteesList() {
   const [assignments, setAssignments] = useState<MentorshipAssignment[]>([]);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-  const { page, setPage, pageCount, visibleItems: visibleAssignments } = usePagination(assignments, 10);
+  const { page, setPage, pageCount, visibleItems: visibleAssignments } = usePagination(assignments, 8);
 
   useEffect(() => {
     let isMounted = true;
@@ -70,7 +70,7 @@ export function MentorMenteesList() {
       title="Liste des mentorés"
       countLabel={`${assignments.length} mentoré${assignments.length > 1 ? "s" : ""}`}
       minWidth={1040}
-      footer={<PaginationControls page={page} pageCount={pageCount} onPageChange={setPage} />}
+      footer={pageCount > 1 ? <PaginationControls page={page} pageCount={pageCount} onPageChange={setPage} /> : null}
       headers={[
         { label: "Mentoré" },
         { label: "Période" },

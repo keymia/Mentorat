@@ -47,7 +47,7 @@ export function AdminMentorshipProgress({
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const activeFilters = filters ?? localFilters;
-  const { page, setPage, pageCount, visibleItems: visibleProgressRows } = usePagination(progressRows, 10);
+  const { page, setPage, pageCount, visibleItems: visibleProgressRows } = usePagination(progressRows, 8);
 
   useEffect(() => {
     let isMounted = true;
@@ -162,7 +162,7 @@ export function AdminMentorshipProgress({
           title="Liste des suivis"
           countLabel={`${progressRows.length} suivi${progressRows.length > 1 ? "s" : ""}`}
           minWidth={1120}
-          footer={<PaginationControls page={page} pageCount={pageCount} onPageChange={setPage} />}
+          footer={pageCount > 1 ? <PaginationControls page={page} pageCount={pageCount} onPageChange={setPage} /> : null}
           headers={[
             { label: "Mentoré" },
             { label: "Mentor" },

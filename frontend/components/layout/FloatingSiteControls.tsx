@@ -3,7 +3,14 @@
 import { ArrowUp, Languages } from "lucide-react";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 
-import { LANGUAGE_STORAGE_KEY, Language, translateDocument } from "@/lib/i18n";
+import {
+  LANGUAGE_CHANGE_EVENT,
+  LANGUAGE_STORAGE_KEY,
+  LEGACY_LANGUAGE_CHANGE_EVENT,
+  LEGACY_LANGUAGE_STORAGE_KEY,
+  Language,
+  translateDocument,
+} from "@/lib/i18n";
 
 const STABLE_DOM_TRANSLATION_DELAY_MS = 250;
 
@@ -11,7 +18,8 @@ function getInitialLanguage(): Language {
   if (typeof window === "undefined") {
     return "fr";
   }
-  const storedLanguage = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
+  const storedLanguage =
+    window.localStorage.getItem(LANGUAGE_STORAGE_KEY) ?? window.localStorage.getItem(LEGACY_LANGUAGE_STORAGE_KEY);
   return storedLanguage === "en" ? "en" : "fr";
 }
 
@@ -22,11 +30,13 @@ function subscribeToLanguageChange(onStoreChange: () => void) {
 
   const handleChange = () => onStoreChange();
   window.addEventListener("storage", handleChange);
-  window.addEventListener("bmc-language-change", handleChange);
+  window.addEventListener(LANGUAGE_CHANGE_EVENT, handleChange);
+  window.addEventListener(LEGACY_LANGUAGE_CHANGE_EVENT, handleChange);
 
   return () => {
     window.removeEventListener("storage", handleChange);
-    window.removeEventListener("bmc-language-change", handleChange);
+    window.removeEventListener(LANGUAGE_CHANGE_EVENT, handleChange);
+    window.removeEventListener(LEGACY_LANGUAGE_CHANGE_EVENT, handleChange);
   };
 }
 
@@ -151,7 +161,7 @@ export function FloatingSiteControls() {
   function toggleLanguage() {
     const nextLanguage = language === "fr" ? "en" : "fr";
     window.localStorage.setItem(LANGUAGE_STORAGE_KEY, nextLanguage);
-    window.dispatchEvent(new Event("bmc-language-change"));
+    window.dispatchEvent(new Event(LANGUAGE_CHANGE_EVENT));
   }
 
   function scrollToTop() {

@@ -48,7 +48,7 @@ export function MentorFollowUpsPanel() {
     () => new Map(assignments.map((assignment) => [assignment.id, assignment])),
     [assignments],
   );
-  const { page, setPage, pageCount, visibleItems: visibleSessions } = usePagination(sessions, 10);
+  const { page, setPage, pageCount, visibleItems: visibleSessions } = usePagination(sessions, 8);
 
   const loadData = useCallback(async () => {
     try {
@@ -287,7 +287,7 @@ export function MentorFollowUpsPanel() {
         title="Liste des séances achevées"
         countLabel={`${sessions.length} séance${sessions.length > 1 ? "s" : ""}`}
         minWidth={1080}
-        footer={<PaginationControls page={page} pageCount={pageCount} onPageChange={setPage} />}
+        footer={pageCount > 1 ? <PaginationControls page={page} pageCount={pageCount} onPageChange={setPage} /> : null}
         headers={[
           { label: "Mentoré" },
           { label: "Séance" },

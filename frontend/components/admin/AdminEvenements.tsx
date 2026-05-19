@@ -83,7 +83,7 @@ export function AdminEvenements() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [detailsEvent, setDetailsEvent] = useState<Evenement | null>(null);
   const [eventToDelete, setEventToDelete] = useState<Evenement | null>(null);
-  const { page, setPage, pageCount, visibleItems: visibleEvenements } = usePagination(evenements, 10);
+  const { page, setPage, pageCount, visibleItems: visibleEvenements } = usePagination(evenements, 8);
 
   useEffect(() => {
     let isMounted = true;
@@ -391,7 +391,7 @@ export function AdminEvenements() {
           title="Liste des événements"
           countLabel={`${evenements.length} evenement${evenements.length > 1 ? "s" : ""}`}
           minWidth={920}
-          footer={<PaginationControls page={page} pageCount={pageCount} onPageChange={setPage} />}
+          footer={pageCount > 1 ? <PaginationControls page={page} pageCount={pageCount} onPageChange={setPage} /> : null}
           action={
           <Button type="button" onClick={() => void reloadEvenements()} variant="outline" size="sm" className="w-fit">
             <RefreshCcw aria-hidden="true" />

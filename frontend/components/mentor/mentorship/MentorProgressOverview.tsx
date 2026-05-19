@@ -30,7 +30,7 @@ export function MentorProgressOverview() {
   const [rows, setRows] = useState<ProgressRow[]>([]);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-  const { page, setPage, pageCount, visibleItems: visibleRows } = usePagination(rows, 10);
+  const { page, setPage, pageCount, visibleItems: visibleRows } = usePagination(rows, 8);
 
   useEffect(() => {
     let isMounted = true;
@@ -78,7 +78,7 @@ export function MentorProgressOverview() {
       title="Liste des suivis"
       countLabel={`${rows.length} suivi${rows.length > 1 ? "s" : ""}`}
       minWidth={920}
-      footer={<PaginationControls page={page} pageCount={pageCount} onPageChange={setPage} />}
+      footer={pageCount > 1 ? <PaginationControls page={page} pageCount={pageCount} onPageChange={setPage} /> : null}
       headers={[
         { label: "Mentoré" },
         { label: "Progression" },

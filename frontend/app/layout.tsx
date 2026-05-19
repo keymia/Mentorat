@@ -44,7 +44,7 @@ const themeInitScript = `
           "--ring": "#d3a262"
         }
       };
-      const storedTheme = window.localStorage.getItem("bmc-theme");
+      const storedTheme = window.localStorage.getItem("bmm-theme") || window.localStorage.getItem("bmc-theme");
       const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
       const theme = storedTheme || (prefersDark ? "dark" : "light");
       Object.entries(tokens[theme]).forEach(([key, value]) => {
@@ -60,7 +60,7 @@ const themeInitScript = `
 const languageInitScript = `
   (() => {
     try {
-      const language = window.localStorage.getItem("bmc-language");
+      const language = window.localStorage.getItem("bmm-language") || window.localStorage.getItem("bmc-language");
       if (language === "en" || language === "fr") {
         document.documentElement.lang = language;
         document.documentElement.dataset.language = language;
@@ -70,12 +70,12 @@ const languageInitScript = `
 `;
 
 export const metadata: Metadata = {
-  title: "BMC Mentorat",
-  description: "Plateforme de mentorat académique BMC.",
+  title: "BMM - Black Med Mentorship",
+  description: "Plateforme de mentorat académique Black Med Mentorship.",
   icons: {
-    icon: "/mentorat-logo.svg",
-    shortcut: "/mentorat-logo.svg",
-    apple: "/mentorat-logo.svg",
+    icon: "/bmm-logo.jpeg",
+    shortcut: "/bmm-logo.jpeg",
+    apple: "/bmm-logo.jpeg",
   },
 };
 

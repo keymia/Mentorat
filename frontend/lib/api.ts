@@ -933,6 +933,15 @@ export function updateUtilisateur(id: number, payload: UtilisateurPayload) {
   });
 }
 
+export function deleteUtilisateur(id: number, deleteMode: "mentor" | "mentee") {
+  return apiFetch<{ detail: string; summary?: Record<string, number> }>(
+    `/users/${id}/?delete_mode=${encodeURIComponent(deleteMode)}`,
+    {
+      method: "DELETE",
+    },
+  );
+}
+
 export function getMentorshipPeriods() {
   return apiFetch<MentorshipPeriod[]>("/mentorship-periods/");
 }
@@ -1002,10 +1011,6 @@ export function updateMentorshipAssignment(id: number, payload: Partial<Mentorsh
 
 export function getAdminMentorshipOverview(filters: MentorshipFilters = {}) {
   return apiFetch<AdminMentorshipOverview>(`/admin/mentorship-overview/${toQueryString(filters)}`);
-}
-
-export function getAdminMentorshipSessions(filters: MentorshipFilters = {}) {
-  return apiFetch<MentorshipSession[]>(`/admin/mentorship-sessions/${toQueryString(filters)}`);
 }
 
 export function getAdminMentorshipProgress(filters: MentorshipFilters = {}) {

@@ -16,8 +16,8 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
   return (
-    <div data-no-translate className="min-h-screen bg-[var(--brand-ink)] text-white">
-      <div className="mx-auto max-w-[1500px] px-4 py-4 lg:px-4 lg:py-5">
+    <div data-no-translate className="min-h-screen bg-[var(--brand-ink)] text-white lg:h-screen lg:overflow-hidden">
+      <div className="mx-auto max-w-[1500px] px-4 py-4 lg:h-screen lg:px-4 lg:py-5">
         <div className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-3 shadow-soft backdrop-blur-xl lg:hidden">
           <BrandMark href="/admin/dashboard" inverse />
           <div className="flex items-center gap-2">
@@ -35,7 +35,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-[290px_1fr]">
+        <div className="grid gap-6 lg:h-full lg:grid-cols-[290px_minmax(0,1fr)]">
           <div
             className={cn(
               "fixed inset-0 z-40 bg-black/55 backdrop-blur-sm transition lg:hidden",
@@ -47,7 +47,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
           <aside
             className={cn(
-              "fixed inset-y-4 left-4 z-50 flex w-[min(88vw,320px)] flex-col rounded-2xl border border-white/10 bg-white/[0.08] p-4 shadow-soft backdrop-blur-xl transition duration-200 lg:sticky lg:top-5 lg:z-auto lg:max-h-[calc(100vh-2.5rem)] lg:w-auto lg:translate-x-0 lg:overflow-y-auto lg:overscroll-contain",
+              "fixed inset-y-4 left-4 z-50 flex w-[min(88vw,320px)] flex-col rounded-2xl border border-white/10 bg-white/[0.08] p-4 shadow-soft backdrop-blur-xl transition duration-200 lg:relative lg:inset-auto lg:z-auto lg:h-[calc(100vh-2.5rem)] lg:w-auto lg:translate-x-0 lg:overflow-y-auto lg:overscroll-contain",
               isMobileNavOpen ? "translate-x-0" : "-translate-x-[120%]",
             )}
           >
@@ -83,7 +83,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             </div>
           </aside>
 
-          <main className="min-w-0 rounded-2xl border border-white/10 bg-background p-4 text-foreground shadow-soft sm:p-6">
+          <main className="min-w-0 rounded-2xl border border-white/10 bg-background p-4 text-foreground shadow-soft sm:p-6 lg:h-[calc(100vh-2.5rem)] lg:overflow-y-auto lg:overscroll-contain">
             {children}
           </main>
         </div>

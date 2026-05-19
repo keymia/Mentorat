@@ -3,7 +3,6 @@
 import {
   BarChart3,
   CalendarDays,
-  CalendarClock,
   ChevronDown,
   ChevronRight,
   Handshake,
@@ -33,7 +32,6 @@ const adminLinks = [
   { href: "/admin/mentores", label: "Mentorés", icon: UserRoundCheck },
   { href: "/admin/equipes", label: "Équipes", icon: UsersRound },
   { href: "/admin/jumelages", label: "Jumelages", icon: Handshake },
-  { href: "/admin/mentorship/sessions", label: "Séances", icon: CalendarClock },
   { href: "/admin/mentorship/progress", label: "Suivis", icon: UserRoundCheck },
   { href: "/admin/evenements", label: "Événements", icon: CalendarDays },
   { href: "/admin/partenaires", label: "Partenaires", icon: Handshake },

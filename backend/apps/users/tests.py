@@ -5,7 +5,8 @@ from django.core import mail
 from django.test import override_settings
 from rest_framework.test import APITestCase
 
-from apps.mentorat.models import MentorshipPeriod
+from apps.inscriptions.models import Inscription
+from apps.mentorat.models import MentoreeProgress, MentorshipAssignment, MentorshipPeriod, MentorshipSession
 from apps.parametres.models import ParametreSysteme
 from apps.users.models import NiveauAcademique, Role, Utilisateur
 
@@ -131,6 +132,57 @@ class AuthAndRoleRulesTests(APITestCase):
         match = re.search(r"\b(\d{6})\b", mail.outbox[0].body)
         self.assertIsNotNone(match)
         return response.data["challenge_id"], match.group(1)
+
+    def _create_compatible_assignment(self):
+        mentor = Utilisateur.objects.create_user(
+            email="mentor.compatible@example.com",
+            password="Testpass123!",
+            nom="Compatible",
+            prenom="Maya",
+            role=self.role_mentor,
+            profil_mentorat=Utilisateur.ProfilMentorat.MENTOR,
+            niveau_academique=self.level_mentor_1,
+            statut_compte=Utilisateur.StatutCompte.ACTIF,
+            is_active=True,
+            capacite_mentorat=5,
+        )
+        period = MentorshipPeriod.objects.create(
+            title="Session suppression 2026",
+            start_date=date(2026, 1, 1),
+            end_date=date(2026, 6, 30),
+            required_sessions=4,
+            max_mentees_per_mentor=5,
+            status=MentorshipPeriod.Status.ACTIVE,
+        )
+        inscription = Inscription.objects.create(
+            utilisateur=self.mentoree,
+            type_inscription=Inscription.TypeInscription.MENTORE,
+            statut_inscription=Inscription.StatutInscription.VALIDEE,
+            consentement=True,
+            mentor_choisi=mentor,
+            mentorship_period=period,
+            needs_matching=False,
+            registration_status=Inscription.RegistrationStatus.MATCHED,
+        )
+        assignment = MentorshipAssignment.objects.create(
+            mentor=mentor,
+            mentoree=self.mentoree,
+            period=period,
+            status=MentorshipAssignment.Status.ACTIVE,
+        )
+        session = MentorshipSession.objects.create(
+            assignment=assignment,
+            session_number=1,
+            scheduled_date=date(2026, 2, 1),
+            status=MentorshipSession.Status.COMPLETED,
+            summary="Seance conservee.",
+        )
+        progress = MentoreeProgress.objects.create(
+            assignment=assignment,
+            progress_percentage=40,
+            achievements="Progression conservee.",
+        )
+        return mentor, period, inscription, assignment, session, progress
 
     def test_admin_principal_login_requiert_code_temporaire(self):
         challenge_id, code = self._login_and_extract_code(self.admin_principal.email)
@@ -374,6 +426,48 @@ class AuthAndRoleRulesTests(APITestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn("niveau_academique", response.data)
         self.assertIn("medecine", str(response.data["niveau_academique"]).lower())
+
+    def test_admin_operationnel_ne_peut_pas_supprimer_mentor(self):
+        self.client.force_authenticate(self.admin_operationnel)
+        response = self.client.delete(f"/api/users/{self.mentor.id}/?delete_mode=mentor")
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_supprimer_mentor_conserve_mentores_et_reouvre_jumelage(self):
+        mentor, _, inscription, assignment, session, progress = self._create_compatible_assignment()
+
+        self.client.force_authenticate(self.admin_principal)
+        response = self.client.delete(f"/api/users/{mentor.id}/?delete_mode=mentor")
+
+        self.assertEqual(response.status_code, 200)
+        mentor.refresh_from_db()
+        assignment.refresh_from_db()
+        inscription.refresh_from_db()
+
+        self.assertFalse(mentor.is_active)
+        self.assertEqual(mentor.statut_compte, Utilisateur.StatutCompte.INACTIF)
+        self.assertIsNone(mentor.profil_mentorat)
+        self.assertEqual(assignment.status, MentorshipAssignment.Status.SUSPENDED)
+        self.assertTrue(Utilisateur.objects.filter(pk=self.mentoree.pk).exists())
+        self.assertTrue(MentorshipSession.objects.filter(pk=session.pk).exists())
+        self.assertTrue(MentoreeProgress.objects.filter(pk=progress.pk).exists())
+        self.assertIsNone(inscription.mentor_choisi)
+        self.assertTrue(inscription.needs_matching)
+        self.assertTrue(inscription.wants_association_assignment)
+        self.assertEqual(inscription.registration_status, Inscription.RegistrationStatus.PENDING_MATCHING)
+
+    def test_supprimer_mentore_supprime_ses_donnees_liees(self):
+        _, _, inscription, assignment, session, progress = self._create_compatible_assignment()
+
+        self.client.force_authenticate(self.admin_principal)
+        response = self.client.delete(f"/api/users/{self.mentoree.id}/?delete_mode=mentee")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(Utilisateur.objects.filter(pk=self.mentoree.pk).exists())
+        self.assertFalse(Inscription.objects.filter(pk=inscription.pk).exists())
+        self.assertFalse(MentorshipAssignment.objects.filter(pk=assignment.pk).exists())
+        self.assertFalse(MentorshipSession.objects.filter(pk=session.pk).exists())
+        self.assertFalse(MentoreeProgress.objects.filter(pk=progress.pk).exists())
 
     def test_admin_principal_gere_admin_operationnel_et_affichage_public(self):
         self.client.force_authenticate(self.admin_principal)

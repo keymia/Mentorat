@@ -2,7 +2,13 @@
 
 import { useSyncExternalStore } from "react";
 
-import { LANGUAGE_STORAGE_KEY, type Language } from "@/lib/i18n";
+import {
+  LANGUAGE_CHANGE_EVENT,
+  LANGUAGE_STORAGE_KEY,
+  LEGACY_LANGUAGE_CHANGE_EVENT,
+  LEGACY_LANGUAGE_STORAGE_KEY,
+  type Language,
+} from "@/lib/i18n";
 
 function readCurrentLanguage(): Language {
   if (typeof window === "undefined") {
@@ -14,7 +20,8 @@ function readCurrentLanguage(): Language {
     return "en";
   }
 
-  const storedLanguage = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
+  const storedLanguage =
+    window.localStorage.getItem(LANGUAGE_STORAGE_KEY) ?? window.localStorage.getItem(LEGACY_LANGUAGE_STORAGE_KEY);
   return storedLanguage === "en" ? "en" : "fr";
 }
 
@@ -30,12 +37,14 @@ function subscribeToHelpLanguage(onStoreChange: () => void) {
   });
 
   window.addEventListener("storage", onStoreChange);
-  window.addEventListener("bmc-language-change", onStoreChange);
+  window.addEventListener(LANGUAGE_CHANGE_EVENT, onStoreChange);
+  window.addEventListener(LEGACY_LANGUAGE_CHANGE_EVENT, onStoreChange);
 
   return () => {
     observer.disconnect();
     window.removeEventListener("storage", onStoreChange);
-    window.removeEventListener("bmc-language-change", onStoreChange);
+    window.removeEventListener(LANGUAGE_CHANGE_EVENT, onStoreChange);
+    window.removeEventListener(LEGACY_LANGUAGE_CHANGE_EVENT, onStoreChange);
   };
 }
 

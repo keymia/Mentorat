@@ -12,6 +12,7 @@ import {
   getNiveaux,
   mentorAcademicLevelOrders,
 } from "@/lib/api";
+import { CANADIAN_PROVINCES } from "@/lib/canadianProvinces";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { PhoneInput } from "@/components/forms/PhoneInput";
@@ -126,8 +127,15 @@ export function MentorForm() {
           </select>
         </label>
         <label>
-          Region
-          <input name="region" className="field" />
+          Province
+          <select name="region" className="field" defaultValue="">
+            <option value="">Sélectionnez une province</option>
+            {CANADIAN_PROVINCES.map((province) => (
+              <option key={province} value={province}>
+                {province}
+              </option>
+            ))}
+          </select>
         </label>
         <label>
           Niveau académique
@@ -162,7 +170,7 @@ export function MentorForm() {
           name="mini_bio"
           rows={5}
           className="field"
-          placeholder="Neter Elysabeth, étudiante en 3e année du baccalauréat en sciences de la santé à l’Université d’Ottawa et présidente de l’Association des jeunes scientifiques d’Ottawa, se distingue par son engagement à faire rayonner la relève scientifique francophone."
+          placeholder="Exemple: Je suis étudiant en médecine passionné par l’accompagnement des futurs professionnels de la santé..."
         />
         <span className="mt-2 block text-xs leading-5 text-muted-foreground">
           Presentez brievement votre parcours, votre niveau d&apos;etude, votre domaine, votre engagement et votre motivation.

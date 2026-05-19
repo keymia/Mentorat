@@ -14,6 +14,7 @@ import {
   getNiveaux,
   mentoreeAcademicLevelOrders,
 } from "@/lib/api";
+import { CANADIAN_PROVINCES } from "@/lib/canadianProvinces";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { PhoneInput } from "@/components/forms/PhoneInput";
@@ -175,8 +176,15 @@ export function MentoreForm() {
           </select>
         </label>
         <label>
-          Region
-          <input name="region" className="field" />
+          Province
+          <select name="region" className="field" defaultValue="">
+            <option value="">Sélectionnez une province</option>
+            {CANADIAN_PROVINCES.map((province) => (
+              <option key={province} value={province}>
+                {province}
+              </option>
+            ))}
+          </select>
         </label>
       </div>
       <label>

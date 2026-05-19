@@ -95,7 +95,7 @@ export function AdminPartenaires() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [detailsPartner, setDetailsPartner] = useState<Partenaire | null>(null);
   const [partnerToDelete, setPartnerToDelete] = useState<Partenaire | null>(null);
-  const { page, setPage, pageCount, visibleItems: visiblePartenaires } = usePagination(partenaires, 10);
+  const { page, setPage, pageCount, visibleItems: visiblePartenaires } = usePagination(partenaires, 8);
 
   useEffect(() => {
     let isMounted = true;
@@ -366,7 +366,7 @@ export function AdminPartenaires() {
           title="Liste des partenaires"
           countLabel={`${partenaires.length} partenaire${partenaires.length > 1 ? "s" : ""}`}
           minWidth={960}
-          footer={<PaginationControls page={page} pageCount={pageCount} onPageChange={setPage} />}
+          footer={pageCount > 1 ? <PaginationControls page={page} pageCount={pageCount} onPageChange={setPage} /> : null}
           action={
           <Button type="button" onClick={() => void reloadPartenaires()} variant="outline" size="sm" className="w-fit">
             <RefreshCcw aria-hidden="true" />

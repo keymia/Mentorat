@@ -1,13 +1,14 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { Eye, Pencil, Plus, UsersRound } from "lucide-react";
+import { Eye, Pencil, Plus, Trash2, UsersRound } from "lucide-react";
 
 import { PhoneInput } from "@/components/forms/PhoneInput";
 import { HelpIconButton } from "@/components/help/HelpIconButton";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ListTable } from "@/components/ui/list-table";
 import { Modal } from "@/components/ui/modal";
@@ -17,10 +18,13 @@ import { usePagination } from "@/hooks/usePagination";
 import {
   NiveauAcademique,
   Role,
+  UtilisateurDetail,
   UtilisateurPayload,
   createUtilisateur,
+  deleteUtilisateur,
   formatApiError,
   getAdminCollection,
+  getCurrentUser,
   getNiveaux,
   getRoles,
   mentorAcademicLevelOrders,
@@ -152,6 +156,7 @@ export function AdminUsersList({
   const [rows, setRows] = useState<UserRow[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
   const [levels, setLevels] = useState<NiveauAcademique[]>([]);
+  const [currentUser, setCurrentUser] = useState<UtilisateurDetail | null>(null);
   const [draft, setDraft] = useState<UserDraft>(() => createEmptyDraft(defaultProfile));
   const [editingId, setEditingId] = useState<number | null>(null);
   const [error, setError] = useState("");
@@ -161,6 +166,8 @@ export function AdminUsersList({
   const [isSaving, setIsSaving] = useState(false);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [selectedRow, setSelectedRow] = useState<UserRow | null>(null);
+  const [rowToDelete, setRowToDelete] = useState<UserRow | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const defaultRoleId = useMemo(
     () => roles.find((role) => role.nom === defaultRoleName)?.id,
@@ -180,7 +187,10 @@ export function AdminUsersList({
     () => levels.filter((level) => profileOptionsForLevel(level, profileOptions).length > 0),
     [levels, profileOptions],
   );
-  const { page, setPage, pageCount, visibleItems: visibleRows } = usePagination(rows, 10);
+  const { page, setPage, pageCount, visibleItems: visibleRows } = usePagination(rows, 8);
+  const isAdminPrincipal = currentUser?.role_nom === "ADMIN_PRINCIPAL";
+  const deleteMode = defaultRoleName === "MENTOR" ? "mentor" : "mentee";
+  const deleteTargetLabel = deleteMode === "mentor" ? "mentor" : "mentoré";
 
   function roleIdForProfile(profile: MentoratProfile, fallbackRole = draft.role) {
     if (profile === "MENTOR") {
@@ -222,12 +232,13 @@ export function AdminUsersList({
 
   useEffect(() => {
     let isMounted = true;
-    Promise.all([getAdminCollection(endpoint), getRoles(), getNiveaux()])
-      .then(([payload, roleData, levelData]) => {
+    Promise.all([getAdminCollection(endpoint), getRoles(), getNiveaux(), getCurrentUser()])
+      .then(([payload, roleData, levelData, user]) => {
         if (isMounted) {
           setRows(normalizeRows(payload));
           setRoles(roleData);
           setLevels(levelData);
+          setCurrentUser(user);
           setError("");
         }
       })
@@ -303,6 +314,28 @@ export function AdminUsersList({
       setError(formatApiError(apiError));
     } finally {
       setUpdatingId(null);
+    }
+  }
+
+  async function handleDelete(row: UserRow) {
+    setIsDeleting(true);
+    setError("");
+    setMessage("");
+    try {
+      await deleteUtilisateur(row.id, deleteMode);
+      setRows((currentRows) => currentRows.filter((currentRow) => currentRow.id !== row.id));
+      setSelectedRow(null);
+      setRowToDelete(null);
+      setMessage(
+        deleteMode === "mentor"
+          ? "Mentor désactivé. Ses mentorés sont replacés en attente d’assignation."
+          : "Mentoré supprimé avec ses données liées.",
+      );
+      await loadData();
+    } catch (apiError) {
+      setError(formatApiError(apiError));
+    } finally {
+      setIsDeleting(false);
     }
   }
 
@@ -544,13 +577,11 @@ export function AdminUsersList({
         <ListTable
           title="Liste des profils"
           countLabel={`${rows.length} profil${rows.length > 1 ? "s" : ""}`}
-          minWidth={1100}
-          footer={<PaginationControls page={page} pageCount={pageCount} onPageChange={setPage} />}
+          minWidth={820}
+          footer={pageCount > 1 ? <PaginationControls page={page} pageCount={pageCount} onPageChange={setPage} /> : null}
           headers={[
-            { label: "Nom" },
-            { label: "Email" },
-            { label: "Téléphone" },
-            { label: "Niveau" },
+            { label: "Nom complet" },
+            { label: "Niveau académique" },
             { label: "Statut" },
             { label: "Profil" },
             { label: "Actions", className: "text-right" },
@@ -562,8 +593,6 @@ export function AdminUsersList({
               <td className="px-4 py-3">
                 <p className="font-medium text-foreground">{fullName(row)}</p>
               </td>
-              <td className="px-4 py-3 text-muted-foreground">{row.email ?? "Non renseigné"}</td>
-              <td className="px-4 py-3 text-muted-foreground">{row.telephone || "Non renseigné"}</td>
               <td className="px-4 py-3 text-muted-foreground">{row.niveau_academique_nom ?? "Non renseigné"}</td>
               <td className="px-4 py-3">
                 <select
@@ -608,28 +637,59 @@ export function AdminUsersList({
         onClose={() => setSelectedRow(null)}
       >
         {selectedRow ? (
-          <div className="grid gap-3 rounded-lg border border-border bg-muted/30 p-4 md:grid-cols-2">
-            <DetailItem label="Nom complet" value={fullName(selectedRow)} />
-            <DetailItem label="Email" value={selectedRow.email ?? "Non renseigné"} />
-            <DetailItem label="Téléphone" value={selectedRow.telephone || "Non renseigné"} />
-            <DetailItem label="Région" value={selectedRow.region || "Non renseignée"} />
-            <DetailItem label="Langue" value={selectedRow.langue_preferee || "Non renseignée"} />
-            <DetailItem label="Niveau académique" value={selectedRow.niveau_academique_nom ?? "Non renseigné"} />
-            <DetailItem
-              label="Statut"
-              value={
-                selectedRow.statut_compte
-                  ? accountStatusLabels[normalizeAccountStatus(selectedRow.statut_compte) ?? ""] ?? selectedRow.statut_compte
-                  : "Non renseigné"
-              }
-            />
-            <DetailItem
-              label="Type de compte mentorat"
-              value={selectedRow.profil_mentorat ? profileLabels[selectedRow.profil_mentorat] : "Non renseigné"}
-            />
+          <div className="grid gap-4">
+            <div className="grid gap-3 rounded-lg border border-border bg-muted/30 p-4 md:grid-cols-2">
+              <DetailItem label="Nom complet" value={fullName(selectedRow)} />
+              <DetailItem label="Email" value={selectedRow.email ?? "Non renseigné"} />
+              <DetailItem label="Téléphone" value={selectedRow.telephone || "Non renseigné"} />
+              <DetailItem label="Région" value={selectedRow.region || "Non renseignée"} />
+              <DetailItem label="Langue" value={selectedRow.langue_preferee || "Non renseignée"} />
+              <DetailItem label="Niveau académique" value={selectedRow.niveau_academique_nom ?? "Non renseigné"} />
+              <DetailItem
+                label="Statut"
+                value={
+                  selectedRow.statut_compte
+                    ? accountStatusLabels[normalizeAccountStatus(selectedRow.statut_compte) ?? ""] ?? selectedRow.statut_compte
+                    : "Non renseigné"
+                }
+              />
+              <DetailItem
+                label="Type de compte mentorat"
+                value={selectedRow.profil_mentorat ? profileLabels[selectedRow.profil_mentorat] : "Non renseigné"}
+              />
+            </div>
+            {isAdminPrincipal ? (
+              <div className="flex flex-col gap-3 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-900/60 dark:bg-red-950/20 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm text-red-900 dark:text-red-100">
+                  Cette suppression est réservée à l’administrateur principal et demande une confirmation.
+                </p>
+                <Button type="button" variant="danger" onClick={() => setRowToDelete(selectedRow)}>
+                  <Trash2 aria-hidden="true" />
+                  Supprimer
+                </Button>
+              </div>
+            ) : null}
           </div>
         ) : null}
       </Modal>
+
+      <ConfirmDialog
+        open={Boolean(rowToDelete)}
+        title={`Supprimer ce ${deleteTargetLabel}`}
+        description={
+          deleteMode === "mentor"
+            ? "Êtes-vous sûr de vouloir supprimer ce mentor ? Ses mentorés seront conservés et replacés en attente d’assignation."
+            : "Êtes-vous sûr de vouloir supprimer ce mentoré ? Toutes les données liées à ce mentoré seront supprimées définitivement."
+        }
+        confirmLabel="Confirmer la suppression"
+        isConfirming={isDeleting}
+        onCancel={() => {
+          if (!isDeleting) {
+            setRowToDelete(null);
+          }
+        }}
+        onConfirm={() => (rowToDelete ? handleDelete(rowToDelete) : undefined)}
+      />
     </div>
   );
 }

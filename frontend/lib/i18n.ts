@@ -1,6 +1,9 @@
 export type Language = "fr" | "en";
 
-export const LANGUAGE_STORAGE_KEY = "bmc-language";
+export const LANGUAGE_STORAGE_KEY = "bmm-language";
+export const LEGACY_LANGUAGE_STORAGE_KEY = "bmc-language";
+export const LANGUAGE_CHANGE_EVENT = "bmm-language-change";
+export const LEGACY_LANGUAGE_CHANGE_EVENT = "bmc-language-change";
 
 const englishDictionary: Record<string, string> = {
   Accueil: "Home",
@@ -22,9 +25,12 @@ const englishDictionary: Record<string, string> = {
   "Navigation compte mentor": "Mentor account navigation",
   "Navigation admin": "Admin navigation",
   "Association of Black Aspiring Physicians": "Association of Black Aspiring Physicians",
+  "Des mentors. Une communaute. Votre avenir en medecine": "Mentors. A community. Your future in medicine",
+  "Une initiative de l'Association of Black Aspiring Physicians (ABAP) de l'Universite d'Ottawa & de Black Med Collective (BMC)":
+    "An initiative of the Association of Black Aspiring Physicians (ABAP) at the University of Ottawa & Black Med Collective (BMC)",
   "Mentorer, soutenir et elever la releve academique.": "Mentor, support, and uplift the next academic generation.",
-  "BMC Mentorat connecte mentors et mentores dans un cadre exigeant, humain et structure autour de la progression academique.":
-    "BMC Mentorship connects mentors and mentees in a rigorous, human-centered, and structured framework built around academic progress.",
+  "BMM - Black Med Mentorship connecte mentors et mentores dans un cadre exigeant, humain et structure autour de la progression academique.":
+    "BMM - Black Med Mentorship connects mentors and mentees in a rigorous, human-centered, and structured framework built around academic progress.",
   "Trouver un mentor": "Find a mentor",
   "Cadre fiable": "Trusted framework",
   "Mentors inscrits, valides et suivis par l'administration.": "Mentors are registered, validated, and monitored by the administration.",
@@ -42,7 +48,7 @@ const englishDictionary: Record<string, string> = {
   "Validation administrative": "Administrative approval",
   "Jumelage actif et suivi des statistiques": "Active matching and statistics tracking",
   "Mentorat academique": "Academic mentorship",
-  "Pret a rejoindre le reseau BMC ?": "Ready to join the BMC network?",
+  "Pret a rejoindre le reseau BMM ?": "Ready to join the BMM network?",
   "Inscrivez-vous comme mentor ou mentore. L'administration valide ensuite les profils et les jumelages.":
     "Register as a mentor or mentee. The administration then validates profiles and matches.",
   "Voir le programme": "View the program",
@@ -69,12 +75,16 @@ const englishDictionary: Record<string, string> = {
   Francais: "French",
   Anglais: "English",
   Region: "Region",
+  Province: "Province",
+  "Selectionnez une province": "Select a province",
   "Niveau academique": "Academic level",
   "Choisir un niveau": "Choose a level",
   "Choisir une periode": "Choose a period",
   "Capacite de mentorat": "Mentoring capacity",
   Objectifs: "Goals",
   "Mini bio": "Short bio",
+  "Exemple: Je suis etudiant en medecine passionne par l'accompagnement des futurs professionnels de la sante...":
+    "Example: I am a medical student passionate about supporting future health professionals...",
   "Je consens au traitement de mes informations pour le programme Mentorat.":
     "I consent to the processing of my information for the Mentorship program.",
   "Envoi...": "Sending...",
@@ -136,7 +146,7 @@ const englishDictionary: Record<string, string> = {
   "Documentation complete": "Full documentation",
   Rechercher: "Search",
   "Aucun resultat": "No result",
-  "Vue d'ensemble du programme BMC Mentorat.": "Overview of the BMC Mentorship program.",
+  "Vue d'ensemble du programme BMM - Black Med Mentorship.": "Overview of the BMM - Black Med Mentorship program.",
   Administration: "Administration",
   "Gestion des inscriptions, jumelages, evenements, partenaires et parametres.":
     "Manage registrations, matches, events, partners, and settings.",
@@ -325,9 +335,12 @@ const frenchPolishDictionary: Record<string, string> = {
     "Consultez la période actuelle et choisissez une nouvelle période uniquement lorsque la période en cours est expirée.",
   "La session en cours n'est pas encore expiree.": "La période en cours n’est pas encore expirée.",
   "Aucune session expiree ne peut etre reconduite.": "Aucune période expirée ne peut être reconduite.",
+  "Des mentors. Une communaute. Votre avenir en medecine": "Des mentors. Une communauté. Votre avenir en médecine",
+  "Une initiative de l'Association of Black Aspiring Physicians (ABAP) de l'Universite d'Ottawa & de Black Med Collective (BMC)":
+    "Une initiative de l’Association of Black Aspiring Physicians (ABAP) de l’Université d’Ottawa & de Black Med Collective (BMC)",
   "Mentorer, soutenir et elever la releve academique.": "Mentorer, soutenir et élever la relève académique.",
-  "BMC Mentorat connecte mentors et mentores dans un cadre exigeant, humain et structure autour de la progression academique.":
-    "BMC Mentorat met en relation mentors et mentorés dans un cadre exigeant, humain et structuré autour de la progression académique.",
+  "BMM - Black Med Mentorship connecte mentors et mentores dans un cadre exigeant, humain et structure autour de la progression academique.":
+    "BMM - Black Med Mentorship met en relation mentors et mentorés dans un cadre exigeant, humain et structuré autour de la progression académique.",
   "Mentors inscrits, valides et suivis par l'administration.":
     "Mentors inscrits, validés et suivis par l’administration.",
   "Choix du mentor selon le niveau academique superieur direct.": "Choix du mentor selon le niveau académique supérieur direct.",
@@ -345,6 +358,7 @@ const frenchPolishDictionary: Record<string, string> = {
   Telephone: "Numéro de téléphone",
   "Langue preferee": "Langue préférée",
   Francais: "Français",
+  "Selectionnez une province": "Sélectionnez une province",
   "Niveau academique": "Niveau académique",
   "Choisir un niveau": "Sélectionnez un niveau",
   "Capacite de mentorat": "Capacité de mentorat",
@@ -388,7 +402,7 @@ const frenchPolishDictionary: Record<string, string> = {
     "Utilisez votre adresse courriel et votre mot de passe. Le système ouvrira automatiquement l’espace administrateur ou mentor.",
   "Documentation complete": "Documentation complète",
   "Aucun resultat": "Aucun résultat",
-  "Vue d'ensemble du programme BMC Mentorat.": "Vue d’ensemble du programme BMC Mentorat.",
+  "Vue d'ensemble du programme BMM - Black Med Mentorship.": "Vue d’ensemble du programme BMM - Black Med Mentorship.",
   "Gestion des inscriptions, jumelages, evenements, partenaires et parametres.":
     "Gestion des inscriptions, jumelages, événements, partenaires et paramètres.",
   "Nombre maximal de mentores par mentor": "Nombre maximal de mentorés par mentor",

@@ -292,8 +292,8 @@ export function AdminOperationalAdmins() {
   }
 
   const pendingPublicRows = useMemo(() => rows.filter((admin) => admin.pending_public_validation), [rows]);
-  const pendingPagination = usePagination(pendingPublicRows, 10);
-  const adminsPagination = usePagination(rows, 10);
+  const pendingPagination = usePagination(pendingPublicRows, 8);
+  const adminsPagination = usePagination(rows, 8);
 
   return (
     <div className="grid gap-5">
@@ -323,11 +323,13 @@ export function AdminOperationalAdmins() {
           countLabel={`${pendingPublicRows.length} validation${pendingPublicRows.length > 1 ? "s" : ""}`}
           minWidth={1080}
           footer={
-            <PaginationControls
-              page={pendingPagination.page}
-              pageCount={pendingPagination.pageCount}
-              onPageChange={pendingPagination.setPage}
-            />
+            pendingPagination.pageCount > 1 ? (
+              <PaginationControls
+                page={pendingPagination.page}
+                pageCount={pendingPagination.pageCount}
+                onPageChange={pendingPagination.setPage}
+              />
+            ) : null
           }
           headers={[
             { label: "Administrateur" },
@@ -376,19 +378,18 @@ export function AdminOperationalAdmins() {
           countLabel={`${rows.length} administrateur${rows.length > 1 ? "s" : ""}`}
           minWidth={980}
           footer={
-            <PaginationControls
-              page={adminsPagination.page}
-              pageCount={adminsPagination.pageCount}
-              onPageChange={adminsPagination.setPage}
-            />
+            adminsPagination.pageCount > 1 ? (
+              <PaginationControls
+                page={adminsPagination.page}
+                pageCount={adminsPagination.pageCount}
+                onPageChange={adminsPagination.setPage}
+              />
+            ) : null
           }
           headers={[
-            { label: "Nom" },
+            { label: "Nom complet" },
             { label: "Email" },
-            { label: "Téléphone" },
-            { label: "Titre / diplôme" },
             { label: "Statut" },
-            { label: "Affichage public" },
             { label: "Validation publique" },
             { label: "Actions", className: "text-right" },
           ]}
@@ -400,15 +401,8 @@ export function AdminOperationalAdmins() {
                 <p className="font-medium text-foreground">{fullName(admin)}</p>
               </td>
               <td className="px-4 py-3 text-muted-foreground">{admin.email}</td>
-              <td className="px-4 py-3 text-muted-foreground">{admin.telephone || "Non renseigné"}</td>
-              <td className="px-4 py-3 text-muted-foreground">
-                {admin.public_title || "Non renseigné"}
-              </td>
               <td className="px-4 py-3">
                 <Badge variant={admin.statut_compte === "ACTIF" ? "success" : "outline"}>{admin.statut_compte}</Badge>
-              </td>
-              <td className="px-4 py-3">
-                {admin.can_appear_on_about_page ? <Badge variant="bronze">Visible sur À propos</Badge> : <Badge variant="outline">Masqué</Badge>}
               </td>
               <td className="px-4 py-3">{publicValidationBadge(admin)}</td>
               <td className="px-4 py-3">

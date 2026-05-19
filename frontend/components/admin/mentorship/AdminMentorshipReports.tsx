@@ -50,7 +50,7 @@ export function AdminMentorshipReports({
   const [isLoading, setIsLoading] = useState(true);
   const activeFilters = filters ?? localFilters;
   const reportRows = report?.results ?? [];
-  const { page, setPage, pageCount, visibleItems: visibleReportRows } = usePagination(reportRows, 10);
+  const { page, setPage, pageCount, visibleItems: visibleReportRows } = usePagination(reportRows, 8);
 
   useEffect(() => {
     let isMounted = true;
@@ -174,7 +174,7 @@ export function AdminMentorshipReports({
             title="Liste des rapports"
             countLabel={`${report.results.length} affectation${report.results.length > 1 ? "s" : ""}`}
             minWidth={1080}
-            footer={<PaginationControls page={page} pageCount={pageCount} onPageChange={setPage} />}
+            footer={pageCount > 1 ? <PaginationControls page={page} pageCount={pageCount} onPageChange={setPage} /> : null}
             headers={[
               { label: "Mentoré" },
               { label: "Mentor" },

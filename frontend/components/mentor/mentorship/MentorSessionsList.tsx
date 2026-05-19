@@ -84,7 +84,7 @@ export function MentorSessionsList() {
     [assignments],
   );
   const selectedAssignment = selectedAssignmentId ? assignmentsById.get(Number(selectedAssignmentId)) : undefined;
-  const { page, setPage, pageCount, visibleItems: visibleSessions } = usePagination(sessions, 10);
+  const { page, setPage, pageCount, visibleItems: visibleSessions } = usePagination(sessions, 8);
 
   const loadData = useCallback(async () => {
     try {
@@ -409,7 +409,7 @@ async function handleCreateSubmit(event: FormEvent<HTMLFormElement>) {
           title="Liste des séances"
           countLabel={`${sessions.length} séance${sessions.length > 1 ? "s" : ""}`}
           minWidth={1080}
-          footer={<PaginationControls page={page} pageCount={pageCount} onPageChange={setPage} />}
+          footer={pageCount > 1 ? <PaginationControls page={page} pageCount={pageCount} onPageChange={setPage} /> : null}
           headers={[
             { label: "Mentoré" },
             { label: "Séance" },

@@ -3,10 +3,10 @@ import Link from "next/link";
 import { Suspense } from "react";
 
 import { InscriptionModalOptions } from "@/components/forms/InscriptionModalOptions";
+import { RevealOnScroll } from "@/components/public/RevealOnScroll";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Reveal } from "@/components/ui/reveal";
 
 const highlights = [
   {
@@ -52,93 +52,99 @@ export default function Home() {
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_18%_45%,rgba(159,20,22,0.58),transparent_48%),radial-gradient(circle_at_78%_14%,rgba(255,246,232,0.50),transparent_36%),linear-gradient(180deg,rgba(255,255,255,0.22)_0%,rgba(255,255,255,0.03)_58%,rgba(20,10,8,0.38)_100%)] opacity-100 mix-blend-soft-light transition-opacity duration-500 dark:opacity-0" />
           <div className="absolute inset-0 opacity-0 mix-blend-normal transition-opacity duration-500 dark:opacity-100 dark:bg-[radial-gradient(ellipse_at_18%_45%,rgba(159,20,22,0.46),transparent_48%),radial-gradient(circle_at_72%_16%,rgba(183,131,75,0.42),transparent_34%),linear-gradient(180deg,rgba(0,0,0,0.14)_0%,rgba(0,0,0,0.70)_100%)]" />
           <div className="relative mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:py-28">
-            <Reveal>
-              <Badge variant="bronze" className="border-white/20 bg-white/12 text-white shadow-card backdrop-blur">
-                Association of Black Aspiring Physicians
+            <RevealOnScroll distance={52} duration={0.75}>
+              <Badge variant="bronze" className="reveal-child border-white/20 bg-white/12 text-white shadow-card backdrop-blur">
+                BMM - Black Med Mentorship
               </Badge>
-              <h1 className="mt-5 max-w-4xl text-4xl font-bold leading-tight tracking-normal text-white drop-shadow-[0_4px_24px_rgba(0,0,0,0.48)] sm:text-6xl">
-                <span className="font-display">Mentorer, soutenir et élever la relève académique.</span>
+              <h1 className="reveal-title mt-5 max-w-4xl text-4xl font-bold leading-tight tracking-normal text-white drop-shadow-[0_4px_24px_rgba(0,0,0,0.48)] sm:text-6xl">
+                <span className="font-display">Des mentors. Une communauté. Votre avenir en médecine</span>
               </h1>
-              <p className="mt-5 max-w-2xl text-lg leading-8 text-white/88 drop-shadow-[0_2px_14px_rgba(0,0,0,0.42)]">
-                BMC Mentorat relie mentors et mentorés dans un cadre exigeant, humain et structuré autour de la
-                progression académique.
+              <p className="reveal-description mt-5 max-w-2xl text-lg leading-8 text-white/88 drop-shadow-[0_2px_14px_rgba(0,0,0,0.42)]">
+                Une initiative de l&apos;Association of Black Aspiring Physicians (ABAP) de l&apos;Université d&apos;Ottawa &amp; de
+                Black Med Collective (BMC)
               </p>
-              <Suspense fallback={null}>
-                <InscriptionModalOptions variant="hero" />
-              </Suspense>
-            </Reveal>
+              <div className="reveal-actions">
+                <Suspense fallback={null}>
+                  <InscriptionModalOptions variant="hero" />
+                </Suspense>
+              </div>
+            </RevealOnScroll>
           </div>
         </section>
 
         <section className="mx-auto grid max-w-7xl gap-4 px-4 py-12 sm:px-6 md:grid-cols-3">
           {highlights.map((highlight, index) => (
-            <Reveal key={highlight.title} delay={index * 0.08}>
-              <Card className="h-full">
+            <RevealOnScroll key={highlight.title} className="h-full" delayMs={index * 140}>
+              <Card className="public-motion-card h-full">
                 <CardContent className="grid gap-4 p-5">
-                  <div className="flex size-11 items-center justify-center rounded-xl bg-secondary text-primary">
+                  <div className="reveal-image flex size-11 items-center justify-center rounded-xl bg-secondary text-primary">
                     <highlight.icon className="size-5" aria-hidden="true" />
                   </div>
                   <div>
-                    <h2 className="font-display text-xl font-bold">{highlight.title}</h2>
-                    <p className="mt-2 text-sm leading-6 text-muted-foreground">{highlight.text}</p>
+                    <h2 className="reveal-title font-display text-xl font-bold">{highlight.title}</h2>
+                    <p className="reveal-description mt-2 text-sm leading-6 text-muted-foreground">{highlight.text}</p>
                   </div>
                 </CardContent>
               </Card>
-            </Reveal>
+            </RevealOnScroll>
           ))}
         </section>
 
         <section className="border-y border-border bg-card">
           <div className="mx-auto grid max-w-7xl gap-8 px-4 py-12 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
-            <div>
-              <Badge variant="secondary">Flux principal</Badge>
-              <h2 className="mt-4 font-display text-3xl font-bold">Un parcours simple, verifie et mesurable.</h2>
-              <p className="mt-3 leading-7 text-muted-foreground">
+            <RevealOnScroll direction="left" distance={42}>
+              <Badge variant="secondary" className="reveal-child">Flux principal</Badge>
+              <h2 className="reveal-title mt-4 font-display text-3xl font-bold">Un parcours simple, verifie et mesurable.</h2>
+              <p className="reveal-description mt-3 leading-7 text-muted-foreground">
                 La plateforme applique les regles metier au moment de l&apos;inscription et au moment de la validation
                 administrative.
               </p>
-            </div>
+            </RevealOnScroll>
             <div className="grid gap-3">
               {steps.map((step, index) => (
-                <Card key={step} className="bg-background/70">
-                  <CardContent className="flex items-center gap-4 p-4">
-                    <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
-                      {index + 1}
-                    </span>
-                    <p className="font-medium text-foreground">{step}</p>
-                  </CardContent>
-                </Card>
+                <RevealOnScroll key={step} direction="right" delayMs={index * 140}>
+                  <Card className="public-motion-card bg-background/70">
+                    <CardContent className="flex items-center gap-4 p-4">
+                      <span className="reveal-image flex size-10 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
+                        {index + 1}
+                      </span>
+                      <p className="reveal-title font-medium text-foreground">{step}</p>
+                    </CardContent>
+                  </Card>
+                </RevealOnScroll>
               ))}
             </div>
           </div>
         </section>
 
         <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
-          <Card className="overflow-hidden bg-[var(--brand-ink)] text-white">
-            <CardContent className="grid gap-6 p-6 sm:p-8 lg:grid-cols-[1fr_auto] lg:items-center">
-              <div>
-                <div className="flex items-center gap-2 text-[var(--brand-bronze)]">
-                  <HeartHandshake className="size-5" aria-hidden="true" />
-                  <span className="text-sm font-semibold uppercase tracking-[0.18em]">Mentorat académique</span>
+          <RevealOnScroll distance={46}>
+            <Card className="public-motion-card overflow-hidden bg-[var(--brand-ink)] text-white">
+              <CardContent className="grid gap-6 p-6 sm:p-8 lg:grid-cols-[1fr_auto] lg:items-center">
+                <div>
+                  <div className="reveal-image flex items-center gap-2 text-[var(--brand-bronze)]">
+                    <HeartHandshake className="size-5" aria-hidden="true" />
+                    <span className="text-sm font-semibold uppercase tracking-[0.18em]">Mentorat académique</span>
+                  </div>
+                  <h2 className="reveal-title mt-4 font-display text-3xl font-bold">Prêt à rejoindre le réseau BMM ?</h2>
+                  <p className="reveal-description mt-3 max-w-2xl text-sm leading-6 text-white/75">
+                    Inscrivez-vous comme mentor ou mentoré. L&apos;administration valide ensuite les profils et les jumelages.
+                  </p>
                 </div>
-                <h2 className="mt-4 font-display text-3xl font-bold">Prêt à rejoindre le réseau BMC ?</h2>
-                <p className="mt-3 max-w-2xl text-sm leading-6 text-white/75">
-                  Inscrivez-vous comme mentor ou mentoré. L&apos;administration valide ensuite les profils et les jumelages.
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-3">
-                <Button asChild variant="secondary">
-                  <Link href="/equipes">
-                    <BookOpenCheck aria-hidden="true" />
-                    Voir les équipes
-                  </Link>
-                </Button>
-                <Button asChild>
-                  <Link href="/inscriptions">S&apos;inscrire</Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+                <div className="reveal-actions flex flex-wrap gap-3">
+                  <Button asChild variant="secondary">
+                    <Link href="/equipes">
+                      <BookOpenCheck aria-hidden="true" />
+                      Voir les équipes
+                    </Link>
+                  </Button>
+                  <Button asChild>
+                    <Link href="/inscriptions">S&apos;inscrire</Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </RevealOnScroll>
         </section>
       </main>
     </>

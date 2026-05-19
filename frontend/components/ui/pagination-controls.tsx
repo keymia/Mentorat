@@ -14,7 +14,7 @@ export function PaginationControls({ page, pageCount, onPageChange }: Pagination
   }
 
   return (
-    <div className="flex items-center justify-between gap-3 text-sm text-muted-foreground">
+    <div className="flex flex-col gap-3 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
       <span>
         Page {page} sur {pageCount}
       </span>

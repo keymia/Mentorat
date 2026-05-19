@@ -357,14 +357,6 @@ class AdminMentorshipOverviewView(APIView):
         )
 
 
-class AdminMentorshipSessionsView(APIView):
-    permission_classes = [IsAdminRole]
-
-    def get(self, request):
-        sessions = filter_sessions(select_session_queryset(), request.query_params)
-        return Response(MentorshipSessionSerializer(sessions, many=True).data)
-
-
 class AdminMentorshipProgressView(APIView):
     permission_classes = [IsAdminRole]
 

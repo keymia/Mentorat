@@ -20,7 +20,7 @@ import {
 } from "@/lib/api";
 import { displayUser, formatDateTime } from "@/lib/mentorship";
 
-const pageSize = 10;
+const pageSize = 8;
 
 const registrationStatusLabels: Record<Inscription["registration_status"], string> = {
   registered: "Inscrit",
@@ -224,25 +224,27 @@ export function AdminInscriptions() {
               </tbody>
             </table>
           </div>
-          <div className="flex items-center justify-between border-t border-border px-4 py-3 text-sm text-muted-foreground">
-            <span>
-              Page {page} sur {pageCount}
-            </span>
-            <div className="flex gap-2">
-              <Button type="button" variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((current) => current - 1)}>
-                Precedent
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={page >= pageCount}
-                onClick={() => setPage((current) => current + 1)}
-              >
-                Suivant
-              </Button>
+          {pageCount > 1 ? (
+            <div className="flex items-center justify-between border-t border-border px-4 py-3 text-sm text-muted-foreground">
+              <span>
+                Page {page} sur {pageCount}
+              </span>
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((current) => current - 1)}>
+                  Precedent
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={page >= pageCount}
+                  onClick={() => setPage((current) => current + 1)}
+                >
+                  Suivant
+                </Button>
+              </div>
             </div>
-          </div>
+          ) : null}
         </Card>
       ) : null}
 

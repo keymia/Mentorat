@@ -2,6 +2,7 @@ import { HeartHandshake, Scale, ShieldCheck, UsersRound } from "lucide-react";
 
 import { PageHeader } from "@/components/PageHeader";
 import { PublicProfileCard } from "@/components/public/PublicProfileCard";
+import { RevealOnScroll } from "@/components/public/RevealOnScroll";
 import { Card, CardContent } from "@/components/ui/card";
 import { getPublicAboutTeam } from "@/lib/api";
 import type { PublicAboutTeamMember } from "@/lib/api";
@@ -36,6 +37,8 @@ function AdminTeamCard({ member }: { member: PublicAboutTeamMember }) {
       description={member.public_description}
       imageUrl={member.public_photo_url}
       minHeightClassName="min-h-[360px]"
+      nameClassName="text-[var(--brand-bronze)] drop-shadow-[0_2px_10px_rgba(0,0,0,0.45)]"
+      descriptionClassName="text-white/78"
     />
   );
 }
@@ -52,31 +55,35 @@ export default async function AboutPage() {
       />
       <main className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
         <div className="grid gap-4 md:grid-cols-2">
-          {pillars.map((pillar) => (
-            <Card key={pillar.title}>
-              <CardContent className="grid gap-4 p-6">
-                <div className="flex size-11 items-center justify-center rounded-xl bg-secondary text-primary">
-                  <pillar.icon className="size-5" aria-hidden="true" />
-                </div>
-                <div>
-                  <h2 className="font-display text-2xl font-bold">{pillar.title}</h2>
-                  <p className="mt-3 leading-7 text-muted-foreground">{pillar.text}</p>
-                </div>
-              </CardContent>
-            </Card>
+          {pillars.map((pillar, index) => (
+            <RevealOnScroll key={pillar.title} delayMs={index * 140}>
+              <Card className="public-motion-card group">
+                <CardContent className="grid gap-4 p-6">
+                  <div className="reveal-image flex size-11 items-center justify-center rounded-xl bg-secondary text-primary transition duration-300 group-hover:bg-primary group-hover:text-primary-foreground">
+                    <pillar.icon className="size-5" aria-hidden="true" />
+                  </div>
+                  <div>
+                    <h2 className="reveal-title font-display text-2xl font-bold">{pillar.title}</h2>
+                    <p className="reveal-description mt-3 leading-7 text-muted-foreground">{pillar.text}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </RevealOnScroll>
           ))}
         </div>
         {adminTeam.length > 0 ? (
           <section className="mt-12">
-            <div className="mb-5">
-              <h2 className="font-display text-3xl font-bold">Equipe administrative</h2>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">
+            <RevealOnScroll className="mb-5">
+              <h2 className="reveal-title font-display text-3xl font-bold">Equipe administrative</h2>
+              <p className="reveal-description mt-2 text-sm leading-6 text-muted-foreground">
                 Les personnes qui coordonnent le fonctionnement operationnel du programme.
               </p>
-            </div>
+            </RevealOnScroll>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {adminTeam.map((member) => (
-                <AdminTeamCard key={member.id} member={member} />
+              {adminTeam.map((member, index) => (
+                <RevealOnScroll key={member.id} delayMs={index * 140}>
+                  <AdminTeamCard member={member} />
+                </RevealOnScroll>
               ))}
             </div>
           </section>

@@ -1,5 +1,5 @@
-import { AdminMentorshipSessions } from "@/components/admin/mentorship/AdminMentorshipSessions";
+import { redirect } from "next/navigation";
 
 export default function AdminMentorshipSessionsPage() {
-  return <AdminMentorshipSessions />;
+  redirect("/admin/mentorship/progress");
 }
